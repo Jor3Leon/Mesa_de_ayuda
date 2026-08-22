@@ -1,9 +1,20 @@
 const crypto = require('crypto');
 
-const NEON_HTTP_URL = 'https://ep-late-violet-avbxxfr1.c-11.us-east-1.aws.neon.tech/sql';
-const CONN_STRING = 'postgresql://neondb_owner:npg_PYJx4QFCUXc6@ep-late-violet-avbxxfr1.c-11.us-east-1.aws.neon.tech/neondb?sslmode=require';
+const NEON_HTTP_URL = process.env.NEON_HTTP_URL;
+const CONN_STRING = process.env.DIRECT_URL || process.env.DATABASE_URL;
+
+if (!CONN_STRING) {
+  console.error('❌ Error: Se requiere la variable de entorno DATABASE_URL o DIRECT_URL para ejecutar la migración.');
+  process.exit(1);
+}
+
+const defaultSeedPass = process.env.SEED_DEFAULT_PASSWORD || crypto.randomBytes(16).toString('hex');
 
 async function sql(query, params = []) {
+  if (!NEON_HTTP_URL) {
+    throw new Error('NEON_HTTP_URL environment variable is required for HTTPS migration execution.');
+  }
+
   const res = await fetch(NEON_HTTP_URL, {
     method: 'POST',
     headers: {
@@ -27,7 +38,7 @@ function hashPassword(password) {
 }
 
 async function migrateAndSeed() {
-  console.log('🚀 Executing Neon PostgreSQL Migration & Seeding via HTTPS...');
+  console.log('🚀 Executing PostgreSQL Migration & Seeding...');
 
   // 1. DDL Schema Execution
   console.log('📦 1/4 Creating Tables and Constraints...');
@@ -278,7 +289,7 @@ async function migrateAndSeed() {
   console.log('✅ All PostgreSQL tables & constraints created successfully.');
 
   // 2. Seed Default Organization
-  console.log('🏢 2/4 Seeding Default Organization (Alcaldía de Yopal - STIC)...');
+  console.log('🏢 2/4 Seeding Default Organization...');
   const orgId = 'org-stic-yopal-001';
   await sql(`
     INSERT INTO "Organization" ("id", "name", "slug", "plan", "isActive")
@@ -364,19 +375,19 @@ async function migrateAndSeed() {
   // 4. Seed Users
   console.log('👤 4/4 Seeding Initial Users...');
   const users = [
-    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@yopal.gov.co', role: 'ADMIN', pass: 'Leon8424*' },
-    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@yopal.gov.co', role: 'NIVEL 1', pass: 'Leon8424*' },
-    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@yopal.gov.co', role: 'NIVEL 2', pass: 'Leon8424*' },
-    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@yopal.gov.co', role: 'NIVEL 3', pass: 'Leon8424*' },
-    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@yopal.gov.co', role: 'USUARIO ESTANDAR', pass: 'Leon8424*' }
+    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@yopal.gov.co', role: 'ADMIN' },
+    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@yopal.gov.co', role: 'NIVEL 1' },
+    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@yopal.gov.co', role: 'NIVEL 2' },
+    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@yopal.gov.co', role: 'NIVEL 3' },
+    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@yopal.gov.co', role: 'USUARIO ESTANDAR' }
   ];
 
   for (const u of users) {
-    const pHash = hashPassword(u.pass);
+    const pHash = hashPassword(defaultSeedPass);
     await sql(`
       INSERT INTO "User" ("name", "username", "email", "passwordHash", "roleId", "locationId", "organizationId", "isActive")
       VALUES ($1, $2, $3, $4, $5, $6, $7, true)
-      ON CONFLICT ("username", "organizationId") DO UPDATE SET "passwordHash" = EXCLUDED."passwordHash", "roleId" = EXCLUDED."roleId";
+      ON CONFLICT ("username", "organizationId") DO NOTHING;
     `, [u.name, u.user, u.email, pHash, roleMap[u.role], locationId, orgId]);
   }
 
@@ -408,8 +419,7 @@ async function migrateAndSeed() {
     `, [title, content, shortcut, cat, type, orgId]);
   }
 
-  console.log('\n🎉 Multi-Tenant Neon PostgreSQL initialized and seeded successfully!');
-  console.log('🔑 Credenciales Admin creadas: usuario: jherson.rivera / clave: Admin12345!');
+  console.log('\n🎉 Multi-Tenant PostgreSQL initialized successfully from environment variables.');
 }
 
 migrateAndSeed().catch(err => {

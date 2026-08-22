@@ -1,10 +1,16 @@
 const crypto = require('crypto');
 
 const TOKEN_TTL_MS = 1000 * 60 * 60 * 12;
-const DEFAULT_SECRET = 'mesa-de-ayuda-yopal-dev-secret';
+let dynamicFallbackSecret = null;
 
 function getAuthSecret() {
-  return process.env.AUTH_SECRET || DEFAULT_SECRET;
+  if (process.env.AUTH_SECRET) {
+    return process.env.AUTH_SECRET;
+  }
+  if (!dynamicFallbackSecret) {
+    dynamicFallbackSecret = crypto.randomBytes(32).toString('hex');
+  }
+  return dynamicFallbackSecret;
 }
 
 function hashPassword(password) {

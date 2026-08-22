@@ -16,14 +16,12 @@ const getAnalyticsRoutes = require('./routes/analytics');
 const getCategoryRoutes = require('./routes/categories');
 const getActivityRoutes = require('./routes/activities');
 
-const DEFAULT_CORS_ORIGINS = ['http://localhost:5173', 'http://127.0.0.1:5173', 'http://localhost:5174', 'http://127.0.0.1:5174'];
-
 function getAllowedOrigins() {
   const configuredOrigins = String(process.env.CORS_ORIGIN || '')
     .split(',')
     .map((origin) => origin.trim())
     .filter(Boolean);
-  return configuredOrigins.length > 0 ? configuredOrigins : DEFAULT_CORS_ORIGINS;
+  return configuredOrigins;
 }
 
 function buildApp(prisma = new PrismaClient()) {
@@ -32,11 +30,11 @@ function buildApp(prisma = new PrismaClient()) {
 
   app.use(cors({
     origin(origin, callback) {
-      if (!origin || allowedOrigins.includes(origin)) {
+      if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
         callback(null, true);
         return;
       }
-      callback(createHttpError(403, 'Origin not allowed by CORS.'));
+      callback(createHttpError(403, `Origin ${origin} not allowed by CORS.`));
     },
   }));
   

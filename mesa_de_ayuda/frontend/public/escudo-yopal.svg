@@ -1,0 +1,16 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 160 160" role="img" aria-labelledby="title desc">
+  <title id="title">Emblema Mesa de Ayuda</title>
+  <desc id="desc">Escudo estilizado para la interfaz de Mesa de Ayuda.</desc>
+  <defs>
+    <linearGradient id="shield" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" stop-color="#f6d365"/>
+      <stop offset="100%" stop-color="#fda085"/>
+    </linearGradient>
+  </defs>
+  <rect width="160" height="160" rx="32" fill="#fff6ec"/>
+  <path d="M80 18 126 34v39c0 32-20 51-46 69C54 124 34 105 34 73V34z" fill="url(#shield)" stroke="#c04b2d" stroke-width="6"/>
+  <path d="M80 36c18 0 33 15 33 33 0 23-15 41-33 55-18-14-33-32-33-55 0-18 15-33 33-33Z" fill="#fff3d2" opacity=".92"/>
+  <path d="M55 90h50" stroke="#c04b2d" stroke-width="8" stroke-linecap="round"/>
+  <path d="M80 55v70" stroke="#c04b2d" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="80" cy="80" r="12" fill="#c04b2d"/>
+</svg>

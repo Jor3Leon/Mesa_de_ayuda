@@ -1,0 +1,16 @@
+{
+  "name": "mesa-de-ayuda-root",
+  "version": "1.0.0",
+  "scripts": {
+    "dev": "concurrently -k -n backend,frontend \"npm --prefix backend run dev\" \"npm --prefix frontend run dev\"",
+    "dev:backend": "npm --prefix backend run dev",
+    "dev:backend:watch": "npm --prefix backend run dev:watch",
+    "dev:frontend": "npm --prefix frontend run dev",
+    "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
+    "dev:down": "powershell -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
+    "start": "npm run dev"
+  },
+  "devDependencies": {
+    "concurrently": "^9.1.2"
+  }
+}

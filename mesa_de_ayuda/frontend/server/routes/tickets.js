@@ -167,6 +167,10 @@ function getTicketRoutes(prisma) {
         throw createHttpError(404, 'Ticket no encontrado.');
       }
 
+      if (req.auth.organizationId && targetTicket.organizationId && targetTicket.organizationId !== req.auth.organizationId) {
+        throw createHttpError(403, 'No tienes permiso para modificar este ticket.');
+      }
+
       const isCreator = targetTicket.createdById === req.auth.user.id;
       const hasEditPermission = req.auth.user.permissions?.includes('TICKETS_EDIT') || false;
 
@@ -345,11 +349,15 @@ function getTicketRoutes(prisma) {
       // Bloquear comentarios si el ticket está RESUELTO o CERRADO
       const ticket = await prisma.ticket.findUnique({
         where: { id: ticketId },
-        select: { status: true }
+        select: { status: true, organizationId: true }
       });
 
       if (!ticket) {
         throw createHttpError(404, 'Ticket no encontrado.');
+      }
+
+      if (req.auth.organizationId && ticket.organizationId && ticket.organizationId !== req.auth.organizationId) {
+        throw createHttpError(403, 'No tienes permiso para comentar en este ticket.');
       }
 
       if (ticket.status === 'RESOLVED' || ticket.status === 'CLOSED') {

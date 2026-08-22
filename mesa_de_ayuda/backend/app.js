@@ -3,7 +3,7 @@ const cors = require('cors');
 const morgan = require('morgan');
 const { PrismaClient } = require('@prisma/client');
 const { createHttpError } = require('./lib/utils');
-const { requireAuth } = require('./lib/middleware');
+const { rateLimit } = require('./lib/rate-limit');
 
 // Import modular routes
 const getAuthRoutes = require('./routes/auth');
@@ -28,6 +28,20 @@ function buildApp(prisma = new PrismaClient()) {
   const app = express();
   const allowedOrigins = getAllowedOrigins();
 
+  // 1. Security Headers Middleware (Anti-Clickjacking, Anti-MIME sniffing, HSTS)
+  app.disable('x-powered-by');
+  app.use((req, res, next) => {
+    res.setHeader('X-Content-Type-Options', 'nosniff');
+    res.setHeader('X-Frame-Options', 'DENY');
+    res.setHeader('X-XSS-Protection', '1; mode=block');
+    res.setHeader('Referrer-Policy', 'strict-origin-when-cross-origin');
+    if (process.env.NODE_ENV === 'production') {
+      res.setHeader('Strict-Transport-Security', 'max-age=31536000; includeSubDomains; preload');
+    }
+    next();
+  });
+
+  // 2. CORS Policy
   app.use(cors({
     origin(origin, callback) {
       if (!origin || allowedOrigins.length === 0 || allowedOrigins.includes('*') || allowedOrigins.includes(origin)) {
@@ -36,23 +50,30 @@ function buildApp(prisma = new PrismaClient()) {
       }
       callback(createHttpError(403, `Origin ${origin} not allowed by CORS.`));
     },
+    credentials: true,
+    methods: ['GET', 'POST', 'PUT', 'PATCH', 'DELETE', 'OPTIONS'],
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept', 'X-Organization-Slug']
   }));
   
-  app.use(express.json({ limit: '10mb' }));
-  app.use(morgan('dev'));
-  
-  console.log('\x1b[36m%s\x1b[0m', '------------------------------------------------');
-  console.log('\x1b[35m%s\x1b[0m', '  🚀 MESA DE AYUDA PRO - BACKEND MODULAR');
-  console.log('\x1b[36m%s\x1b[0m', '------------------------------------------------');
+  // 3. Body Parser with Anti-DoS Payload Limits
+  app.use(express.json({ limit: '2mb' }));
+  app.use(express.urlencoded({ extended: true, limit: '2mb' }));
+
+  if (process.env.NODE_ENV !== 'production') {
+    app.use(morgan('dev'));
+  }
+
+  // 4. Anti-DoS Rate Limiting (General API: 120 req/min per IP)
+  app.use('/api', rateLimit({ windowMs: 60000, max: 120, message: 'Límite de solicitudes excedido. Intente más tarde.' }));
+
+  // 5. Anti-Brute-Force Rate Limiting for Authentication (10 attempts/min per IP)
+  app.use('/api/auth/login', rateLimit({ windowMs: 60000, max: 10, message: 'Demasiados intentos de inicio de sesión. Por favor espere 1 minuto.' }));
 
   // Health check
-  app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.0.0' }));
+  app.get('/api/health', (req, res) => res.json({ ok: true, version: '2.1.0-secure' }));
 
   // Register routes
   app.use('/api/auth', getAuthRoutes(prisma));
-  
-  // Routes are handled by modular routers below
-
   app.use('/api/tickets', getTicketRoutes(prisma));
   app.use('/api/assets', getAssetRoutes(prisma));
   app.use('/api/users', getUserRoutes(prisma));
@@ -64,13 +85,19 @@ function buildApp(prisma = new PrismaClient()) {
 
   // 404 handler
   app.use((req, res, next) => {
-    next(createHttpError(404, `Route ${req.method} ${req.url} not found.`));
+    next(createHttpError(404, `Recurso ${req.method} ${req.url} no encontrado.`));
   });
 
-  // Global error handler
+  // Global error handler - Safe against information leakage
   app.use((error, req, res, next) => {
-    const statusCode = error.statusCode || 500;
-    const message = error.message || 'Internal Server Error';
+    const statusCode = typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 600
+      ? error.statusCode
+      : 500;
+    
+    // In production, mask internal 500 errors to prevent leaking database structure or stack traces
+    const message = statusCode === 500 && process.env.NODE_ENV === 'production'
+      ? 'Ha ocurrido un error interno en el servidor.'
+      : error.message || 'Error en el servidor.';
     
     if (statusCode === 500) {
       console.error('\x1b[31m[ERROR]\x1b[0m', error);

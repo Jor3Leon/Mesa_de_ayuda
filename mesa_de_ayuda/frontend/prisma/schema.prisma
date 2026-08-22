@@ -1,0 +1,270 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model Organization {
+  id               String           @id @default(uuid())
+  name             String
+  slug             String           @unique
+  plan             String           @default("STARTER")
+  isActive         Boolean          @default(true)
+  createdAt        DateTime         @default(now())
+  updatedAt        DateTime         @updatedAt
+
+  users            User[]
+  roles            Role[]
+  locations        Location[]
+  customers        Customer[]
+  tickets          Ticket[]
+  assets           Asset[]
+  cannedResponses  CannedResponse[]
+  ticketCategories TicketCategory[]
+
+  @@index([slug])
+}
+
+model Customer {
+  id             Int           @id @default(autoincrement())
+  name           String
+  email          String
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  assets         Asset[]
+  tickets        Ticket[]
+
+  @@unique([email, organizationId])
+  @@index([organizationId])
+}
+
+model Location {
+  id             Int           @id @default(autoincrement())
+  name           String
+  description    String?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  tickets        Ticket[]
+  users          User[]
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+}
+
+model Role {
+  id             Int              @id @default(autoincrement())
+  name           String
+  description    String?
+  isActive       Boolean          @default(true)
+  createdAt      DateTime         @default(now())
+  updatedAt      DateTime         @updatedAt
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  permissions    RolePermission[]
+  users          User[]
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+}
+
+model Permission {
+  id          Int              @id @default(autoincrement())
+  code        String           @unique
+  name        String
+  description String?
+  roles       RolePermission[]
+}
+
+model RolePermission {
+  roleId       Int
+  permissionId Int
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+}
+
+model User {
+  id                       Int           @id @default(autoincrement())
+  name                     String
+  username                 String
+  email                    String
+  isActive                 Boolean       @default(true)
+  phone                    String?
+  locationId               Int?
+  roleId                   Int
+  organizationId           String?
+  organization             Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  passwordHash             String
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
+  avatarUrl                String?
+  observedTickets          Ticket[]      @relation("TicketObserver")
+  secondaryAssignedTickets Ticket[]      @relation("TicketSecondaryAssignee")
+  assignedTickets          Ticket[]      @relation("TicketAssignee")
+  tickets                  Ticket[]      @relation("TicketCreator")
+  role                     Role          @relation(fields: [roleId], references: [id])
+  location                 Location?     @relation(fields: [locationId], references: [id])
+
+  @@unique([username, organizationId])
+  @@unique([email, organizationId])
+  @@index([organizationId])
+  @@index([roleId])
+  @@index([locationId])
+}
+
+model Ticket {
+  id                    Int              @id @default(autoincrement())
+  title                 String
+  description           String
+  priority              String
+  status                String
+  ticketType            String?          @default("Incidencia")
+  category              String?
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  organizationId        String?
+  organization          Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId            Int
+  assetId               Int?
+  locationId            Int?
+  createdById           Int?
+  assignedToId          Int?
+  secondaryAssignedToId Int?
+  observerId            Int?
+  assignedAt            DateTime?
+  resolvedAt            DateTime?
+  closedAt              DateTime?
+  sla                   String?
+  responsibleUserIds    String?
+  maintenances          Maintenance[]
+  observer              User?            @relation("TicketObserver", fields: [observerId], references: [id])
+  secondaryAssignedTo   User?            @relation("TicketSecondaryAssignee", fields: [secondaryAssignedToId], references: [id])
+  assignedTo            User?            @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  createdBy             User?            @relation("TicketCreator", fields: [createdById], references: [id])
+  location              Location?        @relation(fields: [locationId], references: [id])
+  asset                 Asset?           @relation(fields: [assetId], references: [id])
+  customer              Customer         @relation(fields: [customerId], references: [id])
+  activities            TicketActivity[]
+
+  @@index([organizationId])
+  @@index([status])
+  @@index([customerId])
+  @@index([assignedToId])
+  @@index([createdById])
+}
+
+model TicketActivity {
+  id        Int      @id @default(autoincrement())
+  ticketId  Int
+  user      String?
+  action    String
+  field     String?
+  oldValue  String?
+  newValue  String?
+  createdAt DateTime @default(now())
+  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
+
+  @@index([ticketId])
+}
+
+model Asset {
+  id             Int           @id @default(autoincrement())
+  hostname       String
+  ipAddress      String
+  osType         String
+  osVersion      String
+  status         String
+  serialNumber   String?
+  brand          String?
+  model          String?
+  deviceType     String?
+  assignedUser   String?
+  location       String?
+  agentVersion   String?
+  lastSeenAt     DateTime?
+  motherboard    String?
+  cpuModel       String?
+  ramSummary     String?
+  storageSummary String?
+  networkSummary String?
+  graphicsInfo   String?
+  displayInfo    String?
+  notes          String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     Int
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  maintenances   Maintenance[]
+  metrics        Metric[]
+  tickets        Ticket[]
+
+  @@unique([hostname, organizationId])
+  @@index([organizationId])
+  @@index([customerId])
+}
+
+model Metric {
+  id        Int      @id @default(autoincrement())
+  cpuUsage  Float
+  ramUsage  Float
+  timestamp DateTime @default(now())
+  assetId   Int
+  asset     Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+}
+
+model Maintenance {
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  type        String
+  description String
+  technician  String
+  assetId     Int
+  ticketId    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ticket      Ticket?  @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
+
+  @@index([assetId])
+  @@index([ticketId])
+}
+
+model CannedResponse {
+  id             Int           @id @default(autoincrement())
+  title          String
+  content        String
+  category       String?       @default("General")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  shortcut       String?
+  ticketType     String?       @default("Incidencia")
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}
+
+model TicketCategory {
+  id             Int           @id @default(autoincrement())
+  group          String        @default("General")
+  name           String
+  ticketType     String
+  sla            String?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@index([organizationId])
+}

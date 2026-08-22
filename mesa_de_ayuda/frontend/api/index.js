@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { buildApp } = require('../../backend/app');
+const { buildApp } = require('./app');
 
 let prisma;
 if (!global.__prisma) {

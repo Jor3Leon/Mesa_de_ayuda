@@ -1,12 +1,31 @@
 const { PrismaClient } = require('@prisma/client');
 const { buildApp } = require('./app');
 
-let prisma;
-if (!global.__prisma) {
-  global.__prisma = new PrismaClient();
+let appInstance = null;
+
+function getApp() {
+  if (!appInstance) {
+    let prisma;
+    if (!global.__prisma) {
+      global.__prisma = new PrismaClient();
+    }
+    prisma = global.__prisma;
+    appInstance = buildApp(prisma);
+  }
+  return appInstance;
 }
-prisma = global.__prisma;
 
-const app = buildApp(prisma);
-
-module.exports = app;
+module.exports = (req, res) => {
+  try {
+    const app = getApp();
+    return app(req, res);
+  } catch (error) {
+    console.error('Vercel Serverless Function Error:', error);
+    if (!res.headersSent) {
+      res.status(500).json({
+        error: 'Internal Server Error',
+        message: error.message,
+      });
+    }
+  }
+};

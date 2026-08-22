@@ -1,5 +1,5 @@
 const { PrismaClient } = require('@prisma/client');
-const { buildApp } = require('./app');
+const { buildApp } = require('../server/app');
 
 let appInstance = null;
 

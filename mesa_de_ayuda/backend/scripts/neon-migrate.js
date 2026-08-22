@@ -364,11 +364,11 @@ async function migrateAndSeed() {
   // 4. Seed Users
   console.log('👤 4/4 Seeding Initial Users...');
   const users = [
-    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@yopal.gov.co', role: 'ADMIN', pass: 'Admin12345!' },
-    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@yopal.gov.co', role: 'NIVEL 1', pass: 'SoporteN1!' },
-    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@yopal.gov.co', role: 'NIVEL 2', pass: 'SoporteN2!' },
-    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@yopal.gov.co', role: 'NIVEL 3', pass: 'SoporteN3!' },
-    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@yopal.gov.co', role: 'USUARIO ESTANDAR', pass: 'User1234!' }
+    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@yopal.gov.co', role: 'ADMIN', pass: 'Leon8424*' },
+    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@yopal.gov.co', role: 'NIVEL 1', pass: 'Leon8424*' },
+    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@yopal.gov.co', role: 'NIVEL 2', pass: 'Leon8424*' },
+    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@yopal.gov.co', role: 'NIVEL 3', pass: 'Leon8424*' },
+    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@yopal.gov.co', role: 'USUARIO ESTANDAR', pass: 'Leon8424*' }
   ];
 
   for (const u of users) {

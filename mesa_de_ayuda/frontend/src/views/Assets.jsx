@@ -1035,6 +1035,47 @@ export default function Assets() {
                   <p className="muted-text">{selectedAsset.notes || 'Sin observaciones tecnicas registradas.'}</p>
                 </div>
 
+                {selectedAsset.installedSoftware && (() => {
+                  try {
+                    const swList = typeof selectedAsset.installedSoftware === 'string' 
+                      ? JSON.parse(selectedAsset.installedSoftware) 
+                      : selectedAsset.installedSoftware;
+                    
+                    if (Array.isArray(swList) && swList.length > 0) {
+                      return (
+                        <details className="feedback" style={{ marginTop: '0.5rem', background: '#f8fafc', borderRadius: '8px', padding: '0.75rem', border: '1px solid #e2e8f0' }}>
+                          <summary style={{ cursor: 'pointer', fontWeight: 600, color: '#1e293b' }}>
+                            💻 Software Instalado ({swList.length} programas)
+                          </summary>
+                          <div style={{ maxHeight: '220px', overflowY: 'auto', marginTop: '0.5rem' }}>
+                            <table style={{ width: '100%', fontSize: '0.8rem', borderCollapse: 'collapse' }}>
+                              <thead>
+                                <tr style={{ borderBottom: '1px solid #cbd5e1', textAlign: 'left' }}>
+                                  <th style={{ padding: '4px 6px' }}>Programa</th>
+                                  <th style={{ padding: '4px 6px' }}>Versión</th>
+                                  <th style={{ padding: '4px 6px' }}>Editor</th>
+                                </tr>
+                              </thead>
+                              <tbody>
+                                {swList.map((sw, idx) => (
+                                  <tr key={idx} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                                    <td style={{ padding: '4px 6px', fontWeight: 500 }}>{sw.name}</td>
+                                    <td style={{ padding: '4px 6px', color: '#64748b' }}>{sw.version || '---'}</td>
+                                    <td style={{ padding: '4px 6px', color: '#64748b' }}>{sw.publisher || '---'}</td>
+                                  </tr>
+                                ))}
+                              </tbody>
+                            </table>
+                          </div>
+                        </details>
+                      );
+                    }
+                  } catch (e) {
+                    return null;
+                  }
+                  return null;
+                })()}
+
                 <div className="feedback" style={{ borderTop: '1px solid #eee', paddingTop: '1rem', marginTop: '0.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                   <strong>Ultima conexion:</strong>
                   <span className="muted-text" style={{ fontSize: '0.9rem', fontWeight: 600 }}>{formatLastSeen(selectedAsset.lastSeenAt)}</span>

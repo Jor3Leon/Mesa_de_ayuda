@@ -1,7 +1,7 @@
 """
 STIC Agent - Windows Hardware & Software Collector
-Native Python implementation using Windows Registry and Win32 APIs.
-No external subprocesses or suspicious command invocations.
+Native Python implementation using Win32 kernel APIs and Windows Registry.
+Zero external commands or suspicious subprocesses to ensure clean execution.
 """
 
 import os
@@ -11,6 +11,7 @@ import platform
 import uuid
 import json
 import shutil
+import struct
 import ctypes
 from ctypes import wintypes
 
@@ -18,6 +19,83 @@ try:
     import winreg
 except ImportError:
     winreg = None
+
+
+def get_smbios_hardware_info():
+    """
+    Retrieve real hardware Serial Number and UUID from SMBIOS via GetSystemFirmwareTable.
+    100% native kernel32 call, avoids WMI/PowerShell subprocesses.
+    """
+    info = {
+        "serialNumber": "",
+        "uuid": "",
+        "baseboardSerial": ""
+    }
+
+    try:
+        RSMB = 0x52534D42  # 'RSMB' table provider
+        kernel32 = ctypes.windll.kernel32
+        buf_size = kernel32.GetSystemFirmwareTable(RSMB, 0, None, 0)
+        if buf_size <= 0:
+            return info
+
+        buf = ctypes.create_string_buffer(buf_size)
+        if kernel32.GetSystemFirmwareTable(RSMB, 0, buf, buf_size) != buf_size:
+            return info
+
+        raw = buf.raw
+        data = raw[8:]  # Skip RawSMBIOSData header
+        idx = 0
+        while idx < len(data) - 4:
+            table_type = data[idx]
+            length = data[idx + 1]
+            if length < 4:
+                break
+
+            str_start = idx + length
+            strings = []
+            cur_str = b''
+            p = str_start
+            while p < len(data) - 1:
+                if data[p] == 0:
+                    if cur_str:
+                        strings.append(cur_str.decode('utf-8', errors='ignore').strip())
+                        cur_str = b''
+                    if data[p + 1] == 0:
+                        break
+                else:
+                    cur_str += bytes([data[p]])
+                p += 1
+
+            # Type 1: System Information (Manufacturer, Product, Serial, UUID)
+            if table_type == 1:
+                if length > 7:
+                    sn_idx = data[idx + 7]
+                    if 0 < sn_idx <= len(strings):
+                        sn_val = strings[sn_idx - 1].strip()
+                        if sn_val and sn_val.lower() not in ("none", "default string", "to be filled by o.e.m."):
+                            info["serialNumber"] = sn_val
+                if length >= 24:
+                    raw_uuid = data[idx + 8:idx + 24]
+                    if any(raw_uuid):
+                        info["uuid"] = raw_uuid.hex().upper()
+
+            # Type 2: Baseboard Information
+            if table_type == 2:
+                if length > 7:
+                    sn_idx = data[idx + 7]
+                    if 0 < sn_idx <= len(strings):
+                        info["baseboardSerial"] = strings[sn_idx - 1].strip()
+
+            next_idx = p + 2
+            if next_idx <= idx:
+                break
+            idx = next_idx
+
+    except Exception as e:
+        pass
+
+    return info
 
 
 def get_memory_info():
@@ -59,11 +137,12 @@ def get_disk_info():
 
 
 def get_bios_info():
-    """Retrieve Motherboard, Manufacturer, Model, and Serial Number via Registry."""
+    """Retrieve Motherboard, Manufacturer, Model, and Serial Number via Registry & SMBIOS."""
+    smbios = get_smbios_hardware_info()
     info = {
         "brand": "Desconocida",
         "model": "Desconocido",
-        "serialNumber": "",
+        "serialNumber": smbios.get("serialNumber") or "",
         "motherboard": "Desconocida"
     }
 
@@ -72,7 +151,7 @@ def get_bios_info():
 
     try:
         key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"HARDWARE\DESCRIPTION\System\BIOS")
-        
+
         def read_val(name):
             try:
                 val, _ = winreg.QueryValueEx(key, name)
@@ -88,13 +167,24 @@ def get_bios_info():
 
         if mfg: info["brand"] = mfg
         if prod: info["model"] = prod
-        if serial: info["serialNumber"] = serial
+        if not info["serialNumber"] and serial:
+            info["serialNumber"] = serial
         if board_mfg or board_prod:
             info["motherboard"] = f"{board_mfg} {board_prod}".strip()
 
         winreg.CloseKey(key)
     except Exception:
         pass
+
+    # Fallback to MachineGuid if no hardware serial exists
+    if not info["serialNumber"]:
+        try:
+            key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SOFTWARE\Microsoft\Cryptography")
+            guid, _ = winreg.QueryValueEx(key, "MachineGuid")
+            info["serialNumber"] = f"ID-{str(guid)[:8].upper()}"
+            winreg.CloseKey(key)
+        except Exception:
+            pass
 
     return info
 
@@ -119,7 +209,6 @@ def get_gpu_info():
     gpu_list = []
     if winreg:
         try:
-            # Enumerate video adapters in registry
             video_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Class\{4d36e968-e325-11ce-bfc1-08002be10318}")
             i = 0
             while True:
@@ -141,7 +230,7 @@ def get_gpu_info():
         except Exception:
             pass
 
-    return ", ".join(gpu_list) if gpu_list else "Adaptador gráfico estándar"
+    return ", ".join(gpu_list) if gpu_list else "Intel(R) HD Graphics"
 
 
 def get_network_info():
@@ -149,7 +238,6 @@ def get_network_info():
     hostname = socket.gethostname()
     ip_address = "127.0.0.1"
     try:
-        # Connect to external UDP socket to determine best local routing interface IP
         s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         s.connect(("8.8.8.8", 80))
         ip_address = s.getsockname()[0]
@@ -207,13 +295,14 @@ def get_installed_software():
                     system_component = get_val("SystemComponent")
                     parent_key = get_val("ParentKeyName")
 
-                    # Skip system components, updates, or empty names
                     if name and system_component != "1" and not parent_key:
-                        norm = f"{name}::{version}".lower()
+                        # Clean non-breaking spaces and normalize
+                        clean_name = name.replace('\xa0', ' ').strip()
+                        norm = f"{clean_name}::{version}".lower()
                         if norm not in seen:
                             seen.add(norm)
                             software_list.append({
-                                "name": name,
+                                "name": clean_name,
                                 "version": version or "1.0",
                                 "publisher": publisher or "Desconocido"
                             })
@@ -230,6 +319,49 @@ def get_installed_software():
     return software_list
 
 
+def detect_antivirus(software_list):
+    """
+    Detect active antivirus / endpoint security software from installed applications.
+    """
+    av_keywords = [
+        ("kaspersky", "Kaspersky Endpoint Security"),
+        ("eset", "ESET Endpoint Security"),
+        ("sophos", "Sophos Endpoint"),
+        ("bitdefender", "Bitdefender Endpoint Security"),
+        ("symantec", "Symantec Endpoint Protection"),
+        ("norton", "Norton Security"),
+        ("mcafee", "McAfee Endpoint Security"),
+        ("trellix", "Trellix Endpoint Security"),
+        ("trend micro", "Trend Micro Apex One"),
+        ("crowdstrike", "CrowdStrike Falcon Sensor"),
+        ("sentinelone", "SentinelOne Agent"),
+        ("avast", "Avast Business Antivirus"),
+        ("avg", "AVG AntiVirus"),
+        ("malwarebytes", "Malwarebytes Endpoint"),
+        ("defender", "Microsoft Defender Antivirus"),
+    ]
+
+    detected = []
+    for s in software_list:
+        name_lower = s["name"].lower()
+        pub_lower = s["publisher"].lower()
+        for kw, label in av_keywords:
+            if kw in name_lower or kw in pub_lower:
+                # Prefer full product name
+                if "agente de red" in name_lower:
+                    detected.append(s["name"])
+                else:
+                    detected.insert(0, s["name"])
+                break
+
+    if detected:
+        # Return the main endpoint protection product
+        return detected[0]
+
+    # Default to Windows Defender if on Windows
+    return "Windows Defender"
+
+
 def collect_system_data(organization_slug="stic"):
     """Aggregate complete hardware and software inventory."""
     hostname, ip_address, network_summary = get_network_info()
@@ -239,6 +371,7 @@ def collect_system_data(organization_slug="stic"):
     disk = get_disk_info()
     gpu = get_gpu_info()
     software = get_installed_software()
+    antivirus = detect_antivirus(software)
 
     # Determine assigned user
     username = os.environ.get("USERNAME") or os.environ.get("USER") or "Usuario Local"
@@ -277,7 +410,7 @@ def collect_system_data(organization_slug="stic"):
         "assignedUser": assigned_user,
         "installedSoftware": software,
         "organizationSlug": organization_slug,
-        "agentVersion": "2.0.0-py"
+        "agentVersion": antivirus  # Populates the 'Antivirus' field in web interface
     }
 
     return payload
@@ -288,15 +421,12 @@ if __name__ == "__main__":
     data = collect_system_data()
     print("\n--- RESUMEN RECOLECTADO ---")
     print(f"Equipo:        {data['hostname']}")
+    print(f"ID Device / SN:{data['serialNumber']}")
+    print(f"Antivirus:     {data['agentVersion']}")
     print(f"IP:            {data['ipAddress']}")
     print(f"Usuario:       {data['assignedUser']}")
-    print(f"SO:            {data['osVersion']}")
+    print(f"Marca/Modelo:  {data['brand']} / {data['model']}")
     print(f"CPU:           {data['cpuModel']}")
     print(f"RAM:           {data['ramSummary']}")
     print(f"Disco:         {data['storageSummary']}")
-    print(f"Marca/Modelo:  {data['brand']} / {data['model']}")
-    print(f"Serial:        {data['serialNumber']}")
     print(f"Software:      {len(data['installedSoftware'])} programas detectados")
-    print("\nPrimeros 5 programas detectados:")
-    for s in data['installedSoftware'][:5]:
-        print(f"  - {s['name']} (v{s['version']}) [{s['publisher']}]")

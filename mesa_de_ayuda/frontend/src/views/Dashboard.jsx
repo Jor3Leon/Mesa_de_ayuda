@@ -154,6 +154,10 @@ export default function Dashboard({ user }) {
   const isTechnician = isAdmin || user?.role?.toUpperCase() === 'TECNICO' || user?.role?.toUpperCase() === 'TECHNICIAN' || user?.role?.toUpperCase() === 'LEVEL_1' || user?.role?.toUpperCase() === 'LEVEL_2' || user?.role?.toUpperCase() === 'LEVEL_3';
   const isStandardUser = user?.role === 'USUARIO ESTANDAR';
 
+  const roleUpper = (user?.role || '').trim().toUpperCase();
+  const isLevel1Or2 = roleUpper === 'LEVEL_1' || roleUpper === 'NIVEL 1' || roleUpper === 'LEVEL_2' || roleUpper === 'NIVEL 2' || roleUpper === 'USUARIO ESTANDAR';
+  const showInfrastructureAndActions = !isLevel1Or2;
+
   useEffect(() => {
     let ignore = false;
 
@@ -357,37 +361,41 @@ export default function Dashboard({ user }) {
           />
         </BentoCard>
 
-        {/* Row 4: Infrastructure & Quick Actions */}
-        <BentoCard title="Salud de Infraestructura" icon="shield" className="bento-span-2">
-          <InfraHealthWidget 
-            data={{ global, personal }} 
-            recentAssets={recentAssets || []} 
-            navigate={navigate} 
-          />
-        </BentoCard>
+        {/* Row 4: Infrastructure & Quick Actions (Oculto para Nivel 1 y Nivel 2) */}
+        {showInfrastructureAndActions && (
+          <>
+            <BentoCard title="Salud de Infraestructura" icon="shield" className="bento-span-2">
+              <InfraHealthWidget 
+                data={{ global, personal }} 
+                recentAssets={recentAssets || []} 
+                navigate={navigate} 
+              />
+            </BentoCard>
 
-        <BentoCard title="Acciones Rápidas" icon="plus" className="bento-span-2">
-          <div className="quick-actions-container">
-            <Link to="/tickets" className="quick-action-btn hover-lift">
-              <Icon name="plus" size={24} style={{ color: 'var(--color-primary)' }} />
-              <span>Nuevo Ticket</span>
-            </Link>
-            {isAdmin && (
-              <Link to="/assets" className="quick-action-btn hover-lift">
-                <Icon name="assets" size={24} style={{ color: 'var(--color-secondary)' }} />
-                <span>Registrar Activo</span>
-              </Link>
-            )}
-            <Link to="/analytics" className="quick-action-btn hover-lift">
-              <Icon name="chart" size={24} style={{ color: '#2e5aac' }} />
-              <span>Reportes</span>
-            </Link>
-            <Link to="/users" className="quick-action-btn hover-lift">
-              <Icon name="user" size={24} style={{ color: '#8b5cf6' }} />
-              <span>Usuarios</span>
-            </Link>
-          </div>
-        </BentoCard>
+            <BentoCard title="Acciones Rápidas" icon="plus" className="bento-span-2">
+              <div className="quick-actions-container">
+                <Link to="/tickets" className="quick-action-btn hover-lift">
+                  <Icon name="plus" size={24} style={{ color: 'var(--color-primary)' }} />
+                  <span>Nuevo Ticket</span>
+                </Link>
+                {isAdmin && (
+                  <Link to="/assets" className="quick-action-btn hover-lift">
+                    <Icon name="assets" size={24} style={{ color: 'var(--color-secondary)' }} />
+                    <span>Registrar Activo</span>
+                  </Link>
+                )}
+                <Link to="/analytics" className="quick-action-btn hover-lift">
+                  <Icon name="chart" size={24} style={{ color: '#2e5aac' }} />
+                  <span>Reportes</span>
+                </Link>
+                <Link to="/users" className="quick-action-btn hover-lift">
+                  <Icon name="user" size={24} style={{ color: '#8b5cf6' }} />
+                  <span>Usuarios</span>
+                </Link>
+              </div>
+            </BentoCard>
+          </>
+        )}
       </div>
     </div>
   );

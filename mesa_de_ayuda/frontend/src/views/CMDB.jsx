@@ -205,7 +205,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
           </p>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '1rem', marginTop: '1.2rem' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginTop: '1.2rem' }}>
           <div className="card-premium" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
             <div style={{ fontSize: '2rem' }}>🖥️</div>
             <div>
@@ -239,7 +239,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
       {error && <div className="feedback error" style={{ margin: '1rem 0' }}>{error}</div>}
 
-      <div style={{ display: 'grid', gridTemplateColumns: selectedAsset ? '1fr 430px' : '1fr', gap: '1.5rem', marginTop: '2rem', transition: 'all 0.3s' }}>
+      <div className={`cmdb-content-grid ${selectedAsset ? 'has-selected' : ''}`}>
         
         {/* Tabla de Activos */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>

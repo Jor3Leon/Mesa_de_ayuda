@@ -1,5 +1,5 @@
 """
-STIC Agent - Modern Python GUI Installer (Tkinter)
+STIC Agent - Modern Windows GUI Installer (Tkinter)
 Native Windows UI, zero external dependencies, 100% clean and antivirus-friendly.
 """
 
@@ -20,7 +20,7 @@ I18N = {
         "header_sub": "Asistente de Configuracion e Instalacion de Inventario",
         "lang_label": "Idioma / Language:",
         "server_label": "URL del Servidor Mesa de Ayuda:",
-        "server_hint": "Ejemplo: https://mesa-de-ayuda.vercel.app o http://192.168.1.50:5000",
+        "server_hint": "Ejemplo: https://mesa-de-ayuda-rho.vercel.app",
         "org_label": "Organizacion (Slug):",
         "org_hint": "Identificador de la entidad asignada (ejemplo: stic)",
         "interval_label": "Frecuencia de Sincronizacion (minutos):",
@@ -36,7 +36,7 @@ I18N = {
         "test_ok": "Conexion exitosa con el servidor.",
         "test_fail": "No se pudo contactar el servidor: ",
         "validation_err": "Por favor complete la URL del servidor y el slug de la organizacion.",
-        "footer": "v2.0.0 (Python Nativo) - Mesa de Ayuda STIC"
+        "footer": "v2.0.0 (Windows Native) - Alcaldia de Yopal / STIC"
     },
     "EN": {
         "title": "STIC Agent Setup - Help Desk",
@@ -44,7 +44,7 @@ I18N = {
         "header_sub": "Inventory Configuration and Installation Wizard",
         "lang_label": "Language / Idioma:",
         "server_label": "Help Desk Server URL:",
-        "server_hint": "Example: https://mesa-de-ayuda.vercel.app or http://192.168.1.50:5000",
+        "server_hint": "Example: https://mesa-de-ayuda-rho.vercel.app",
         "org_label": "Organization Slug:",
         "org_hint": "Identifier assigned to your organization (example: stic)",
         "interval_label": "Sync Frequency (minutes):",
@@ -60,7 +60,7 @@ I18N = {
         "test_ok": "Successfully connected to server.",
         "test_fail": "Could not connect to server: ",
         "validation_err": "Please enter both the server URL and organization slug.",
-        "footer": "v2.0.0 (Native Python) - STIC Help Desk"
+        "footer": "v2.0.0 (Windows Native) - STIC Help Desk"
     }
 }
 

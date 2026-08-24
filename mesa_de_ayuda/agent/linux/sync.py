@@ -1,6 +1,7 @@
 """
-STIC Agent - Synchronization Module
+STIC Agent - Synchronization Module (Linux)
 Handles HTTP/HTTPS communication with the Helpdesk backend.
+100% Native Python 3 Standard Library (urllib), zero external dependencies.
 """
 
 import json
@@ -9,7 +10,8 @@ import urllib.error
 import ssl
 import sys
 
-def sync_to_server(payload, server_url="https://mesa-de-ayuda.vercel.app", api_key="", proxy="", verify_tls=True):
+
+def sync_to_server(payload, server_url="https://mesa-de-ayuda-rho.vercel.app", api_key="", proxy="", verify_tls=True):
     """
     Send system inventory payload to Helpdesk backend API.
     Returns (success: bool, message: str, asset_id: int/None)
@@ -25,14 +27,14 @@ def sync_to_server(payload, server_url="https://mesa-de-ayuda.vercel.app", api_k
 
     headers = {
         "Content-Type": "application/json; charset=utf-8",
-        "User-Agent": "STIC-Agent/2.0.0 (Windows; Python)",
+        "User-Agent": "STIC-Agent/2.0.0 (Linux; Python 3)",
         "X-Organization-Slug": payload.get("organizationSlug", "stic")
     }
 
     if api_key:
         headers["X-Agent-Key"] = api_key
 
-    data_bytes = json.dumps(payload).encode("utf-8")
+    data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
     # SSL Context
     ssl_context = None
@@ -73,11 +75,3 @@ def sync_to_server(payload, server_url="https://mesa-de-ayuda.vercel.app", api_k
         return False, f"No se pudo conectar con el servidor: {e.reason}", None
     except Exception as e:
         return False, f"Error inesperado: {str(e)}", None
-
-
-if __name__ == "__main__":
-    from collector import collect_system_data
-    print("Probando sincronizacion...")
-    payload = collect_system_data("stic")
-    success, msg, aid = sync_to_server(payload, "https://mesa-de-ayuda.vercel.app")
-    print(f"Resultado: {msg}")

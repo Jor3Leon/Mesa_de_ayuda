@@ -1,6 +1,7 @@
 """
-STIC Agent - Main CLI & Service Runner (Python Version)
+STIC Agent - Main CLI & Service Runner (Windows)
 Native, clean, non-malicious Windows inventory synchronization agent.
+Supports both direct Python script execution and standalone PyInstaller .EXE binary.
 """
 
 import os
@@ -24,6 +25,7 @@ from sync import sync_to_server
 INSTALL_DIR = r"C:\ProgramData\STIC-Agent"
 CONFIG_FILE = os.path.join(INSTALL_DIR, "config.json")
 LOG_FILE = os.path.join(INSTALL_DIR, "agent.log")
+INSTALLED_EXE = os.path.join(INSTALL_DIR, "stic-agent.exe")
 
 DEFAULT_CONFIG = {
     "serverUrl": "https://mesa-de-ayuda-rho.vercel.app",
@@ -33,6 +35,11 @@ DEFAULT_CONFIG = {
     "proxy": "",
     "logLevel": "INFO"
 }
+
+
+def is_frozen():
+    """Check if running inside PyInstaller packaged executable."""
+    return getattr(sys, 'frozen', False) and hasattr(sys, '_MEIPASS')
 
 
 def setup_logger(log_to_file=True):
@@ -132,9 +139,12 @@ def register_control_panel():
         key_path = r"Software\Microsoft\Windows\CurrentVersion\Uninstall\STIC-Agent"
         key = winreg.CreateKey(winreg.HKEY_CURRENT_USER, key_path)
 
-        python_exe = sys.executable
-        agent_script = os.path.join(INSTALL_DIR, "agent.py")
-        uninstall_cmd = f'"{python_exe}" "{agent_script}" --uninstall'
+        if is_frozen() or os.path.exists(INSTALLED_EXE):
+            uninstall_cmd = f'"{INSTALLED_EXE}" --uninstall'
+        else:
+            python_exe = sys.executable
+            agent_script = os.path.join(INSTALL_DIR, "agent.py")
+            uninstall_cmd = f'"{python_exe}" "{agent_script}" --uninstall'
 
         today = datetime.now().strftime("%Y%m%d")
 
@@ -166,19 +176,21 @@ def unregister_control_panel():
 
 
 def register_windows_startup():
-    """Register background daemon in Windows Startup (HKCU Run). Clean & non-suspicious."""
+    """Register background daemon in Windows Startup (HKCU Run)."""
     if not winreg:
         return False
     try:
         key = winreg.OpenKey(winreg.HKEY_CURRENT_USER, r"Software\Microsoft\Windows\CurrentVersion\Run", 0, winreg.KEY_SET_VALUE)
         
-        # Use pythonw.exe to run completely hidden without console window
-        pythonw_exe = sys.executable.lower().replace("python.exe", "pythonw.exe")
-        if not os.path.exists(pythonw_exe):
-            pythonw_exe = sys.executable
+        if is_frozen() or os.path.exists(INSTALLED_EXE):
+            startup_cmd = f'"{INSTALLED_EXE}" --daemon'
+        else:
+            pythonw_exe = sys.executable.lower().replace("python.exe", "pythonw.exe")
+            if not os.path.exists(pythonw_exe):
+                pythonw_exe = sys.executable
 
-        agent_script = os.path.join(INSTALL_DIR, "agent.py")
-        startup_cmd = f'"{pythonw_exe}" "{agent_script}" --daemon'
+            agent_script = os.path.join(INSTALL_DIR, "agent.py")
+            startup_cmd = f'"{pythonw_exe}" "{agent_script}" --daemon'
 
         winreg.SetValueEx(key, "STIC-Agent", 0, winreg.REG_SZ, startup_cmd)
         winreg.CloseKey(key)
@@ -203,22 +215,31 @@ def unregister_windows_startup():
 def install(server_url=None, org_slug=None, interval=None, api_key=None, proxy=None):
     """Full installation procedure."""
     print("=" * 60)
-    print("   INSTALADOR STIC AGENT - MESA DE AYUDA (PYTHON NATIVE)")
+    print("   INSTALADOR STIC AGENT - MESA DE AYUDA (WINDOWS)")
     print("=" * 60)
 
     # 1. Create target directory
     os.makedirs(INSTALL_DIR, exist_ok=True)
     print(f"[1/5] Directorio de instalacion: {INSTALL_DIR}")
 
-    # 2. Copy agent files
-    current_dir = os.path.dirname(os.path.abspath(__file__))
-    files_to_copy = ["agent.py", "collector.py", "sync.py"]
-    for f in files_to_copy:
-        src = os.path.join(current_dir, f)
-        dst = os.path.join(INSTALL_DIR, f)
-        if os.path.exists(src):
-            shutil.copy2(src, dst)
-    print("[2/5] Archivos copiados correctamente.")
+    # 2. Copy binary or python files
+    if is_frozen():
+        try:
+            current_exe = sys.executable
+            if os.path.abspath(current_exe).lower() != os.path.abspath(INSTALLED_EXE).lower():
+                shutil.copy2(current_exe, INSTALLED_EXE)
+            print(f"[2/5] Binario ejecutable copiado: {INSTALLED_EXE}")
+        except Exception as e:
+            print(f"[2/5] Nota al copiar binario: {e}")
+    else:
+        current_dir = os.path.dirname(os.path.abspath(__file__))
+        files_to_copy = ["agent.py", "collector.py", "sync.py"]
+        for f in files_to_copy:
+            src = os.path.join(current_dir, f)
+            dst = os.path.join(INSTALL_DIR, f)
+            if os.path.exists(src):
+                shutil.copy2(src, dst)
+        print("[2/5] Archivos de script copiados correctamente.")
 
     # 3. Save configuration
     config = load_config()
@@ -282,10 +303,10 @@ def show_status():
 
 def main():
     parser = argparse.ArgumentParser(description="STIC Agent - Mesa de Ayuda")
-    parser.add_argument("command", nargs="?", default="sync", choices=["sync", "install", "uninstall", "status", "daemon"], help="Comando a ejecutar")
+    parser.add_argument("command", nargs="?", default="gui", choices=["gui", "sync", "install", "uninstall", "status", "daemon"], help="Comando a ejecutar")
     parser.add_argument("--install", action="store_true", help="Instalar agente")
     parser.add_argument("--uninstall", action="store_true", help="Desinstalar agente")
-    parser.add_argument("--daemon", action="store_true", help="Ejecutar en modo servicio")
+    parser.add_argument("--daemon", action="store_true", help="Ejecutar en modo servicio silencioso")
     parser.add_argument("--server", type=str, help="URL del servidor")
     parser.add_argument("--org", type=str, help="Slug de la organizacion")
     parser.add_argument("--interval", type=int, help="Intervalo en minutos")
@@ -297,14 +318,22 @@ def main():
 
     if args.uninstall or args.command == "uninstall":
         uninstall()
-    elif args.install or args.command == "install":
-        install(server_url=args.server, org_slug=args.org, interval=args.interval, api_key=args.api_key, proxy=args.proxy)
     elif args.daemon or args.command == "daemon":
         run_daemon()
+    elif args.install or args.command == "install":
+        install(server_url=args.server, org_slug=args.org, interval=args.interval, api_key=args.api_key, proxy=args.proxy)
     elif args.command == "status":
         show_status()
-    else:
+    elif args.command == "sync":
         perform_sync(server_url=args.server, org_slug=args.org, api_key=args.api_key, proxy=args.proxy)
+    else:
+        # Default: Launch GUI installer
+        try:
+            from installer_gui import main as gui_main
+            gui_main()
+        except Exception as e:
+            print(f"Iniciando en modo CLI (no se pudo abrir interfaz grafica: {e})")
+            install(server_url=args.server, org_slug=args.org, interval=args.interval, api_key=args.api_key, proxy=args.proxy)
 
 
 if __name__ == "__main__":

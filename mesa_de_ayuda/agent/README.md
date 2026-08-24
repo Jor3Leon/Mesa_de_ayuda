@@ -1,60 +1,84 @@
-# 🖥️ STIC Agent v2.0 (Python Nativo) - Mesa de Ayuda
+# 🖥️ STIC Agent Multiplataforma - Mesa de Ayuda
 
-Cliente ligero y nativo para la recolección automática del inventario de Hardware y Software de equipos Windows y su sincronización con la plataforma **Mesa de Ayuda**.
-
----
-
-## ✨ Características Principales
-
-- **100% Nativo en Python 3:** Sin dependencias externas ni compiladores que generen falsos positivos en antivirus corporativos (Kaspersky, Windows Defender).
-- **Lectura Directa de Hardware y Software:**
-  - Procesador (CPU), Memoria RAM y Almacenamiento (Disco C:).
-  - Placa Base, Fabricante, Modelo y Número de Serie.
-  - Dirección IP, Dirección MAC y Nombre de Equipo.
-  - Usuario de sesión activo y dominio.
-  - Listado completo de Software instalado obtenido directamente del Registro de Windows.
-- **Registro Oficial en Windows:** Aparece en **Panel de control → Programas y características** como aplicación instalada.
-- **Inicio Automático Silencioso:** Se ejecuta en segundo plano como servicio de usuario (`pythonw.exe`).
-- **Instalador Gráfico Multilenguaje:** Asistente visual con soporte para **Español** e **Inglés** y botón para probar la conexión con el servidor.
+Agente nativo de descubrimiento automático de Hardware y Software para la plataforma **Mesa de Ayuda**, organizado y optimizado para cada sistema operativo empresarial: **Windows**, **Linux** y **macOS**.
 
 ---
 
-## 🚀 Instalación Rápida
+## 📁 Estructura del Proyecto
 
-### Opción 1: Asistente Visual (Recomendado)
-1. Haz doble clic en **`Instalar-Agente.pyw`** (o en `Instalar-Agente.bat`).
-2. Ingresa la **URL del Servidor** (ej. `https://tu-mesa-de-ayuda.vercel.app`).
-3. Ingresa el **Slug de Organización** (ej. `stic`).
-4. Haz clic en **Probar Conexión** para verificar que el servidor responda.
-5. Haz clic en **Instalar e Iniciar Servicio**.
-
-### Opción 2: Instalación por Línea de Comandos / Desatendida (GPO)
-```powershell
-python agent.py install --server https://tu-mesa.vercel.app --org stic --interval 30 --silent
+```text
+agent/
+├── 🪟 windows/
+│   ├── STIC-Agent-Installer.exe   # Ejecutable autónomo independiente (NO requiere Python)
+│   ├── Instalar-Agente.bat        # Lanzador rápido
+│   ├── Desinstalar-Agente.bat     # Desinstalador rápido
+│   ├── build.bat                  # Compilador a .exe de 1 clic (PyInstaller)
+│   ├── agent.py                   # Motor principal de Windows (CLI / Servicio)
+│   ├── collector.py               # Recolector hardware/software (Win32/Registry)
+│   ├── installer_gui.py           # Asistente visual con interfaz gráfica (Tkinter)
+│   ├── sync.py                    # Cliente HTTP/HTTPS de sincronización
+│   └── README.md                  # Guía detallada para Windows
+│
+├── 🐧 linux/
+│   ├── install.sh                 # Script instalador automatizado (con sudo)
+│   ├── uninstall.sh               # Script de desinstalación limpia
+│   ├── stic-agent.service         # Archivo de servicio para Systemd
+│   ├── agent_linux.py             # Motor principal y demonio de Linux
+│   ├── collector_linux.py         # Recolector hardware/software (/sys, /proc, dpkg, rpm, etc.)
+│   ├── sync.py                    # Cliente HTTP/HTTPS de sincronización
+│   └── README.md                  # Guía detallada para distribuciones Linux
+│
+├── 🍎 macos/
+│   ├── install.sh                 # Script instalador automatizado (con sudo)
+│   ├── uninstall.sh               # Script de desinstalación limpia
+│   ├── gov.yopal.stic-agent.plist # Definición de daemon para Launchd de macOS
+│   ├── agent_macos.py             # Motor principal y demonio de macOS
+│   ├── collector_macos.py         # Recolector hardware/software (system_profiler / sysctl)
+│   ├── sync.py                    # Cliente HTTP/HTTPS de sincronización
+│   └── README.md                  # Guía detallada para macOS (Apple Silicon e Intel)
+│
+└── 📖 README.md                   # Este índice general
 ```
 
 ---
 
-## 🗑️ Desinstalación
+## 🚀 Despliegue Rápido por Sistema Operativo
 
-- **Desde Panel de Control:** Ve a *Programas y características* → Selecciona *STIC Agent - Mesa de Ayuda* → Desinstalar.
-- **Desde la carpeta:** Haz doble clic en **`Desinstalar-Agente.bat`** o ejecuta:
-  ```powershell
-  python agent.py uninstall
+### 1. 🪟 Windows (Windows 10, 11 y Windows Server)
+* **Instalación Manual:**
+  1. Copia la carpeta `windows/` (o solo el archivo `STIC-Agent-Installer.exe`) al equipo.
+  2. Haz doble clic en **`STIC-Agent-Installer.exe`**.
+  3. Ingresa la URL del servidor y presiona **Instalar e Iniciar Servicio**.
+* **Instalación Desatendida (GPO / Active Directory):**
+  ```cmd
+  STIC-Agent-Installer.exe --install --server https://tu-mesa-de-ayuda.vercel.app --org stic --interval 30 --silent
   ```
 
 ---
 
-## 📂 Estructura de Archivos
+### 2. 🐧 Linux (Ubuntu, Debian, RHEL, CentOS, Rocky Linux, Fedora, Arch)
+* **Instalación:**
+  1. Copia la carpeta `linux/` al equipo.
+  2. Ejecuta en terminal:
+     ```bash
+     sudo bash install.sh
+     ```
+  3. El script configurará automáticamente el servicio `systemd` (`stic-agent.service`) y sincronizará en segundo plano.
 
-```
-agent/
-├── agent.py               # Motor principal (sync, daemon, install, uninstall)
-├── collector.py           # Recolector nativo de Hardware y Software (Registry/Win32)
-├── sync.py                # Cliente HTTP/HTTPS para envío a la API
-├── installer_gui.py       # Asistente visual Tkinter multilenguaje
-├── Instalar-Agente.pyw    # Lanzador gráfico sin consola
-├── Instalar-Agente.bat    # Lanzador por lotes
-├── Desinstalar-Agente.bat # Desinstalador por lotes
-└── README.md              # Documentación de uso
-```
+---
+
+### 3. 🍎 macOS (Apple Silicon M1/M2/M3/M4 e Intel)
+* **Instalación:**
+  1. Copia la carpeta `macos/` al Mac.
+  2. Abre la Terminal y ejecuta:
+     ```bash
+     sudo bash install.sh
+     ```
+  3. El script configurará el LaunchDaemon (`/Library/LaunchDaemons/gov.yopal.stic-agent.plist`) para ejecutarse automáticamente al iniciar el Mac.
+
+---
+
+## 🔒 Privacidad y Seguridad
+- **Zero Antivirus Flags:** No utiliza binarios ofuscados ni scripts sospechosos.
+- **Sincronización Segura:** Comunicación mediante HTTPS nativo hacia la API de Mesa de Ayuda (`/api/assets/sync`).
+- **Autonomía:** Cada sistema operativo ejecuta su propio servicio en segundo plano de manera ligera y transparente para el usuario final.

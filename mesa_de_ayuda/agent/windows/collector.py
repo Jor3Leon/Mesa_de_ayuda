@@ -92,7 +92,7 @@ def get_smbios_hardware_info():
                 break
             idx = next_idx
 
-    except Exception as e:
+    except Exception:
         pass
 
     return info
@@ -296,7 +296,6 @@ def get_installed_software():
                     parent_key = get_val("ParentKeyName")
 
                     if name and system_component != "1" and not parent_key:
-                        # Clean non-breaking spaces and normalize
                         clean_name = name.replace('\xa0', ' ').strip()
                         norm = f"{clean_name}::{version}".lower()
                         if norm not in seen:
@@ -347,7 +346,6 @@ def detect_antivirus(software_list):
         pub_lower = s["publisher"].lower()
         for kw, label in av_keywords:
             if kw in name_lower or kw in pub_lower:
-                # Prefer full product name
                 if "agente de red" in name_lower:
                     detected.append(s["name"])
                 else:
@@ -355,10 +353,8 @@ def detect_antivirus(software_list):
                 break
 
     if detected:
-        # Return the main endpoint protection product
         return detected[0]
 
-    # Default to Windows Defender if on Windows
     return "Windows Defender"
 
 
@@ -373,7 +369,6 @@ def collect_system_data(organization_slug="stic"):
     software = get_installed_software()
     antivirus = detect_antivirus(software)
 
-    # Determine assigned user
     username = os.environ.get("USERNAME") or os.environ.get("USER") or "Usuario Local"
     user_domain = os.environ.get("USERDOMAIN")
     if user_domain and user_domain.lower() != hostname.lower():
@@ -410,7 +405,7 @@ def collect_system_data(organization_slug="stic"):
         "assignedUser": assigned_user,
         "installedSoftware": software,
         "organizationSlug": organization_slug,
-        "agentVersion": antivirus  # Populates the 'Antivirus' field in web interface
+        "agentVersion": antivirus
     }
 
     return payload

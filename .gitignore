@@ -8,10 +8,19 @@ node_modules/
 !.env.example
 *.env
 
-# Build outputs
+# Build outputs & Python
 dist/
 build/
 */dist/
+*/build/
+.venv/
+*/.venv/
+venv/
+*/venv/
+__pycache__/
+*/__pycache__/
+*.pyc
+*.spec
 
 # SQLite & Databases
 *.db
@@ -37,3 +46,4 @@ scratch/
 .idea/
 .DS_Store
 Thumbs.db
+

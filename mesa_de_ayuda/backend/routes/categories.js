@@ -1,6 +1,7 @@
 const express = require('express');
 const { requireAuth, requirePermission } = require('../lib/middleware');
 const { createHttpError } = require('../lib/utils');
+const { DEFAULT_CATEGORIES, ensureDefaultCategories } = require('../lib/categories-data');
 
 module.exports = function getCategoryRoutes(prisma) {
   const router = express.Router();
@@ -25,7 +26,7 @@ module.exports = function getCategoryRoutes(prisma) {
         where.isActive = isActive === 'true';
       }
 
-      const categories = await prisma.ticketCategory.findMany({
+      let categories = await prisma.ticketCategory.findMany({
         where,
         orderBy: [
           { ticketType: 'asc' },
@@ -33,6 +34,19 @@ module.exports = function getCategoryRoutes(prisma) {
           { name: 'asc' }
         ]
       });
+
+      // Si hay menos de 10 categorías registradas, sembrar automáticamente las 35 categorías por defecto
+      if (categories.length < 10) {
+        await ensureDefaultCategories(prisma, req.auth.organizationId);
+        categories = await prisma.ticketCategory.findMany({
+          where,
+          orderBy: [
+            { ticketType: 'asc' },
+            { group: 'asc' },
+            { name: 'asc' }
+          ]
+        });
+      }
 
       res.json(categories);
     } catch (error) {

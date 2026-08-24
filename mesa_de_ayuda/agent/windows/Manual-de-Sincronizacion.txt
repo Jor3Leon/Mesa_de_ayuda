@@ -1,0 +1,83 @@
+================================================================================
+          MANUAL DE SINCRONIZACION Y DIAGNOSTICO - STIC AGENT (WINDOWS)
+                             Mesa de Ayuda TI
+================================================================================
+
+Esta guia rapida describe los pasos para verificar, diagnosticar y resolver 
+problemas cuando un equipo Windows no aparece reflejado en la plataforma web 
+de Mesa de Ayuda.
+
+--------------------------------------------------------------------------------
+1. VERIFICACION RAPIDA DESDE EL ASISTENTE (RECOMENDADO)
+--------------------------------------------------------------------------------
+1. Ejecuta el archivo: STIC-Agent-Installer.exe
+2. Confirma los siguientes datos:
+   - URL del Servidor: https://mesa-de-ayuda-rho.vercel.app
+   - Organizacion (Slug): stic
+3. Haz clic en el boton "Probar Conexion":
+   * Si responde "Conexion exitosa (ID de Activo: X)": El equipo ya esta 
+     registrado correctamente. Recarga la pagina web con F5.
+   * Si responde con un mensaje de Error: Revisa los pasos a continuacion.
+
+
+--------------------------------------------------------------------------------
+2. CAUSAS COMUNES Y COMO RESOLVERLAS
+--------------------------------------------------------------------------------
+
+[A] ERROR DE SLUG / ORGANIZACION NO COINCIDE
+- Causa: Si en el instalador se escribe un nombre de organizacion diferente 
+  (ejemplo: "STIC", "alcaldia", "ayuda"), el sistema asignara el equipo a otra 
+  entidad o no se vinculara a tu cuenta de usuario.
+- Solucion: Utiliza siempre el slug oficial en minusculas: "stic".
+
+[B] ERROR EN LA URL DEL SERVIDOR
+- Causa: Falta el protocolo "https://" o hay un error tipografico en el dominio.
+- Solucion: Verifica que la URL sea exactamente:
+  https://mesa-de-ayuda-rho.vercel.app (sin barras ni espacios al final).
+
+[C] BLOQUEO DE RED, PROXY O FIREWALL
+- Causa: La red corporativa del equipo restringe conexiones salientes HTTPS 
+  hacia internet.
+- Solucion: Abre el navegador en ese equipo y valida que puedas abrir la URL 
+  de la Mesa de Ayuda. Si tu red usa proxy, ingresalo en la configuracion.
+
+[D] EL SERVICIO NO HA REALIZADO SU PRIMER CICLO
+- Causa: El agente por defecto se sincroniza cada 30 minutos.
+- Solucion: Fuerza la sincronizacion inmediata usando la linea de comandos 
+  (ver seccion 3).
+
+
+--------------------------------------------------------------------------------
+3. COMANDOS DE DIAGNOSTICO EN SIMBOLO DEL SISTEMA (CMD / POWERSHELL)
+--------------------------------------------------------------------------------
+
+Abre CMD o PowerShell como Administrador en el equipo cliente y ejecuta:
+
+1. FORZAR SINCRONIZACION INMEDIATA:
+   "C:\ProgramData\STIC-Agent\stic-agent.exe" sync
+
+   * Si todo esta bien, veras en pantalla:
+     [INFO] Iniciando recoleccion de inventario...
+     [INFO] Enviando datos al servidor...
+     [INFO] OK: Sincronizacion exitosa (ID de activo: X)
+
+2. VER ESTADO ACTUAL DE LA CONFIGURACION:
+   "C:\ProgramData\STIC-Agent\stic-agent.exe" status
+
+3. REVISAR EL ARCHIVO DE LOGS (HISTORIAL):
+   Abre con el Bloc de notas el archivo:
+   C:\ProgramData\STIC-Agent\agent.log
+
+
+--------------------------------------------------------------------------------
+4. UBICACION DE ARCHIVOS EN EL SISTEMA
+--------------------------------------------------------------------------------
+- Carpeta de Instalacion: C:\ProgramData\STIC-Agent\
+- Ejecutable del Servicio: C:\ProgramData\STIC-Agent\stic-agent.exe
+- Archivo de Configuracion: C:\ProgramData\STIC-Agent\config.json
+- Historial de Eventos / Log: C:\ProgramData\STIC-Agent\agent.log
+- Registro en Windows: Panel de control -> Programas y caracteristicas
+
+--------------------------------------------------------------------------------
+Soporte Tecnico: Alcaldia de Yopal - Oficina STIC
+================================================================================

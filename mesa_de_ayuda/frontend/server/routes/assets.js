@@ -65,6 +65,30 @@ function getAssetRoutes(prisma) {
         });
       }
 
+      // Ensure a valid customerId exists
+      let customerId = asset?.customerId;
+      if (!customerId) {
+        const existingCustomer = await prisma.customer.findFirst({
+          where: orgId ? { organizationId: orgId } : {}
+        });
+        if (existingCustomer) {
+          customerId = existingCustomer.id;
+        } else {
+          const defaultCustomer = await prisma.customer.create({
+            data: {
+              name: 'General / Interno',
+              code: 'GEN-01',
+              organizationId: orgId || null
+            }
+          });
+          customerId = defaultCustomer.id;
+        }
+      }
+
+      const serializedSoftware = typeof installedSoftware === 'object' && installedSoftware !== null
+        ? JSON.stringify(installedSoftware)
+        : installedSoftware;
+
       const data = {
         hostname,
         serialNumber: serialNumber || undefined,
@@ -83,11 +107,11 @@ function getAssetRoutes(prisma) {
         graphicsInfo: graphicsInfo || undefined,
         displayInfo: displayInfo || undefined,
         assignedUser: assignedUser || undefined,
-        installedSoftware: installedSoftware || undefined,
+        installedSoftware: serializedSoftware || undefined,
         lastSeenAt: new Date(),
         agentVersion: req.body.agentVersion || '1.0.0',
         organizationId: orgId || asset?.organizationId || null,
-        customerId: asset ? undefined : 1, 
+        customerId: customerId,
       };
 
       if (asset) {
@@ -99,8 +123,10 @@ function getAssetRoutes(prisma) {
         asset = await prisma.asset.create({ data });
       }
 
+      console.log(`[SYNC SUCCESS] Asset synchronized: ${hostname} (ID: ${asset.id})`);
       res.json({ success: true, assetId: asset.id });
     } catch (error) {
+      console.error('[SYNC ERROR]', error);
       next(error);
     }
   });

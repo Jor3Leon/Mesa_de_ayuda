@@ -3,6 +3,7 @@ import { apiRequest } from '../lib/api';
 
 const MODULE_LABELS = {
   ADMINISTRACION: 'ADMINISTRACION',
+  DASHBOARD: 'Dashboard',
   ANALYTICS: 'Analitica',
   ASSETS: 'Inventario',
   CMDB: 'CMDB',
@@ -39,6 +40,20 @@ function getPermissionMeta(code) {
 }
 
 function getPermissionDisplay(permission) {
+  if (permission.code === 'DASHBOARD_VIEW') {
+    return {
+      title: 'Consultar',
+      subtitle: 'Ver Dashboard Operacional',
+    };
+  }
+
+  if (permission.code === 'ANALYTICS_VIEW') {
+    return {
+      title: 'Consultar',
+      subtitle: 'Ver Estadísticas y Analítica',
+    };
+  }
+
   if (permission.code === 'USERS_MANAGE') {
     return {
       title: 'Usuarios',

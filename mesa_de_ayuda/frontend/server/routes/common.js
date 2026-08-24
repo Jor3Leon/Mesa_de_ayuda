@@ -98,6 +98,13 @@ function getCommonRoutes(prisma) {
 
   router.get('/permissions', requirePermission('ROLES_MANAGE'), async (req, res, next) => {
     try {
+      // Auto-asegurar que DASHBOARD_VIEW y ANALYTICS_VIEW existan en la BD
+      await prisma.permission.upsert({
+        where: { code: 'DASHBOARD_VIEW' },
+        update: { name: 'Ver Dashboard', description: 'Permite ver el dashboard operacional principal.' },
+        create: { code: 'DASHBOARD_VIEW', name: 'Ver Dashboard', description: 'Permite ver el dashboard operacional principal.' }
+      }).catch(() => {});
+
       const permissions = await prisma.permission.findMany({
         orderBy: { code: 'asc' }
       });
@@ -153,7 +160,7 @@ function getCommonRoutes(prisma) {
     }
   });
 
-  router.get('/dashboard/data', requireAnyPermission('ANALYTICS_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
+  router.get('/dashboard/data', requireAnyPermission('DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
       const user = req.auth?.user;
       if (!user) {

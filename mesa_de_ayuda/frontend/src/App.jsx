@@ -28,10 +28,10 @@ const ROLE_HIERARCHY = {
 
 // Permisos de fallback (solo si la consulta al API falla)
 const FALLBACK_ROLE_PERMISSIONS = {
-  ADMIN: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
-  LEVEL_3: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
-  LEVEL_2: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
-  LEVEL_1: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  ADMIN: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
+  LEVEL_3: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
+  LEVEL_2: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  LEVEL_1: ['DASHBOARD_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
   'USUARIO ESTANDAR': ['TICKETS_VIEW', 'TICKETS_CREATE'],
 };
 
@@ -740,7 +740,7 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
 function Sidebar({ user, navSections, isCollapsed, onClose }) {
   const location = useLocation();
   const primaryItems = user?.role === 'USUARIO ESTANDAR' ? [] : [
-    { name: 'Tablero', path: '/', icon: 'dashboard', requiredPermission: 'ANALYTICS_VIEW' },
+    { name: 'Dashboard', path: '/', icon: 'dashboard', requiredPermission: 'DASHBOARD_VIEW' },
     { name: 'Analitica', path: '/analytics', icon: 'analytics', requiredPermission: 'ANALYTICS_VIEW' },
   ].filter(item => {
     if (user?.role === 'ADMIN') return true;
@@ -1007,7 +1007,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/" 
               element={effectiveUser?.role === 'USUARIO ESTANDAR' ? <Navigate to="/tickets" replace /> : (
-                <ProtectedRoute user={effectiveUser} requiredPermission="ANALYTICS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="DASHBOARD_VIEW">
                   <Dashboard user={effectiveUser} />
                 </ProtectedRoute>
               )} 

@@ -243,6 +243,14 @@ function UpdateLanguage {
 
 $ComboLang.Add_SelectedIndexChanged({ UpdateLanguage })
 
+# --- Base Paths Captured at Startup ---
+$SCRIPT_DIR = Split-Path -Parent $PSCommandPath
+if (-not $SCRIPT_DIR) { $SCRIPT_DIR = $PSScriptRoot }
+if (-not $SCRIPT_DIR) { $SCRIPT_DIR = (Get-Location).Path }
+
+$AGENT_DIR = Split-Path -Parent $SCRIPT_DIR
+$BUNDLE_SRC = Join-Path $AGENT_DIR "dist\stic-agent.js"
+
 # --- Install Click Handler ---
 $BtnInstall.Add_Click({
     $t = $I18N[$script:currentLang]
@@ -272,10 +280,11 @@ $BtnInstall.Add_Click({
         }
 
         # 2. Copy agent bundle
-        $scriptDir = Split-Path -Parent $MyInvocation.MyCommand.Path
-        $bundleSrc = Join-Path $scriptDir "..\dist\stic-agent.js"
-        if (Test-Path $bundleSrc) {
-            Copy-Item -Path $bundleSrc -Destination "$installDir\stic-agent.js" -Force
+        if (Test-Path $BUNDLE_SRC) {
+            Copy-Item -Path $BUNDLE_SRC -Destination "$installDir\stic-agent.js" -Force
+        } elseif (Test-Path "$AGENT_DIR\src\index.js") {
+            Copy-Item -Path "$AGENT_DIR\src" -Destination "$installDir\src" -Recurse -Force
+            Copy-Item -Path "$AGENT_DIR\package.json" -Destination "$installDir\package.json" -Force
         }
 
         # 3. Write config.json

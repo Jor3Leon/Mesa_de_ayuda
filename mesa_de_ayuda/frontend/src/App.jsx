@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, useRef } from 'react';
 import { BrowserRouter as Router, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import './index.css';
 import { apiRequest, clearStoredSession, getStoredSession, setStoredSession } from './lib/api';
@@ -17,13 +17,46 @@ import StandarUserPortal from './views/StandarUserPortal';
 import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
 
+// Jerarquía de roles: cada rol puede cambiar a los roles listados debajo
+const ROLE_HIERARCHY = {
+  ADMIN: ['LEVEL_3', 'LEVEL_2', 'LEVEL_1', 'USUARIO ESTANDAR'],
+  LEVEL_3: ['LEVEL_2', 'LEVEL_1', 'USUARIO ESTANDAR'],
+  LEVEL_2: ['LEVEL_1', 'USUARIO ESTANDAR'],
+  LEVEL_1: ['USUARIO ESTANDAR'],
+  'USUARIO ESTANDAR': [],
+};
+
+// Permisos simulados para cada rol cuando se hace "Ver como"
+const ROLE_PERMISSIONS = {
+  ADMIN: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
+  LEVEL_3: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
+  LEVEL_2: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  LEVEL_1: ['TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  'USUARIO ESTANDAR': ['TICKETS_VIEW', 'TICKETS_CREATE'],
+};
+
+function getAvailableRoles(realRole) {
+  return ROLE_HIERARCHY[realRole] || [];
+}
+
 function getRoleLabel(role) {
   return {
     ADMIN: 'Administrador',
     LEVEL_1: 'Tecnico Nivel 1',
     LEVEL_2: 'Tecnico Nivel 2',
     LEVEL_3: 'Tecnico Nivel 3',
+    'USUARIO ESTANDAR': 'Usuario Estándar',
   }[role] || role;
+}
+
+function getRoleColor(role) {
+  return {
+    ADMIN: '#10b981',
+    LEVEL_3: '#0ea5e9',
+    LEVEL_2: '#8b5cf6',
+    LEVEL_1: '#f59e0b',
+    'USUARIO ESTANDAR': '#6b7280',
+  }[role] || '#64748b';
 }
 
 function getUserInitials(name) {
@@ -428,9 +461,12 @@ function buildNavSections(user) {
   return filteredSections;
 }
 
-function Header({ user, navSections, onLogout, isSidebarCollapsed, onToggleSidebar, onProfileUpdate }) {
+function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogout, isSidebarCollapsed, onToggleSidebar, onProfileUpdate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
+  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
+  const roleDropdownRef = useRef(null);
+
   const quickLinks = useMemo(
     () =>
       navSections.flatMap((section) =>
@@ -447,6 +483,22 @@ function Header({ user, navSections, onLogout, isSidebarCollapsed, onToggleSideb
         `${item.name} ${item.description} ${item.section}`.toLowerCase().includes(searchQuery.toLowerCase()),
       )
     : [];
+
+  const availableRoles = getAvailableRoles(realRole);
+  const isImpersonating = viewAsRole && viewAsRole !== realRole;
+
+  // Cerrar dropdown al hacer clic fuera
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
+        setIsRoleDropdownOpen(false);
+      }
+    }
+    if (isRoleDropdownOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+    }
+    return () => document.removeEventListener('mousedown', handleClickOutside);
+  }, [isRoleDropdownOpen]);
 
   return (
     <header className="header">
@@ -500,10 +552,168 @@ function Header({ user, navSections, onLogout, isSidebarCollapsed, onToggleSideb
 
       {/* Meta del usuario: visible en desktop */}
       <div className="header-meta hide-mobile">
-        <div className="status-pill">
-          <span className="status-dot" />
-          {getRoleLabel(user.role)}
+        {/* Role Switcher Dropdown */}
+        <div style={{ position: 'relative' }} ref={roleDropdownRef}>
+          <button
+            type="button"
+            className="status-pill"
+            onClick={() => availableRoles.length > 0 && setIsRoleDropdownOpen(!isRoleDropdownOpen)}
+            style={{ 
+              cursor: availableRoles.length > 0 ? 'pointer' : 'default',
+              border: isImpersonating ? `2px solid ${getRoleColor(viewAsRole)}` : undefined,
+              background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : undefined,
+              transition: 'all 0.2s ease',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+            }}
+            title={availableRoles.length > 0 ? 'Clic para cambiar vista de rol' : getRoleLabel(user.role)}
+          >
+            <span className="status-dot" style={{ background: getRoleColor(viewAsRole || realRole) }} />
+            <span>{getRoleLabel(viewAsRole || realRole)}</span>
+            {availableRoles.length > 0 && (
+              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, transition: 'transform 0.2s', transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
+                <polyline points="6 9 12 15 18 9" />
+              </svg>
+            )}
+          </button>
+
+          {isRoleDropdownOpen && availableRoles.length > 0 && (
+            <div style={{
+              position: 'absolute',
+              top: 'calc(100% + 8px)',
+              right: 0,
+              background: '#fff',
+              borderRadius: '14px',
+              boxShadow: '0 20px 40px -8px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05)',
+              minWidth: '260px',
+              zIndex: 1000,
+              overflow: 'hidden',
+              animation: 'fadeIn 0.15s ease',
+            }}>
+              {/* Header del Dropdown */}
+              <div style={{ padding: '0.9rem 1rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', fontWeight: 700 }}>
+                  Cambiar Vista de Rol
+                </div>
+                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
+                  Rol real: <strong style={{ color: getRoleColor(realRole) }}>{getRoleLabel(realRole)}</strong>
+                </div>
+              </div>
+
+              {/* Opción: Volver al rol real */}
+              {isImpersonating && (
+                <button
+                  type="button"
+                  onClick={() => { onRoleSwitch(null); setIsRoleDropdownOpen(false); }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.7rem',
+                    background: '#ecfdf5',
+                    border: 'none',
+                    borderBottom: '1px solid #f1f5f9',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s',
+                    fontSize: '0.85rem',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#d1fae5'}
+                  onMouseLeave={e => e.currentTarget.style.background = '#ecfdf5'}
+                >
+                  <span style={{ fontSize: '1.1rem' }}>↩️</span>
+                  <div>
+                    <div style={{ fontWeight: 700, color: '#065f46' }}>Volver a {getRoleLabel(realRole)}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#10b981' }}>Restaurar mi rol original</div>
+                  </div>
+                </button>
+              )}
+
+              {/* Lista de roles disponibles */}
+              {availableRoles.map((role) => (
+                <button
+                  type="button"
+                  key={role}
+                  onClick={() => { onRoleSwitch(role); setIsRoleDropdownOpen(false); }}
+                  style={{
+                    width: '100%',
+                    padding: '0.75rem 1rem',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '0.7rem',
+                    background: viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent',
+                    border: 'none',
+                    borderBottom: '1px solid #f1f5f9',
+                    cursor: 'pointer',
+                    textAlign: 'left',
+                    transition: 'background 0.15s',
+                    fontSize: '0.85rem',
+                  }}
+                  onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+                  onMouseLeave={e => e.currentTarget.style.background = viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent'}
+                >
+                  <div style={{
+                    width: '32px',
+                    height: '32px',
+                    borderRadius: '8px',
+                    background: `${getRoleColor(role)}18`,
+                    border: `1.5px solid ${getRoleColor(role)}40`,
+                    display: 'grid',
+                    placeItems: 'center',
+                    fontSize: '0.85rem',
+                    flexShrink: 0,
+                  }}>
+                    {viewAsRole === role ? '✓' : role === 'USUARIO ESTANDAR' ? '👤' : '🔧'}
+                  </div>
+                  <div style={{ flex: 1 }}>
+                    <div style={{ fontWeight: 600, color: '#1e293b' }}>{getRoleLabel(role)}</div>
+                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+                      {role === 'USUARIO ESTANDAR' ? 'Solo crear y ver sus tickets' :
+                       role === 'LEVEL_1' ? 'Soporte básico y tickets' :
+                       role === 'LEVEL_2' ? 'Soporte intermedio y activos' :
+                       'Soporte avanzado y gestión'}
+                    </div>
+                  </div>
+                  {viewAsRole === role && (
+                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: getRoleColor(role), background: `${getRoleColor(role)}15`, padding: '2px 8px', borderRadius: '6px' }}>Activo</span>
+                  )}
+                </button>
+              ))}
+
+              {/* Footer informativo */}
+              <div style={{ padding: '0.6rem 1rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+                <div style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+                  <span>ℹ️</span> Vista temporal: solo cambia la interfaz, no los permisos reales.
+                </div>
+              </div>
+            </div>
+          )}
         </div>
+
+        {/* Indicador de impersonación */}
+        {isImpersonating && (
+          <div style={{
+            background: `${getRoleColor(viewAsRole)}15`,
+            border: `1px solid ${getRoleColor(viewAsRole)}40`,
+            borderRadius: '8px',
+            padding: '0.25rem 0.6rem',
+            fontSize: '0.68rem',
+            color: getRoleColor(viewAsRole),
+            fontWeight: 700,
+            display: 'flex',
+            alignItems: 'center',
+            gap: '0.3rem',
+            cursor: 'pointer',
+          }}
+          onClick={() => onRoleSwitch(null)}
+          title="Clic para restaurar rol original"
+          >
+            <span>👁️</span> Vista como
+          </div>
+        )}
+
         <button type="button" className="profile-chip profile-chip-button" onClick={() => setIsProfileOpen(true)}>
           <UserAvatar user={user} />
           <div>
@@ -698,7 +908,20 @@ function ProtectedRoute({ user, allowedRoles, requiredPermission, requiredAnyPer
 function AppShell({ user, onLogout, onProfileUpdate }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const navSections = useMemo(() => buildNavSections(user), [user]);
+  const [viewAsRole, setViewAsRole] = useState(null);
+
+  // Construir el usuario efectivo con el rol simulado
+  const effectiveUser = useMemo(() => {
+    if (!viewAsRole || viewAsRole === user.role) return user;
+    return {
+      ...user,
+      role: viewAsRole,
+      permissions: ROLE_PERMISSIONS[viewAsRole] || [],
+      _realRole: user.role,
+    };
+  }, [user, viewAsRole]);
+
+  const navSections = useMemo(() => buildNavSections(effectiveUser), [effectiveUser]);
 
   function closeSidebar() {
     setIsSidebarCollapsed(true);
@@ -706,6 +929,10 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
 
   function toggleSidebar() {
     setIsSidebarCollapsed((prev) => !prev);
+  }
+
+  function handleRoleSwitch(role) {
+    setViewAsRole(role);
   }
 
   // No es necesario forzar el colapso en el montaje ya que el estado inicial es true
@@ -719,7 +946,10 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
   return (
     <div className={`app-wrapper ${isSidebarCollapsed ? 'collapsed-sidebar' : ''}`}>
       <Header 
-        user={user} 
+        user={effectiveUser}
+        realRole={user.role}
+        viewAsRole={viewAsRole}
+        onRoleSwitch={handleRoleSwitch}
         navSections={navSections} 
         onLogout={onLogout}
         isSidebarCollapsed={isSidebarCollapsed}
@@ -736,7 +966,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
           />
         )}
         <Sidebar
-          user={user}
+          user={effectiveUser}
           navSections={navSections}
           isCollapsed={isSidebarCollapsed}
           onClose={closeSidebar}
@@ -745,16 +975,16 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
           <Routes>
             <Route 
               path="/" 
-              element={user?.role === 'USUARIO ESTANDAR' ? <Navigate to="/tickets" replace /> : (
-                <ProtectedRoute user={user} requiredPermission="ANALYTICS_VIEW">
-                  <Dashboard user={user} />
+              element={effectiveUser?.role === 'USUARIO ESTANDAR' ? <Navigate to="/tickets" replace /> : (
+                <ProtectedRoute user={effectiveUser} requiredPermission="ANALYTICS_VIEW">
+                  <Dashboard user={effectiveUser} />
                 </ProtectedRoute>
               )} 
             />
             <Route 
               path="/tickets" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="TICKETS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="TICKETS_VIEW">
                   <Tickets />
                 </ProtectedRoute>
               )} 
@@ -762,7 +992,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/analytics" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="ANALYTICS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="ANALYTICS_VIEW">
                   <Analytics />
                 </ProtectedRoute>
               )} 
@@ -770,7 +1000,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route
               path="/knowledge"
               element={(
-                <ProtectedRoute user={user} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE', 'TICKETS_CONFIGURE']}>
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE', 'TICKETS_CONFIGURE']}>
                   <CannedResponses />
                 </ProtectedRoute>
               )}
@@ -778,7 +1008,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/assets" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="ASSETS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="ASSETS_VIEW">
                   <Assets />
                 </ProtectedRoute>
               )} 
@@ -786,7 +1016,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/customers" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="USERS_MANAGE">
+                <ProtectedRoute user={effectiveUser} requiredPermission="USERS_MANAGE">
                   <Customers />
                 </ProtectedRoute>
               )} 
@@ -794,7 +1024,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/cmdb" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="ASSETS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="ASSETS_VIEW">
                   <CMDB />
                 </ProtectedRoute>
               )} 
@@ -802,7 +1032,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/patch" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="ASSETS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="ASSETS_VIEW">
                   <Patches />
                 </ProtectedRoute>
               )} 
@@ -810,7 +1040,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/scripts" 
               element={(
-                <ProtectedRoute user={user} requiredPermission="ASSETS_VIEW">
+                <ProtectedRoute user={effectiveUser} requiredPermission="ASSETS_VIEW">
                   <Scripts />
                 </ProtectedRoute>
               )} 
@@ -818,7 +1048,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route
               path="/users"
               element={(
-                <ProtectedRoute user={user} requiredPermission="USERS_MANAGE">
+                <ProtectedRoute user={effectiveUser} requiredPermission="USERS_MANAGE">
                   <Users />
                 </ProtectedRoute>
               )}
@@ -826,7 +1056,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route
               path="/roles"
               element={(
-                <ProtectedRoute user={user} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE']}>
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE']}>
                   <Roles />
                 </ProtectedRoute>
               )}
@@ -834,7 +1064,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route
               path="/categories"
               element={(
-                <ProtectedRoute user={user} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE', 'TICKETS_CONFIGURE']}>
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ROLES_MANAGE', 'TICKETS_CONFIGURE']}>
                   <Categories />
                 </ProtectedRoute>
               )}

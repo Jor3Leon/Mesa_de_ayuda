@@ -12,7 +12,9 @@ module.exports = function getCategoryRoutes(prisma) {
   router.get('/', async (req, res, next) => {
     try {
       const { ticketType, isActive } = req.query;
-      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+      const orgFilter = req.auth.organizationId 
+        ? { OR: [{ organizationId: req.auth.organizationId }, { organizationId: null }] } 
+        : {};
       const where = { ...orgFilter };
 
       if (ticketType) {

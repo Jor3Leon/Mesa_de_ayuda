@@ -123,7 +123,7 @@ class InstallerApp:
         self.lbl_server.pack(anchor="w", pady=(5, 2))
 
         self.entry_server = ttk.Entry(content, width=60)
-        self.entry_server.insert(0, self.config.get("serverUrl", "https://mesa-de-ayuda.vercel.app"))
+        self.entry_server.insert(0, self.config.get("serverUrl", "https://mesa-de-ayuda-rho.vercel.app"))
         self.entry_server.pack(fill="x", pady=(0, 2))
 
         self.lbl_server_hint = tk.Label(content, text="", font=("Segoe UI", 8), fg="#64748B", bg="#F8FAFC")

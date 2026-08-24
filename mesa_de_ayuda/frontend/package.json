@@ -5,7 +5,7 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native --host 127.0.0.1 --port 5173",
-    "build": "npx --yes prisma@6 db push --accept-data-loss --schema=./prisma/schema.prisma && vite build",
+    "build": "npx --yes prisma@6 generate --schema=./prisma/schema.prisma && vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

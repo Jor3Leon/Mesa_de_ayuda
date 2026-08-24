@@ -26,7 +26,7 @@ CONFIG_FILE = os.path.join(INSTALL_DIR, "config.json")
 LOG_FILE = os.path.join(INSTALL_DIR, "agent.log")
 
 DEFAULT_CONFIG = {
-    "serverUrl": "https://mesa-de-ayuda.vercel.app",
+    "serverUrl": "https://mesa-de-ayuda-rho.vercel.app",
     "organizationSlug": "stic",
     "syncIntervalMinutes": 30,
     "apiKey": "",

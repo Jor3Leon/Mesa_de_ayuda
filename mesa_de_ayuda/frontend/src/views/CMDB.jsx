@@ -496,46 +496,80 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 </div>
               </div>
 
-              {/* Inventario de Software */}
-              {softwareList.length > 0 && (
-                <div>
+              {/* Botones de Acción Unificados */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
+                
+                {/* 1. Software Instalado */}
+                {softwareList.length > 0 && (
                   <button 
+                    type="button"
                     className="btn secondary full"
-                    style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '0.8rem 1rem', borderRadius: '10px' }}
+                    style={{ 
+                      padding: '0.85rem 1rem', 
+                      fontSize: '0.92rem', 
+                      fontWeight: 700, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: '0.5rem',
+                      borderRadius: '12px',
+                      width: '100%',
+                      cursor: 'pointer',
+                      background: '#f1f5f9',
+                      border: '1.5px solid #cbd5e1',
+                      color: '#1e293b'
+                    }}
                     onClick={() => { setSoftwareSearch(''); setIsSoftwareModalOpen(true); }}
                   >
-                    <span>📦 Software Instalado</span>
-                    <span className="badge info" style={{ fontSize: '0.75rem' }}>{softwareList.length} aplicaciones</span>
+                    <span>📦</span> Ver Software Instalado ({softwareList.length})
                   </button>
-                </div>
-              )}
+                )}
 
-              {/* Botones de Acción */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.7rem', marginTop: '0.5rem' }}>
-                
-                {/* Botón Principal: Remitir a Mantenimiento */}
+                {/* 2. Remitir a Mantenimiento */}
                 <button 
+                  type="button"
                   className="btn primary full"
                   style={{ 
-                    padding: '0.9rem', 
-                    fontSize: '0.95rem', 
+                    padding: '0.85rem 1rem', 
+                    fontSize: '0.92rem', 
                     fontWeight: 700, 
                     display: 'flex', 
                     alignItems: 'center', 
                     justifyContent: 'center', 
                     gap: '0.5rem',
+                    borderRadius: '12px',
+                    width: '100%',
+                    cursor: 'pointer',
                     background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.3)'
+                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
+                    color: '#fff',
+                    border: 'none'
                   }}
                   onClick={() => openMaintenanceModal(selectedAsset, 'Mantenimiento Preventivo')}
                 >
                   <span>🛠️</span> Remitir a Mantenimiento
                 </button>
 
-                {/* Botón Secundario: Generar Reporte Técnico */}
+                {/* 3. Generar Reporte / Ficha Técnica */}
                 <button 
+                  type="button"
                   className="btn secondary full" 
-                  style={{ padding: '0.8rem', fontSize: '0.9rem', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.5rem' }}
+                  style={{ 
+                    padding: '0.85rem 1rem', 
+                    fontSize: '0.92rem', 
+                    fontWeight: 700, 
+                    display: 'flex', 
+                    alignItems: 'center', 
+                    justifyContent: 'center', 
+                    gap: '0.5rem',
+                    borderRadius: '12px',
+                    width: '100%',
+                    cursor: 'pointer',
+                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
+                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
+                    color: '#fff',
+                    border: 'none'
+                  }}
                   onClick={() => generateAssetReport(selectedAsset)}
                 >
                   <span>📄</span> Generar Ficha Técnica (PDF)

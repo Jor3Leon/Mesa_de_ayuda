@@ -9,15 +9,26 @@ const {
 } = require('../lib/utils');
 const { requireAuth, requirePermission, requireAnyPermission } = require('../lib/middleware');
 
+function requireAgentApiKey(req, res, next) {
+  const expectedKey = process.env.AGENT_API_KEY;
+  if (!expectedKey) return next();
+  const providedKey = req.headers['x-agent-key'];
+  if (!providedKey || providedKey !== expectedKey) {
+    return res.status(401).json({ error: 'Invalid or missing Agent API Key (X-Agent-Key header).' });
+  }
+  next();
+}
+
 function getAssetRoutes(prisma) {
   const router = express.Router();
 
-  router.post('/sync', async (req, res, next) => {
+  router.post('/sync', requireAgentApiKey, async (req, res, next) => {
     try {
       const { 
         hostname, serialNumber, ipAddress, osType, osVersion, 
         brand, model, deviceType, cpuModel, ramSummary, 
-        storageSummary, networkSummary, motherboard, graphicsInfo, displayInfo
+        storageSummary, networkSummary, motherboard, graphicsInfo, displayInfo,
+        installedSoftware, assignedUser
       } = req.body;
 
       if (!hostname) {
@@ -69,6 +80,8 @@ function getAssetRoutes(prisma) {
         motherboard: motherboard || undefined,
         graphicsInfo: graphicsInfo || undefined,
         displayInfo: displayInfo || undefined,
+        assignedUser: assignedUser || undefined,
+        installedSoftware: installedSoftware || undefined,
         lastSeenAt: new Date(),
         agentVersion: req.body.agentVersion || '1.0.0',
         organizationId: orgId || asset?.organizationId || null,
@@ -174,6 +187,7 @@ function getAssetRoutes(prisma) {
           networkSummary: normalizeOptionalString(req.body.networkSummary),
           graphicsInfo: normalizeOptionalString(req.body.graphicsInfo),
           displayInfo: normalizeOptionalString(req.body.displayInfo),
+          installedSoftware: normalizeOptionalString(req.body.installedSoftware),
           notes: normalizeOptionalString(req.body.notes),
         },
       });
@@ -207,7 +221,7 @@ function getAssetRoutes(prisma) {
         'hostname', 'ipAddress', 'osType', 'osVersion', 'status', 'customerId', 
         'serialNumber', 'brand', 'model', 'deviceType', 'assignedUser', 
         'location', 'agentVersion', 'motherboard', 'cpuModel', 'ramSummary', 
-        'storageSummary', 'networkSummary', 'graphicsInfo', 'displayInfo', 'notes'
+        'storageSummary', 'networkSummary', 'graphicsInfo', 'displayInfo', 'installedSoftware', 'notes'
       ];
 
       fields.forEach(field => {

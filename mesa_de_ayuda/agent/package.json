@@ -1,0 +1,36 @@
+{
+  "name": "stic-agent",
+  "version": "1.0.0",
+  "description": "STIC Agent - Universal cross-platform inventory sync client for Mesa de Ayuda",
+  "main": "src/index.js",
+  "bin": {
+    "stic-agent": "src/index.js"
+  },
+  "scripts": {
+    "start": "node src/index.js sync",
+    "install-agent": "node src/index.js install",
+    "uninstall-agent": "node src/index.js uninstall",
+    "status": "node src/index.js status",
+    "build": "node build.js",
+    "bundle": "npx esbuild src/index.js --bundle --platform=node --target=node16 --outfile=dist/stic-agent.js --banner:js=\"#!/usr/bin/env node\"",
+    "build:win": "npx pkg src/index.js --target node18-win-x64 --output dist/stic-agent-win.exe",
+    "build:linux": "npx pkg src/index.js --target node18-linux-x64 --output dist/stic-agent-linux",
+    "build:macos": "npx pkg src/index.js --target node18-macos-x64 --output dist/stic-agent-macos"
+  },
+  "dependencies": {
+    "systeminformation": "^5.23.5"
+  },
+  "devDependencies": {
+    "@yao-pkg/pkg": "^6.2.0"
+  },
+  "pkg": {
+    "assets": [
+      "src/**/*"
+    ],
+    "targets": [
+      "node18-win-x64",
+      "node18-linux-x64",
+      "node18-macos-x64"
+    ]
+  }
+}

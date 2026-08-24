@@ -196,9 +196,10 @@ model Asset {
   storageSummary String?
   networkSummary String?
   graphicsInfo   String?
-  displayInfo    String?
-  notes          String?
-  organizationId String?
+  displayInfo       String?
+  notes             String?
+  installedSoftware String?
+  organizationId    String?
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   customerId     Int
   customer       Customer      @relation(fields: [customerId], references: [id])

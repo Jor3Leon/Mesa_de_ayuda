@@ -116,7 +116,8 @@ function getAssetRoutes(prisma) {
       });
       res.json(assets);
     } catch (error) {
-      next(error);
+      console.error('Error fetching recent assets:', error);
+      res.json([]);
     }
   });
 

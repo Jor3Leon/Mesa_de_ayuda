@@ -73,6 +73,15 @@ function getCommonRoutes(prisma) {
       await prisma.rolePermission.deleteMany({ where: { roleId: id } });
 
       if (permissionCodes && permissionCodes.length > 0) {
+        // Auto-asegurar que todos los permissionCodes existan en la tabla Permission
+        for (const code of permissionCodes) {
+          await prisma.permission.upsert({
+            where: { code },
+            update: {},
+            create: { code, name: code, description: '' }
+          }).catch(() => {});
+        }
+
         const permissions = await prisma.permission.findMany({
           where: { code: { in: permissionCodes } }
         });
@@ -90,7 +99,12 @@ function getCommonRoutes(prisma) {
         include: { permissions: { include: { permission: true } } }
       });
 
-      res.json(updatedRole);
+      const mappedUpdatedRole = {
+        ...updatedRole,
+        permissionCodes: updatedRole.permissions.map(p => p.permission.code)
+      };
+
+      res.json(mappedUpdatedRole);
     } catch (error) {
       next(error);
     }

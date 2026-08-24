@@ -31,7 +31,10 @@ const FALLBACK_ROLE_PERMISSIONS = {
   ADMIN: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
   LEVEL_3: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
   LEVEL_2: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
-  LEVEL_1: ['DASHBOARD_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  LEVEL_1: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  'NIVEL 3': ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
+  'NIVEL 2': ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  'NIVEL 1': ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
   'USUARIO ESTANDAR': ['TICKETS_VIEW', 'TICKETS_CREATE'],
 };
 
@@ -912,43 +915,61 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
   const [rolesMap, setRolesMap] = useState({}); // { 'LEVEL_1': ['ANALYTICS_VIEW', ...], ... }
 
   // Cargar los roles reales y sus permisos desde el backend
-  useEffect(() => {
+  const loadRoles = () => {
     apiRequest('/roles')
       .then((roles) => {
         if (Array.isArray(roles)) {
           const map = {};
           roles.forEach(r => {
             const roleName = (r.name || '').trim().toUpperCase();
-            map[roleName] = r.permissionCodes || [];
-            // También mapear variantes de nombre (ej. 'NIVEL 2' -> 'LEVEL_2')
+            const perms = r.permissionCodes || [];
+            map[roleName] = perms;
             if (roleName.startsWith('NIVEL ')) {
-              map['LEVEL_' + roleName.replace('NIVEL ', '')] = r.permissionCodes || [];
+              map['LEVEL_' + roleName.replace('NIVEL ', '')] = perms;
+            }
+            if (roleName.startsWith('LEVEL_')) {
+              map['NIVEL ' + roleName.replace('LEVEL_', '')] = perms;
             }
           });
           setRolesMap(map);
         }
       })
       .catch(() => {
-        // Si falla (ej. no tiene ROLES_MANAGE), usar fallback
         setRolesMap(FALLBACK_ROLE_PERMISSIONS);
       });
+  };
+
+  useEffect(() => {
+    loadRoles();
+    window.addEventListener('roles-updated', loadRoles);
+    return () => window.removeEventListener('roles-updated', loadRoles);
   }, []);
 
   // Construir el usuario efectivo con el rol simulado y permisos REALES del backend
   const effectiveUser = useMemo(() => {
-    if (!viewAsRole || viewAsRole === user.role) return user;
-
-    // Buscar permisos reales del rol en el mapa cargado del backend
-    const realPermissions = rolesMap[viewAsRole] 
-      || rolesMap[viewAsRole.replace('LEVEL_', 'NIVEL ')]
-      || FALLBACK_ROLE_PERMISSIONS[viewAsRole] 
+    const currentRole = (viewAsRole || user?.role || '').trim().toUpperCase();
+    
+    // Buscar permisos reales del rol en el mapa cargado del backend o fallback
+    const resolvedPermissions = rolesMap[currentRole] 
+      || rolesMap[currentRole.replace('LEVEL_', 'NIVEL ')]
+      || rolesMap[currentRole.replace('NIVEL ', 'LEVEL_')]
+      || FALLBACK_ROLE_PERMISSIONS[currentRole]
+      || FALLBACK_ROLE_PERMISSIONS[viewAsRole]
+      || (viewAsRole ? [] : user?.permissions)
       || [];
+
+    if (!viewAsRole || viewAsRole === user?.role) {
+      return {
+        ...user,
+        permissions: resolvedPermissions.length > 0 ? resolvedPermissions : (user?.permissions || []),
+      };
+    }
 
     return {
       ...user,
       role: viewAsRole,
-      permissions: realPermissions,
-      _realRole: user.role,
+      permissions: resolvedPermissions,
+      _realRole: user?.role,
     };
   }, [user, viewAsRole, rolesMap]);
 

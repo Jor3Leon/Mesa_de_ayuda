@@ -196,12 +196,18 @@ export default function Roles() {
         }),
       });
 
+      const mappedRole = {
+        ...updated,
+        permissionCodes: updated.permissionCodes || updated.permissions?.map((p) => p.permission?.code || p.code) || []
+      };
+
       setRoles((prev) => prev.map((role) => (
-        role.id === updated.id
-          ? { ...updated, permissionCodes: updated.permissions.map((permission) => permission.permission.code) }
-          : role
+        role.id === updated.id ? mappedRole : role
       )));
       setFeedback('Rol actualizado con exito.');
+      
+      // Notificar a toda la aplicación para actualizar la barra lateral y permisos activos
+      window.dispatchEvent(new CustomEvent('roles-updated'));
     } catch (err) {
       setError(err.message);
     } finally {

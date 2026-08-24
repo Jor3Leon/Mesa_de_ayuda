@@ -26,12 +26,12 @@ const ROLE_HIERARCHY = {
   'USUARIO ESTANDAR': [],
 };
 
-// Permisos simulados para cada rol cuando se hace "Ver como"
-const ROLE_PERMISSIONS = {
+// Permisos de fallback (solo si la consulta al API falla)
+const FALLBACK_ROLE_PERMISSIONS = {
   ADMIN: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
   LEVEL_3: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
   LEVEL_2: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
-  LEVEL_1: ['TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
+  LEVEL_1: ['ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
   'USUARIO ESTANDAR': ['TICKETS_VIEW', 'TICKETS_CREATE'],
 };
 
@@ -909,17 +909,48 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
   const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(true);
   const [isProfileOpen, setIsProfileOpen] = useState(false);
   const [viewAsRole, setViewAsRole] = useState(null);
+  const [rolesMap, setRolesMap] = useState({}); // { 'LEVEL_1': ['ANALYTICS_VIEW', ...], ... }
 
-  // Construir el usuario efectivo con el rol simulado
+  // Cargar los roles reales y sus permisos desde el backend
+  useEffect(() => {
+    apiRequest('/roles')
+      .then((roles) => {
+        if (Array.isArray(roles)) {
+          const map = {};
+          roles.forEach(r => {
+            const roleName = (r.name || '').trim().toUpperCase();
+            map[roleName] = r.permissionCodes || [];
+            // También mapear variantes de nombre (ej. 'NIVEL 2' -> 'LEVEL_2')
+            if (roleName.startsWith('NIVEL ')) {
+              map['LEVEL_' + roleName.replace('NIVEL ', '')] = r.permissionCodes || [];
+            }
+          });
+          setRolesMap(map);
+        }
+      })
+      .catch(() => {
+        // Si falla (ej. no tiene ROLES_MANAGE), usar fallback
+        setRolesMap(FALLBACK_ROLE_PERMISSIONS);
+      });
+  }, []);
+
+  // Construir el usuario efectivo con el rol simulado y permisos REALES del backend
   const effectiveUser = useMemo(() => {
     if (!viewAsRole || viewAsRole === user.role) return user;
+
+    // Buscar permisos reales del rol en el mapa cargado del backend
+    const realPermissions = rolesMap[viewAsRole] 
+      || rolesMap[viewAsRole.replace('LEVEL_', 'NIVEL ')]
+      || FALLBACK_ROLE_PERMISSIONS[viewAsRole] 
+      || [];
+
     return {
       ...user,
       role: viewAsRole,
-      permissions: ROLE_PERMISSIONS[viewAsRole] || [],
+      permissions: realPermissions,
       _realRole: user.role,
     };
-  }, [user, viewAsRole]);
+  }, [user, viewAsRole, rolesMap]);
 
   const navSections = useMemo(() => buildNavSections(effectiveUser), [effectiveUser]);
 

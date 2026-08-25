@@ -3992,6 +3992,79 @@ tbody tr:hover {
   }
 }
 
+/* ─── CMDB Quick Chips & Topology Tree Styling ─── */
+.cmdb-quick-chips {
+  display: flex;
+  gap: 0.45rem;
+  flex-wrap: wrap;
+  align-items: center;
+  margin-top: 0.2rem;
+}
+
+.chip {
+  padding: 0.35rem 0.75rem;
+  border-radius: 20px;
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 0.75rem;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.chip:hover {
+  background: #e2e8f0;
+  color: #1e293b;
+}
+
+.chip.active {
+  background: var(--color-primary);
+  color: #ffffff;
+  border-color: var(--color-primary);
+  box-shadow: 0 2px 6px rgba(15, 157, 58, 0.2);
+}
+
+.chip.danger.active {
+  background: #ef4444;
+  color: #ffffff;
+  border-color: #ef4444;
+  box-shadow: 0 2px 6px rgba(239, 68, 68, 0.25);
+}
+
+.cmdb-tree-node {
+  display: flex;
+  align-items: center;
+  gap: 0.65rem;
+  padding: 0.65rem 0.85rem;
+  border-radius: 10px;
+  background: #f8fafc;
+  border: 1px solid #e2e8f0;
+  font-size: 0.8rem;
+}
+
+.cmdb-tree-node.network {
+  background: #f0f9ff;
+  border-color: #bae6fd;
+}
+
+.cmdb-tree-node.main {
+  background: rgba(15, 157, 58, 0.05);
+  border-color: rgba(15, 157, 58, 0.25);
+}
+
+.tree-icon {
+  font-size: 1.25rem;
+}
+
+.tree-connector-line {
+  width: 2px;
+  height: 16px;
+  background: #0284c7;
+  margin-left: 1.25rem;
+}
+
+
 
 
 

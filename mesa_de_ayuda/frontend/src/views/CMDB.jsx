@@ -53,6 +53,9 @@ export default function CMDB() {
   const [showMobile360, setShowMobile360] = useState(false);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('ALL');
+  const [filterRisk, setFilterRisk] = useState('ALL');
+  const [active360Tab, setActive360Tab] = useState('INFO'); // 'INFO' | 'TOPOLOGY' | 'TIMELINE'
+  const [copiedIp, setCopiedIp] = useState(false);
 
   // Modales
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
@@ -104,7 +107,16 @@ export default function CMDB() {
     const macos = assets.filter(a => a.osType === 'macOS').length;
     const warning = assets.filter(a => a.status === 'WARNING' || a.status === 'OFFLINE').length;
     
-    return { total, online, windows, linux, macos, warning };
+    // Métricas de Salud y Cumplimiento
+    const healthScore = total > 0 ? Math.round((online / total) * 100) : 100;
+    const withAgent = assets.filter(a => a.agentVersion && a.agentVersion !== '1.0.0').length;
+    const securityScore = total > 0 ? Math.round((withAgent / total) * 100) : 100;
+    const storageRiskCount = assets.filter(a => {
+      const s = parseStorage(a.storageSummary);
+      return s?.freePercent !== undefined && s.freePercent < 15;
+    }).length;
+    
+    return { total, online, windows, linux, macos, warning, healthScore, securityScore, storageRiskCount, withAgent };
   }, [assets]);
 
   const filteredAssets = useMemo(() => {
@@ -114,9 +126,31 @@ export default function CMDB() {
                            (a.serialNumber || '').toLowerCase().includes(search.toLowerCase()) ||
                            (a.customer?.name || '').toLowerCase().includes(search.toLowerCase());
       const matchesType = filterType === 'ALL' || a.osType === filterType;
-      return matchesSearch && matchesType;
+
+      let matchesRisk = true;
+      if (filterRisk === 'ONLINE') matchesRisk = a.status === 'ONLINE';
+      else if (filterRisk === 'WARNING') matchesRisk = a.status === 'WARNING' || a.status === 'OFFLINE';
+      else if (filterRisk === 'CRITICAL_STORAGE') {
+        const s = parseStorage(a.storageSummary);
+        matchesRisk = s?.freePercent !== undefined && s.freePercent < 15;
+      } else if (filterRisk === 'COMPUTE') {
+        const type = (a.deviceType || '').toLowerCase();
+        matchesRisk = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop'].some(k => type.includes(k));
+      } else if (filterRisk === 'NETWORK') {
+        const type = (a.deviceType || '').toLowerCase();
+        matchesRisk = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor'].some(k => type.includes(k));
+      }
+
+      return matchesSearch && matchesType && matchesRisk;
     });
-  }, [assets, search, filterType]);
+  }, [assets, search, filterType, filterRisk]);
+
+  const handleCopyIp = (ipAddress) => {
+    if (!ipAddress) return;
+    navigator.clipboard.writeText(ipAddress);
+    setCopiedIp(true);
+    setTimeout(() => setCopiedIp(false), 2000);
+  };
 
   const storageData = useMemo(() => {
     return selectedAsset ? parseStorage(selectedAsset.storageSummary) : null;
@@ -217,8 +251,8 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
           <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid var(--color-primary)' }}>
             <div className="cmdb-stat-icon">🟢</div>
             <div>
-              <div className="cmdb-stat-val">{stats.online}</div>
-              <div className="muted-text cmdb-stat-lbl">En Línea</div>
+              <div className="cmdb-stat-val">{stats.online} <small style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary)' }}>({stats.healthScore}%)</small></div>
+              <div className="muted-text cmdb-stat-lbl">En Línea (Salud)</div>
             </div>
           </div>
           <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid #f59e0b' }}>
@@ -228,11 +262,11 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
               <div className="muted-text cmdb-stat-lbl">En Riesgo / Offline</div>
             </div>
           </div>
-          <div className="card-premium cmdb-stat-box">
-            <div className="cmdb-stat-icon">🌐</div>
+          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid #0284c7' }}>
+            <div className="cmdb-stat-icon">🛡️</div>
             <div>
-              <div className="cmdb-stat-val">{stats.windows}W / {stats.linux}L</div>
-              <div className="muted-text cmdb-stat-lbl">Windows / Linux</div>
+              <div className="cmdb-stat-val">{stats.securityScore}%</div>
+              <div className="muted-text cmdb-stat-lbl">Cobertura Endpoint</div>
             </div>
           </div>
         </div>
@@ -243,24 +277,75 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
       <div className={`cmdb-content-grid ${selectedAsset ? 'has-selected' : ''} ${showMobile360 ? 'mobile-show-360' : 'mobile-show-table'}`}>
         
         {/* Tabla de Activos */}
-        <div className="cmdb-table-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card-premium cmdb-search-bar" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="field" style={{ flex: 1, minWidth: '240px' }}>
-              <input 
-                type="text" 
-                placeholder="Buscar por hostname, IP, serial o usuario..." 
-                value={search}
-                onChange={e => setSearch(e.target.value)}
-                style={{ borderRadius: '12px', padding: '0.8rem 1.2rem', border: '1.5px solid #e2e8f0', width: '100%' }}
-              />
+        <div className="cmdb-table-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }}>
+          
+          <div className="card-premium cmdb-search-bar" style={{ padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+            <div style={{ display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap', width: '100%' }}>
+              <div className="field" style={{ flex: 1, minWidth: '220px' }}>
+                <input 
+                  type="text" 
+                  placeholder="Buscar por hostname, IP, serial o usuario..." 
+                  value={search}
+                  onChange={e => setSearch(e.target.value)}
+                  style={{ borderRadius: '12px', padding: '0.75rem 1.1rem', border: '1.5px solid #e2e8f0', width: '100%' }}
+                />
+              </div>
+              <div className="field" style={{ minWidth: '150px' }}>
+                <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ borderRadius: '12px', padding: '0.75rem', width: '100%' }}>
+                  <option value="ALL">Todos los Sistemas</option>
+                  <option value="Windows">Windows</option>
+                  <option value="Linux">Linux Core</option>
+                  <option value="macOS">macOS</option>
+                </select>
+              </div>
             </div>
-            <div className="field" style={{ minWidth: '150px' }}>
-              <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ borderRadius: '12px', padding: '0.8rem', width: '100%' }}>
-                <option value="ALL">Todos los Sistemas</option>
-                <option value="Windows">Windows</option>
-                <option value="Linux">Linux Core</option>
-                <option value="macOS">macOS</option>
-              </select>
+
+            {/* Quick Filter Chips */}
+            <div className="cmdb-quick-chips">
+              <button 
+                type="button" 
+                className={`chip ${filterRisk === 'ALL' ? 'active' : ''}`}
+                onClick={() => setFilterRisk('ALL')}
+              >
+                Todos ({assets.length})
+              </button>
+              <button 
+                type="button" 
+                className={`chip ${filterRisk === 'ONLINE' ? 'active' : ''}`}
+                onClick={() => setFilterRisk('ONLINE')}
+              >
+                🟢 En Línea ({stats.online})
+              </button>
+              <button 
+                type="button" 
+                className={`chip ${filterRisk === 'WARNING' ? 'active' : ''}`}
+                onClick={() => setFilterRisk('WARNING')}
+              >
+                ⚠️ En Riesgo ({stats.warning})
+              </button>
+              {stats.storageRiskCount > 0 && (
+                <button 
+                  type="button" 
+                  className={`chip danger ${filterRisk === 'CRITICAL_STORAGE' ? 'active' : ''}`}
+                  onClick={() => setFilterRisk('CRITICAL_STORAGE')}
+                >
+                  💾 Disco Crítico (&lt;15%) ({stats.storageRiskCount})
+                </button>
+              )}
+              <button 
+                type="button" 
+                className={`chip ${filterRisk === 'COMPUTE' ? 'active' : ''}`}
+                onClick={() => setFilterRisk('COMPUTE')}
+              >
+                💻 Cómputo
+              </button>
+              <button 
+                type="button" 
+                className={`chip ${filterRisk === 'NETWORK' ? 'active' : ''}`}
+                onClick={() => setFilterRisk('NETWORK')}
+              >
+                🌐 Servidores & Red
+              </button>
             </div>
           </div>
 
@@ -367,17 +452,45 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 </div>
                 <button className="btn-icon" onClick={() => { setSelectedAsset(null); setShowMobile360(false); }} title="Cerrar panel">✕</button>
               </div>
+
+              {/* Sub-tabs Vista 360 */}
+              <div className="cmdb-360-tabs" style={{ display: 'flex', gap: '0.4rem', marginTop: '0.85rem' }}>
+                <button 
+                  type="button" 
+                  className={`tab ${active360Tab === 'INFO' ? 'active' : ''}`}
+                  onClick={() => setActive360Tab('INFO')}
+                  style={{ padding: '0.4rem 0.65rem', fontSize: '0.78rem', fontWeight: 700 }}
+                >
+                  📊 Resumen
+                </button>
+                <button 
+                  type="button" 
+                  className={`tab ${active360Tab === 'TOPOLOGY' ? 'active' : ''}`}
+                  onClick={() => setActive360Tab('TOPOLOGY')}
+                  style={{ padding: '0.4rem 0.65rem', fontSize: '0.78rem', fontWeight: 700 }}
+                >
+                  🌐 Topología
+                </button>
+                <button 
+                  type="button" 
+                  className={`tab ${active360Tab === 'TIMELINE' ? 'active' : ''}`}
+                  onClick={() => setActive360Tab('TIMELINE')}
+                  style={{ padding: '0.4rem 0.65rem', fontSize: '0.78rem', fontWeight: 700 }}
+                >
+                  ⏱️ Historial
+                </button>
+              </div>
             </div>
 
-            <div style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.3rem', maxHeight: 'calc(100vh - 180px)', overflowY: 'auto' }}>
+            <div style={{ padding: '1.2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
               
               {/* Tarjeta de Identidad del Equipo */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '1rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '2.5rem', background: '#fff', padding: '0.5rem', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.9rem 1rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                <div style={{ fontSize: '2.2rem', background: '#fff', padding: '0.4rem', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
                   {selectedAsset.osType === 'Linux' ? '🐧' : selectedAsset.osType === 'macOS' ? '🍎' : '💻'}
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 800, fontSize: '1.15rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                     {selectedAsset.hostname}
                   </div>
                   <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '4px' }}>
@@ -389,205 +502,262 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 </div>
               </div>
 
-              {/* Métricas de Salud y Rendimiento */}
-              <div>
-                <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span>📊</span> Métricas de Salud y Rendimiento
-                </h4>
-                
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+              {/* Botón rápido Copiar IP */}
+              <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
+                <button 
+                  type="button" 
+                  className="btn-ghost" 
+                  onClick={() => handleCopyIp(selectedAsset.ipAddress)}
+                  style={{ flex: 1, padding: '0.45rem 0.75rem', fontSize: '0.76rem', fontWeight: 700, borderRadius: '8px', background: '#f1f5f9', border: '1px solid #cbd5e1', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem', cursor: 'pointer' }}
+                >
+                  <span>📋</span> {copiedIp ? '¡IP Copiada!' : `Copiar IP (${selectedAsset.ipAddress || 'Sin IP'})`}
+                </button>
+              </div>
+
+              {active360Tab === 'INFO' && (
+                <>
+                  {/* Métricas de Salud y Rendimiento */}
+                  <div>
+                    <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>📊</span> Métricas de Salud y Rendimiento
+                    </h4>
+                    
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                      
+                      {/* Barra de Almacenamiento */}
+                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                          <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
+                          {storageData?.total ? (
+                            <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                              {storageData.free} GB libres ({storageData.freePercent}%)
+                            </span>
+                          ) : (
+                            <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
+                          )}
+                        </div>
+                        {storageData?.usedPercent !== undefined && (
+                          <div>
+                            <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                              <div 
+                                style={{ 
+                                  width: `${storageData.usedPercent}%`, 
+                                  height: '100%', 
+                                  background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
+                                  transition: 'width 0.5s ease'
+                                }} 
+                              />
+                            </div>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                              <span>Usado: {storageData.used} GB</span>
+                              <span>Total: {storageData.total} GB</span>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Memoria RAM */}
+                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                          <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
+                          <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+                            {selectedAsset.ramSummary || '---'}
+                          </span>
+                        </div>
+                        {ramData?.usedPercent !== undefined && (
+                          <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                            <div 
+                              style={{ 
+                                width: `${ramData.usedPercent}%`, 
+                                height: '100%', 
+                                background: '#0284c7',
+                                transition: 'width 0.5s ease'
+                              }} 
+                            />
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Procesador CPU */}
+                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                        <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
+                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
+                          {selectedAsset.cpuModel || 'Procesador estándar'}
+                        </div>
+                      </div>
+
+                      {/* Seguridad & Antivirus */}
+                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                        <div style={{ fontSize: '1.8rem' }}>🛡️</div>
+                        <div>
+                          <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
+                          <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
+                            {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
+                              ? selectedAsset.agentVersion 
+                              : 'Microsoft Defender Antivirus'}
+                          </div>
+                          <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
+                            Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                          </div>
+                        </div>
+                      </div>
+
+                    </div>
+                  </div>
+
+                  {/* Ficha Técnica y Red */}
+                  <div>
+                    <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                      <span>⚙️</span> Ficha Técnica & Red
+                    </h4>
+                    <div className="cmdb-info-card">
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">👤 Usuario Sesión:</span>
+                        <span className="cmdb-info-val">{selectedAsset.assignedUser || 'Usuario Local'}</span>
+                      </div>
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">🏷️ Serial / Tag:</span>
+                        <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
+                      </div>
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">🏢 Fabricante/Board:</span>
+                        <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
+                      </div>
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">🌐 IP Local:</span>
+                        <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
+                      </div>
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">💻 Sistema:</span>
+                        <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
+                      </div>
+                    </div>
+                  </div>
+
+                  {/* Botones de Acción Unificados */}
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
+                    {softwareList.length > 0 && (
+                      <button 
+                        type="button"
+                        className="btn secondary full"
+                        style={{ padding: '0.85rem 1rem', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', cursor: 'pointer', background: '#f1f5f9', border: '1.5px solid #cbd5e1', color: '#1e293b' }}
+                        onClick={() => { setSoftwareSearch(''); setIsSoftwareModalOpen(true); }}
+                      >
+                        <span>📦</span> Ver Software Instalado ({softwareList.length})
+                      </button>
+                    )}
+
+                    <button 
+                      type="button"
+                      className="btn primary full"
+                      style={{ padding: '0.85rem 1rem', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', cursor: 'pointer', background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)', boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)', color: '#fff', border: 'none' }}
+                      onClick={() => openMaintenanceModal(selectedAsset, 'Mantenimiento Preventivo')}
+                    >
+                      <span>🛠️</span> Remitir a Mantenimiento
+                    </button>
+
+                    <button 
+                      type="button"
+                      className="btn secondary full" 
+                      style={{ padding: '0.85rem 1rem', fontSize: '0.88rem', fontWeight: 700, borderRadius: '12px', cursor: 'pointer', background: '#fff', border: '1.5px solid var(--color-border)', color: 'var(--color-text)' }}
+                      onClick={() => generateAssetReport(selectedAsset)}
+                    >
+                      <span>📄</span> Generar Ficha Técnica (PDF/Imprimir)
+                    </button>
+                  </div>
+                </>
+              )}
+
+              {active360Tab === 'TOPOLOGY' && (
+                <div className="cmdb-topology-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem', display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                    🌐 Mapa de Topología & Cadena de Red
+                  </div>
                   
-                  {/* Barra de Almacenamiento */}
-                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                      <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
-                      {storageData?.total ? (
-                        <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
-                          {storageData.free} GB libres ({storageData.freePercent}%)
-                        </span>
-                      ) : (
-                        <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
-                      )}
-                    </div>
-                    {storageData?.usedPercent !== undefined && (
+                  <div className="cmdb-topology-tree">
+                    {/* Nodo Red */}
+                    <div className="cmdb-tree-node network">
+                      <span className="tree-icon">🌐</span>
                       <div>
-                        <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                          <div 
-                            style={{ 
-                              width: `${storageData.usedPercent}%`, 
-                              height: '100%', 
-                              background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
-                              transition: 'width 0.5s ease'
-                            }} 
-                          />
+                        <strong>Subred / Gateway Local</strong>
+                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>IP: {selectedAsset.ipAddress || '192.168.1.1'}</div>
+                      </div>
+                      <span className="badge success" style={{ marginLeft: 'auto', fontSize: '0.6rem' }}>ACTIVO</span>
+                    </div>
+
+                    <div className="tree-connector-line"></div>
+
+                    {/* Nodo Hostname */}
+                    <div className="cmdb-tree-node main">
+                      <span className="tree-icon">{selectedAsset.osType === 'Linux' ? '🐧' : selectedAsset.osType === 'macOS' ? '🍎' : '💻'}</span>
+                      <div>
+                        <strong>{selectedAsset.hostname}</strong>
+                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>{selectedAsset.brand || 'Marca'} {selectedAsset.model || ''}</div>
+                      </div>
+                      <span className={`badge ${selectedAsset.status === 'ONLINE' ? 'success' : 'warning'}`} style={{ marginLeft: 'auto', fontSize: '0.6rem' }}>{selectedAsset.status}</span>
+                    </div>
+
+                    <div className="tree-connector-line"></div>
+
+                    {/* Hijos */}
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr', gap: '0.5rem', paddingLeft: '0.5rem', borderLeft: '2px dashed #0284c7' }}>
+                      <div className="cmdb-tree-node child">
+                        <span className="tree-icon">👤</span>
+                        <div>
+                          <strong>Usuario Sesión</strong>
+                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>{selectedAsset.assignedUser || 'Usuario Local'}</div>
                         </div>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                          <span>Usado: {storageData.used} GB</span>
-                          <span>Total: {storageData.total} GB</span>
+                      </div>
+                      <div className="cmdb-tree-node child">
+                        <span className="tree-icon">🛡️</span>
+                        <div>
+                          <strong>Protección Endpoint</strong>
+                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>{selectedAsset.agentVersion || 'Antivirus OK'}</div>
                         </div>
                       </div>
-                    )}
-                  </div>
-
-                  {/* Memoria RAM */}
-                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                      <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
-                      <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                        {selectedAsset.ramSummary || '---'}
-                      </span>
-                    </div>
-                    {ramData?.usedPercent !== undefined && (
-                      <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                        <div 
-                          style={{ 
-                            width: `${ramData.usedPercent}%`, 
-                            height: '100%', 
-                            background: '#0284c7',
-                            transition: 'width 0.5s ease'
-                          }} 
-                        />
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Procesador CPU */}
-                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                    <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
-                    <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
-                      {selectedAsset.cpuModel || 'Procesador estándar'}
-                    </div>
-                  </div>
-
-                  {/* Seguridad & Antivirus */}
-                  <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                    <div style={{ fontSize: '1.8rem' }}>🛡️</div>
-                    <div>
-                      <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
-                      <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
-                        {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
-                          ? selectedAsset.agentVersion 
-                          : 'Microsoft Defender Antivirus'}
-                      </div>
-                      <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
-                        Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                      <div className="cmdb-tree-node child">
+                        <span className="tree-icon">📦</span>
+                        <div>
+                          <strong>Software Instalado</strong>
+                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>{softwareList.length} aplicaciones activas</div>
+                        </div>
                       </div>
                     </div>
-                  </div>
-
-                </div>
-              </div>
-
-              {/* Ficha Técnica y Red */}
-              <div>
-                <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                  <span>⚙️</span> Ficha Técnica & Red
-                </h4>
-                <div className="cmdb-info-card">
-                  <div className="cmdb-info-row">
-                    <span className="muted-text">👤 Usuario Sesión:</span>
-                    <span className="cmdb-info-val">{selectedAsset.assignedUser || 'Usuario Local'}</span>
-                  </div>
-                  <div className="cmdb-info-row">
-                    <span className="muted-text">🏷️ Serial / Tag:</span>
-                    <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
-                  </div>
-                  <div className="cmdb-info-row">
-                    <span className="muted-text">🏢 Fabricante/Board:</span>
-                    <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
-                  </div>
-                  <div className="cmdb-info-row">
-                    <span className="muted-text">🌐 IP Local:</span>
-                    <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
-                  </div>
-                  <div className="cmdb-info-row">
-                    <span className="muted-text">💻 Sistema:</span>
-                    <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
                   </div>
                 </div>
-              </div>
+              )}
 
-              {/* Botones de Acción Unificados */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>
-                
-                {/* 1. Software Instalado */}
-                {softwareList.length > 0 && (
-                  <button 
-                    type="button"
-                    className="btn secondary full"
-                    style={{ 
-                      padding: '0.85rem 1rem', 
-                      fontSize: '0.92rem', 
-                      fontWeight: 700, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: '0.5rem',
-                      borderRadius: '12px',
-                      width: '100%',
-                      cursor: 'pointer',
-                      background: '#f1f5f9',
-                      border: '1.5px solid #cbd5e1',
-                      color: '#1e293b'
-                    }}
-                    onClick={() => { setSoftwareSearch(''); setIsSoftwareModalOpen(true); }}
-                  >
-                    <span>📦</span> Ver Software Instalado ({softwareList.length})
-                  </button>
-                )}
-
-                {/* 2. Remitir a Mantenimiento */}
-                <button 
-                  type="button"
-                  className="btn primary full"
-                  style={{ 
-                    padding: '0.85rem 1rem', 
-                    fontSize: '0.92rem', 
-                    fontWeight: 700, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '0.5rem',
-                    borderRadius: '12px',
-                    width: '100%',
-                    cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #0284c7 0%, #0369a1 100%)',
-                    boxShadow: '0 4px 12px rgba(2, 132, 199, 0.25)',
-                    color: '#fff',
-                    border: 'none'
-                  }}
-                  onClick={() => openMaintenanceModal(selectedAsset, 'Mantenimiento Preventivo')}
-                >
-                  <span>🛠️</span> Remitir a Mantenimiento
-                </button>
-
-                {/* 3. Generar Reporte / Ficha Técnica */}
-                <button 
-                  type="button"
-                  className="btn secondary full" 
-                  style={{ 
-                    padding: '0.85rem 1rem', 
-                    fontSize: '0.92rem', 
-                    fontWeight: 700, 
-                    display: 'flex', 
-                    alignItems: 'center', 
-                    justifyContent: 'center', 
-                    gap: '0.5rem',
-                    borderRadius: '12px',
-                    width: '100%',
-                    cursor: 'pointer',
-                    background: 'linear-gradient(135deg, #059669 0%, #047857 100%)',
-                    boxShadow: '0 4px 12px rgba(5, 150, 105, 0.25)',
-                    color: '#fff',
-                    border: 'none'
-                  }}
-                  onClick={() => generateAssetReport(selectedAsset)}
-                >
-                  <span>📄</span> Generar Ficha Técnica (PDF)
-                </button>
-
-              </div>
-
+              {active360Tab === 'TIMELINE' && (
+                <div className="cmdb-timeline-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem' }}>
+                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.85rem' }}>
+                    ⏱️ Trazabilidad & Auditoría de Eventos
+                  </div>
+                  <div className="cmdb-timeline-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', marginTop: '5px' }}></div>
+                      <div>
+                        <strong style={{ fontSize: '0.82rem' }}>Último Reporte de Agente RMM</strong>
+                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>{selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}</div>
+                        <span className="badge success" style={{ fontSize: '0.62rem', marginTop: '3px' }}>Sincronización Correcta</span>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#0284c7', marginTop: '5px' }}></div>
+                      <div>
+                        <strong style={{ fontSize: '0.82rem' }}>Inspección de Almacenamiento & RAM</strong>
+                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>RAM: {selectedAsset.ramSummary || '---'} | Disco: {selectedAsset.storageSummary || '---'}</div>
+                      </div>
+                    </div>
+                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#64748b', marginTop: '5px' }}></div>
+                      <div>
+                        <strong style={{ fontSize: '0.82rem' }}>Ficha Registrada en CMDB</strong>
+                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>Serial: {selectedAsset.serialNumber || '---'} | IP: {selectedAsset.ipAddress || '---'}</div>
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
             </div>
           </aside>
         )}

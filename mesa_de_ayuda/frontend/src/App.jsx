@@ -162,11 +162,23 @@ function ProfileModal({ user, onClose, onSave }) {
         aria-labelledby="profile-modal-title"
         onClick={(event) => event.stopPropagation()}
       >
-        <div className="section-heading">
+        <div className="section-heading" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
           <div>
-            <h3 id="profile-modal-title">Mi perfil</h3>
-            <p>Actualiza tu celular, correo y avatar personal.</p>
+            <h3 id="profile-modal-title" style={{ margin: 0, fontSize: '1.2rem', color: '#0f172a', fontWeight: 700 }}>Mi perfil</h3>
+            <p style={{ margin: '0.2rem 0 0', fontSize: '0.8rem', color: '#64748b' }}>Actualiza tu celular, correo y avatar personal.</p>
           </div>
+          <button
+            type="button"
+            className="sidebar-close-btn"
+            onClick={onClose}
+            aria-label="Cerrar perfil"
+            style={{ width: '32px', height: '32px', borderRadius: '8px', border: '1px solid #e2e8f0', background: '#f8fafc', color: '#64748b', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', flexShrink: 0 }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+              <line x1="18" y1="6" x2="6" y2="18" />
+              <line x1="6" y1="6" x2="18" y2="18" />
+            </svg>
+          </button>
         </div>
 
         {error && <div className="feedback error" style={{ marginTop: '1rem' }}>{error}</div>}

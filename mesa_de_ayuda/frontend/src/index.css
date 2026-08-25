@@ -1045,22 +1045,31 @@ textarea {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  z-index: 60;
+  z-index: 2000;
   display: flex;
   align-items: center;
   justify-content: center;
   padding: 1.25rem;
-  background: rgba(18, 31, 53, 0.38);
-  backdrop-filter: blur(4px);
+  background: rgba(15, 23, 42, 0.55);
+  backdrop-filter: blur(6px);
+  overflow-y: auto;
 }
 
 .modal-card {
   width: min(100%, 760px);
-  padding: 1.35rem;
-  border: 1px solid rgba(255, 255, 255, 0.3);
+  max-height: calc(100vh - 2.5rem);
+  overflow-y: auto;
+  margin: auto;
+  padding: 1.5rem;
+  border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 20px;
-  background: linear-gradient(180deg, #ffffff, #f9fbfd);
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.18);
+  background: #ffffff;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.22);
+}
+
+.profile-modal-card {
+  width: min(100%, 480px);
+  padding: 1.5rem;
 }
 
 .stat-grid {

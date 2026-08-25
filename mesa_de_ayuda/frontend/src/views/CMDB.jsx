@@ -196,42 +196,42 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
   return (
     <div className="view-container">
-      <section className="hero-panel" style={{ padding: '2rem', background: 'linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%)', borderBottom: '1px solid var(--color-border)' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
-          <p className="eyebrow" style={{ color: 'var(--color-primary)', letterSpacing: '0.1em' }}>Estrategia de Activos & Infraestructura</p>
-          <h2 style={{ fontSize: '2.2rem', fontWeight: 800, color: '#1e293b' }}>CMDB Operacional 360°</h2>
-          <p className="muted-text" style={{ maxWidth: '650px', fontSize: '1.05rem' }}>
+      <section className="hero-panel glass-card">
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+          <p className="eyebrow">Estrategia de Activos & Infraestructura</p>
+          <h2>CMDB Operacional 360°</h2>
+          <p className="muted-text">
             Monitoreo en tiempo real de la salud del parque informático, inventario de hardware y software, y gestión de mantenimientos preventivos y correctivos.
           </p>
         </div>
         
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 200px), 1fr))', gap: '1rem', marginTop: '1.2rem' }}>
-          <div className="card-premium" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '2rem' }}>🖥️</div>
+        <div className="cmdb-stats-grid">
+          <div className="card-premium cmdb-stat-box">
+            <div className="cmdb-stat-icon">🖥️</div>
             <div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.total}</div>
-              <div className="muted-text" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Total Activos</div>
+              <div className="cmdb-stat-val">{stats.total}</div>
+              <div className="muted-text cmdb-stat-lbl">Total Activos</div>
             </div>
           </div>
-          <div className="card-premium" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid var(--color-primary)' }}>
-            <div style={{ fontSize: '2rem' }}>🟢</div>
+          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid var(--color-primary)' }}>
+            <div className="cmdb-stat-icon">🟢</div>
             <div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.online}</div>
-              <div className="muted-text" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>En Línea</div>
+              <div className="cmdb-stat-val">{stats.online}</div>
+              <div className="muted-text cmdb-stat-lbl">En Línea</div>
             </div>
           </div>
-          <div className="card-premium" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #f59e0b' }}>
-            <div style={{ fontSize: '2rem' }}>⚠️</div>
+          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid #f59e0b' }}>
+            <div className="cmdb-stat-icon">⚠️</div>
             <div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.warning}</div>
-              <div className="muted-text" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>En Riesgo / Offline</div>
+              <div className="cmdb-stat-val">{stats.warning}</div>
+              <div className="muted-text cmdb-stat-lbl">En Riesgo / Offline</div>
             </div>
           </div>
-          <div className="card-premium" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem' }}>
-            <div style={{ fontSize: '2rem' }}>🌐</div>
+          <div className="card-premium cmdb-stat-box">
+            <div className="cmdb-stat-icon">🌐</div>
             <div>
-              <div style={{ fontSize: '1.5rem', fontWeight: 800 }}>{stats.windows}W / {stats.linux}L</div>
-              <div className="muted-text" style={{ fontSize: '0.75rem', textTransform: 'uppercase' }}>Windows / Linux</div>
+              <div className="cmdb-stat-val">{stats.windows}W / {stats.linux}L</div>
+              <div className="muted-text cmdb-stat-lbl">Windows / Linux</div>
             </div>
           </div>
         </div>

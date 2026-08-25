@@ -855,12 +855,6 @@ export default function Assets() {
                       >
                         <td>
                           <strong>{asset.hostname}</strong>
-                          {!['Monitor', 'Monitores', 'Perifericos'].includes(asset.deviceType) && (
-                            <>
-                              <div className="muted-text">{asset.ipAddress}</div>
-                              <div className="muted-text">{asset.osType} {asset.osVersion}</div>
-                            </>
-                          )}
                         </td>
                         <td>
                           <div className="muted-text">{asset.brand || 'Sin marca'} {asset.model || ''}</div>

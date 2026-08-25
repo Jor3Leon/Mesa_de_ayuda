@@ -1,4 +1,5 @@
 import { useEffect, useMemo, useState, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { BrowserRouter as Router, Link, Navigate, Route, Routes, useLocation } from 'react-router-dom';
 import './index.css';
 import { apiRequest, clearStoredSession, getStoredSession, setStoredSession } from './lib/api';
@@ -16,6 +17,16 @@ import Roles from './views/Roles';
 import StandarUserPortal from './views/StandarUserPortal';
 import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
+
+function getShortRoleLabel(role) {
+  const normalized = (role || '').trim().toUpperCase();
+  if (normalized === 'ADMIN' || normalized === 'ADMINISTRADOR') return 'Admin';
+  if (normalized === 'LEVEL_1' || normalized === 'NIVEL 1') return 'Nivel 1';
+  if (normalized === 'LEVEL_2' || normalized === 'NIVEL 2') return 'Nivel 2';
+  if (normalized === 'LEVEL_3' || normalized === 'NIVEL 3') return 'Nivel 3';
+  if (normalized === 'USUARIO ESTANDAR' || normalized === 'USUARIO' || normalized === 'STANDARD_USER') return 'Usuario';
+  return role || 'Rol';
+}
 
 // Jerarquía de roles: cada rol puede cambiar a los roles listados debajo
 const ROLE_HIERARCHY = {
@@ -153,14 +164,15 @@ function ProfileModal({ user, onClose, onSave }) {
     }
   }
 
-  return (
-    <div className="modal-overlay" role="presentation" onClick={onClose}>
+  return createPortal(
+    <div className="modal-overlay" role="presentation" onClick={onClose} style={{ zIndex: 99999, position: 'fixed', inset: 0 }}>
       <div
         className="modal-card profile-modal-card"
         role="dialog"
         aria-modal="true"
         aria-labelledby="profile-modal-title"
         onClick={(event) => event.stopPropagation()}
+        style={{ position: 'relative', zIndex: 100000 }}
       >
         <div className="section-heading" style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: '0.75rem' }}>
           <div>
@@ -251,7 +263,8 @@ function ProfileModal({ user, onClose, onSave }) {
           </div>
         </form>
       </div>
-    </div>
+    </div>,
+    document.body
   );
 }
 
@@ -520,16 +533,16 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
         style={{
           cursor: 'pointer',
           width: 'auto',
-          maxWidth: isMobile ? '108px' : 'none',
-          height: isMobile ? '28px' : 'auto',
-          padding: isMobile ? '0.15rem 0.45rem' : '0.45rem 0.85rem',
-          fontSize: isMobile ? '0.68rem' : '0.8rem',
+          maxWidth: isMobile ? '82px' : 'none',
+          height: isMobile ? '26px' : 'auto',
+          padding: isMobile ? '0.1rem 0.38rem' : '0.45rem 0.85rem',
+          fontSize: isMobile ? '0.66rem' : '0.8rem',
           border: isImpersonating ? `1.5px solid ${getRoleColor(viewAsRole)}` : '1px solid #e2e8f0',
           background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : '#f8fafc',
           transition: 'all 0.2s ease',
           display: 'inline-flex',
           alignItems: 'center',
-          gap: isMobile ? '0.25rem' : '0.4rem',
+          gap: isMobile ? '0.2rem' : '0.4rem',
           borderRadius: isMobile ? '7px' : '10px',
           fontWeight: 700,
           color: isImpersonating ? getRoleColor(viewAsRole) : '#334155',
@@ -537,7 +550,7 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
         }}
         title="Cambiar vista de rol"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.25rem' : '0.45rem', minWidth: 0, overflow: 'hidden' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.2rem' : '0.45rem', minWidth: 0, overflow: 'hidden' }}>
           <span 
             className="status-dot" 
             style={{ 
@@ -547,8 +560,8 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
               flexShrink: 0,
             }} 
           />
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '68px' : 'none' }}>
-            {getRoleLabel(viewAsRole || realRole)}
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '46px' : 'none' }}>
+            {isMobile ? getShortRoleLabel(viewAsRole || realRole) : getRoleLabel(viewAsRole || realRole)}
           </span>
         </div>
         <svg
@@ -561,12 +574,12 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
         </svg>
       </button>
 
-      {isOpen && isMobile && (
+      {isOpen && isMobile && createPortal(
         <div 
           className="modal-overlay" 
           role="presentation" 
           onClick={() => setIsOpen(false)}
-          style={{ zIndex: 99999, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)' }}
+          style={{ zIndex: 99999, position: 'fixed', inset: 0, background: 'rgba(15, 23, 42, 0.65)', backdropFilter: 'blur(6px)', display: 'flex', alignItems: 'center', justifyContent: 'center', padding: '1rem' }}
         >
           <div
             className="modal-card"
@@ -574,10 +587,12 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
             aria-modal="true"
             onClick={(e) => e.stopPropagation()}
             style={{
+              position: 'relative',
+              zIndex: 100000,
               width: 'min(92vw, 360px)',
               padding: '1.2rem',
               borderRadius: '18px',
-              boxShadow: '0 24px 48px rgba(0,0,0,0.3)',
+              boxShadow: '0 24px 48px rgba(0,0,0,0.35)',
               maxHeight: 'calc(100vh - 4rem)',
               overflowY: 'auto',
               background: '#ffffff',
@@ -687,7 +702,8 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
               <span>ℹ️</span> <span>Modifica la vista de la interfaz, sin alterar permisos de BD.</span>
             </div>
           </div>
-        </div>
+        </div>,
+        document.body
       )}
 
       {isOpen && !isMobile && (

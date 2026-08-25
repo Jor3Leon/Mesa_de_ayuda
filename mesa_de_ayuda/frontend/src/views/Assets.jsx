@@ -753,34 +753,33 @@ export default function Assets() {
             <h3>Consola de inventario</h3>
             <p>Busqueda operativa, filtros por estado y acceso directo a acciones del dispositivo.</p>
           </div>
-          <div className="toolbar" style={{ gap: '0.8rem' }}>
-            <div className="inventory-actions-group" style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
+          <div className="toolbar inventory-top-toolbar">
+            <div className="inventory-actions-group">
               <button 
                 type="button" 
-                className="btn-ghost" 
-                style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', border: 'none', borderRadius: 0, fontWeight: 600, color: '#1a437e', whiteSpace: 'nowrap' }}
+                className="btn-ghost inventory-export-btn" 
                 onClick={() => downloadInventory('XLS')}
               >
                 📊 Excel Estructurado
               </button>
               <button 
                 type="button" 
-                className="btn-ghost" 
-                style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', border: 'none', borderLeft: '1px solid var(--color-border)', borderRadius: 0, fontWeight: 600, color: '#e53e3e', whiteSpace: 'nowrap' }}
+                className="btn-ghost inventory-export-btn export-pdf" 
                 onClick={() => downloadInventory('PRINT')}
               >
                 📄 Reporte PDF
               </button>
               <button 
                 type="button" 
-                className="btn-ghost" 
-                style={{ padding: '0.6rem 1rem', fontSize: '0.82rem', border: 'none', borderLeft: '1px solid var(--color-border)', borderRadius: 0, fontWeight: 600, color: '#718096', whiteSpace: 'nowrap' }}
+                className="btn-ghost inventory-export-btn export-json" 
                 onClick={() => downloadInventory('JSON')}
               >
                 🗂️ JSON
               </button>
             </div>
-            <button type="button" className="btn" style={{ background: '#002E5D', color: '#fff', boxShadow: '0 2px 4px rgba(0,0,0,0.1)', padding: '0.6rem 1.5rem', borderRadius: '10px' }} onClick={handleNew}>+ Nuevo dispositivo</button>
+            <button type="button" className="btn inventory-new-btn" onClick={handleNew}>
+              + Nuevo dispositivo
+            </button>
           </div>
         </div>
 

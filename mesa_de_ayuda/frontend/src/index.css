@@ -3855,5 +3855,143 @@ tbody tr:hover {
   }
 }
 
+/* ─── CMDB Content Grid Master-Detail & Compact Mobile Rules ─── */
+.cmdb-info-card {
+  display: flex;
+  flex-direction: column;
+  gap: 0.5rem;
+  font-size: 0.85rem;
+  background: #ffffff;
+  border: 1px solid #e2e8f0;
+  padding: 1rem;
+  border-radius: 12px;
+}
+
+.cmdb-info-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.cmdb-info-val {
+  font-weight: 600;
+  text-align: right;
+}
+
+.cmdb-info-val.highlight {
+  font-weight: 700;
+  color: var(--color-primary);
+}
+
+.cmdb-info-val.mono {
+  font-family: monospace;
+}
+
+.cmdb-mobile-back-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .cmdb-content-grid {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .cmdb-mobile-back-btn {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.85rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(15, 157, 58, 0.08);
+    color: var(--color-primary);
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 157, 58, 0.2);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .cmdb-content-grid.mobile-show-table .cmdb-360-panel {
+    display: none !important;
+  }
+
+  .cmdb-content-grid.mobile-show-table .cmdb-table-section {
+    display: flex !important;
+    width: 100% !important;
+  }
+
+  .cmdb-content-grid.mobile-show-360 .cmdb-table-section {
+    display: none !important;
+  }
+
+  .cmdb-content-grid.mobile-show-360 .cmdb-360-panel {
+    display: block !important;
+    width: 100% !important;
+    position: static !important;
+  }
+
+  /* Compact Table for Mobile (Imagen 1) */
+  .cmdb-table-header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .cmdb-table-header h3 {
+    font-size: 0.95rem !important;
+  }
+
+  .cmdb-table-shell table th,
+  .cmdb-table-shell table td {
+    padding: 0.45rem 0.55rem !important;
+    font-size: 0.74rem !important;
+  }
+
+  .cmdb-search-bar {
+    padding: 0.65rem !important;
+    gap: 0.5rem !important;
+  }
+
+  .cmdb-search-bar input,
+  .cmdb-search-bar select {
+    padding: 0.45rem 0.65rem !important;
+    font-size: 0.76rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* Compact Vista 360 Container (Imagen 2) */
+  .cmdb-360-header {
+    padding: 0.75rem 1rem !important;
+  }
+
+  .cmdb-360-header h3 {
+    font-size: 1.05rem !important;
+  }
+
+  .cmdb-info-card {
+    padding: 0.75rem !important;
+    gap: 0.4rem !important;
+  }
+
+  .cmdb-info-row {
+    flex-wrap: wrap;
+    font-size: 0.75rem !important;
+  }
+
+  .cmdb-info-val {
+    font-size: 0.75rem !important;
+    word-break: break-word;
+    max-width: 60%;
+  }
+
+  .cmdb-360-panel button.btn {
+    padding: 0.6rem 0.75rem !important;
+    font-size: 0.78rem !important;
+    border-radius: 10px !important;
+  }
+}
+
+
 
 

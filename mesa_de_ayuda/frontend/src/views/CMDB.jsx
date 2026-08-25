@@ -50,6 +50,7 @@ export default function CMDB() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState('');
   const [selectedAsset, setSelectedAsset] = useState(null);
+  const [showMobile360, setShowMobile360] = useState(false);
   const [search, setSearch] = useState('');
   const [filterType, setFilterType] = useState('ALL');
 
@@ -239,12 +240,12 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
       {error && <div className="feedback error" style={{ margin: '1rem 0' }}>{error}</div>}
 
-      <div className={`cmdb-content-grid ${selectedAsset ? 'has-selected' : ''}`}>
+      <div className={`cmdb-content-grid ${selectedAsset ? 'has-selected' : ''} ${showMobile360 ? 'mobile-show-360' : 'mobile-show-table'}`}>
         
         {/* Tabla de Activos */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-          <div className="card-premium" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
-            <div className="field" style={{ flex: 1, minWidth: '280px' }}>
+        <div className="cmdb-table-section" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="card-premium cmdb-search-bar" style={{ padding: '1rem', display: 'flex', gap: '1rem', alignItems: 'center', flexWrap: 'wrap' }}>
+            <div className="field" style={{ flex: 1, minWidth: '240px' }}>
               <input 
                 type="text" 
                 placeholder="Buscar por hostname, IP, serial o usuario..." 
@@ -253,7 +254,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 style={{ borderRadius: '12px', padding: '0.8rem 1.2rem', border: '1.5px solid #e2e8f0', width: '100%' }}
               />
             </div>
-            <div className="field" style={{ minWidth: '160px' }}>
+            <div className="field" style={{ minWidth: '150px' }}>
               <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ borderRadius: '12px', padding: '0.8rem', width: '100%' }}>
                 <option value="ALL">Todos los Sistemas</option>
                 <option value="Windows">Windows</option>
@@ -263,13 +264,13 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
             </div>
           </div>
 
-          <article className="card-premium" style={{ padding: 0, overflow: 'hidden' }}>
-            <div style={{ padding: '1.2rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <article className="card-premium cmdb-table-card" style={{ padding: 0, overflow: 'hidden' }}>
+            <div className="cmdb-table-header" style={{ padding: '1.2rem 1.5rem', borderBottom: '1px solid var(--color-border)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, fontSize: '1.2rem' }}>Inventario de Dispositivos</h3>
               <span className="badge" style={{ background: '#f1f5f9', color: '#475569' }}>{filteredAssets.length} equipos registrados</span>
             </div>
             
-            <div className="table-shell">
+            <div className="table-shell cmdb-table-shell">
               {loading ? (
                 <div style={{ padding: '3rem', textAlign: 'center' }}><div className="loader"></div></div>
               ) : filteredAssets.length === 0 ? (
@@ -292,7 +293,10 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                     {filteredAssets.map((asset) => (
                       <tr 
                         key={asset.id} 
-                        onClick={() => setSelectedAsset(asset)}
+                        onClick={() => {
+                          setSelectedAsset(asset);
+                          setShowMobile360(true);
+                        }}
                         style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedAsset?.id === asset.id ? 'rgba(15, 157, 58, 0.08)' : 'transparent' }}
                         className={selectedAsset?.id === asset.id ? 'asset-row-active' : ''}
                       >
@@ -340,10 +344,17 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
         {/* Panel Lateral: Vista 360° Activo Mejorada */}
         {selectedAsset && (
-          <aside className="card-premium animate-fade-in" style={{ padding: 0, position: 'sticky', top: '1.5rem', height: 'fit-content', border: '1.5px solid var(--color-primary)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}>
+          <aside className="card-premium animate-fade-in cmdb-360-panel" style={{ padding: 0, position: 'sticky', top: '1.5rem', height: 'fit-content', border: '1.5px solid var(--color-primary)', boxShadow: '0 10px 25px -5px rgba(0, 0, 0, 0.1), 0 8px 10px -6px rgba(0, 0, 0, 0.1)' }}>
+            <button 
+              type="button" 
+              className="cmdb-mobile-back-btn" 
+              onClick={() => setShowMobile360(false)}
+            >
+              ← Volver al inventario de CMDB
+            </button>
             
             {/* Header Vista 360 */}
-            <div style={{ padding: '1.2rem 1.5rem', background: 'linear-gradient(180deg, #f8fafc 0%, #fff 100%)', borderBottom: '1px solid var(--color-border)' }}>
+            <div className="cmdb-360-header" style={{ padding: '1.2rem 1.5rem', background: 'linear-gradient(180deg, #f8fafc 0%, #fff 100%)', borderBottom: '1px solid var(--color-border)' }}>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
                 <div>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
@@ -354,7 +365,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                     ID Interno: <strong>ASSET-{selectedAsset.id.toString().padStart(5, '0')}</strong>
                   </p>
                 </div>
-                <button className="btn-icon" onClick={() => setSelectedAsset(null)} title="Cerrar panel">✕</button>
+                <button className="btn-icon" onClick={() => { setSelectedAsset(null); setShowMobile360(false); }} title="Cerrar panel">✕</button>
               </div>
             </div>
 
@@ -472,26 +483,26 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                   <span>⚙️</span> Ficha Técnica & Red
                 </h4>
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem', fontSize: '0.85rem', background: '#fff', border: '1px solid #e2e8f0', padding: '1rem', borderRadius: '12px' }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                <div className="cmdb-info-card">
+                  <div className="cmdb-info-row">
                     <span className="muted-text">👤 Usuario Sesión:</span>
-                    <span style={{ fontWeight: 600 }}>{selectedAsset.assignedUser || 'Usuario Local'}</span>
+                    <span className="cmdb-info-val">{selectedAsset.assignedUser || 'Usuario Local'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="cmdb-info-row">
                     <span className="muted-text">🏷️ Serial / Tag:</span>
-                    <span style={{ fontWeight: 700, color: 'var(--color-primary)' }}>{selectedAsset.serialNumber || '---'}</span>
+                    <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="cmdb-info-row">
                     <span className="muted-text">🏢 Fabricante/Board:</span>
-                    <span style={{ fontWeight: 600, textAlign: 'right', fontSize: '0.8rem' }}>{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
+                    <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="cmdb-info-row">
                     <span className="muted-text">🌐 IP Local:</span>
-                    <span style={{ fontWeight: 600, fontFamily: 'monospace' }}>{selectedAsset.ipAddress || '---'}</span>
+                    <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
                   </div>
-                  <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+                  <div className="cmdb-info-row">
                     <span className="muted-text">💻 Sistema:</span>
-                    <span style={{ fontWeight: 600 }}>{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
+                    <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
                   </div>
                 </div>
               </div>

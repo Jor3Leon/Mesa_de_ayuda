@@ -231,42 +231,52 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
   return (
     <div className="view-container">
-      <section className="hero-panel glass-card">
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.4rem' }}>
+      <section className="hero-panel cmdb-hero-panel">
+        <div className="cmdb-hero-left">
+          <div className="cmdb-hero-live-pill">
+            <span className="live-dot"></span>
+            MONITOREO CMDB 360° EN TIEMPO REAL
+          </div>
           <p className="eyebrow">Estrategia de Activos & Infraestructura</p>
-          <h2>CMDB Operacional 360°</h2>
+          <h2>Consola Operativa CMDB</h2>
           <p className="muted-text">
-            Monitoreo en tiempo real de la salud del parque informático, inventario de hardware y software, y gestión de mantenimientos preventivos y correctivos.
+            Monitoreo en tiempo real de la salud del parque informático, inventario de hardware y software, y gestión de mantenimientos preventivos.
           </p>
         </div>
         
         <div className="cmdb-stats-grid">
-          <div className="card-premium cmdb-stat-box">
-            <div className="cmdb-stat-icon">🖥️</div>
-            <div>
+          <div className="cmdb-stat-box default">
+            <div className="cmdb-stat-icon-wrap default">🖥️</div>
+            <div className="cmdb-stat-info">
               <div className="cmdb-stat-val">{stats.total}</div>
-              <div className="muted-text cmdb-stat-lbl">Total Activos</div>
+              <div className="cmdb-stat-lbl">Total Activos</div>
             </div>
           </div>
-          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid var(--color-primary)' }}>
-            <div className="cmdb-stat-icon">🟢</div>
-            <div>
-              <div className="cmdb-stat-val">{stats.online} <small style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--color-primary)' }}>({stats.healthScore}%)</small></div>
-              <div className="muted-text cmdb-stat-lbl">En Línea (Salud)</div>
+
+          <div className="cmdb-stat-box success">
+            <div className="cmdb-stat-icon-wrap success">🟢</div>
+            <div className="cmdb-stat-info">
+              <div className="cmdb-stat-val">
+                {stats.online} 
+                <span className="cmdb-stat-tag success">{stats.healthScore}% Salud</span>
+              </div>
+              <div className="cmdb-stat-lbl">En Línea</div>
             </div>
           </div>
-          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid #f59e0b' }}>
-            <div className="cmdb-stat-icon">⚠️</div>
-            <div>
+
+          <div className="cmdb-stat-box warning">
+            <div className="cmdb-stat-icon-wrap warning">⚠️</div>
+            <div className="cmdb-stat-info">
               <div className="cmdb-stat-val">{stats.warning}</div>
-              <div className="muted-text cmdb-stat-lbl">En Riesgo / Offline</div>
+              <div className="cmdb-stat-lbl">En Riesgo / Offline</div>
             </div>
           </div>
-          <div className="card-premium cmdb-stat-box" style={{ borderLeft: '4px solid #0284c7' }}>
-            <div className="cmdb-stat-icon">🛡️</div>
-            <div>
+
+          <div className="cmdb-stat-box info">
+            <div className="cmdb-stat-icon-wrap info">🛡️</div>
+            <div className="cmdb-stat-info">
               <div className="cmdb-stat-val">{stats.securityScore}%</div>
-              <div className="muted-text cmdb-stat-lbl">Cobertura Endpoint</div>
+              <div className="cmdb-stat-lbl">Cobertura Endpoint</div>
             </div>
           </div>
         </div>

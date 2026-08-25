@@ -261,9 +261,10 @@ function getTicketRoutes(prisma) {
         },
       });
 
-      // Activity Recording
+      // Activity Recording - Auditoría completa de cambios
       const activitiesToCreate = [];
 
+      // 1. Estado
       if (updateData.status !== undefined && updateData.status !== targetTicket.status) {
         const currentResponsibleIds = parseResponsibleUserIds(updateData.responsibleUserIds || targetTicket.responsibleUserIds);
         
@@ -302,20 +303,123 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // Record other changes if technician
-      if (hasEditPermission) {
-        const fields = ['title', 'priority', 'category', 'ticketType', 'locationId', 'sla'];
-        fields.forEach(f => {
-          if (updateData[f] !== undefined && updateData[f] !== targetTicket[f]) {
-            activitiesToCreate.push({
-              ticketId: id,
-              user: req.auth.user.name,
-              action: 'UPDATED',
-              field: f.charAt(0).toUpperCase() + f.slice(1),
-              oldValue: String(targetTicket[f] || 'Ninguno'),
-              newValue: String(updateData[f]),
-            });
-          }
+      // 2. Tipo (ticketType)
+      if (updateData.ticketType !== undefined && updateData.ticketType !== targetTicket.ticketType) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Tipo',
+          oldValue: String(targetTicket.ticketType || 'Sin Tipo'),
+          newValue: String(updateData.ticketType || 'Sin Tipo'),
+        });
+      }
+
+      // 3. Categoría (category)
+      if (updateData.category !== undefined && updateData.category !== targetTicket.category) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Categoría',
+          oldValue: String(targetTicket.category || 'Sin Categoría'),
+          newValue: String(updateData.category || 'Sin Categoría'),
+        });
+      }
+
+      // 4. Prioridad (priority)
+      if (updateData.priority !== undefined && updateData.priority !== targetTicket.priority) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Prioridad',
+          oldValue: String(targetTicket.priority || 'Sin Prioridad'),
+          newValue: String(updateData.priority || 'Sin Prioridad'),
+        });
+      }
+
+      // 5. ANS / SLA (sla)
+      if (updateData.sla !== undefined && updateData.sla !== targetTicket.sla) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'ANS',
+          oldValue: String(targetTicket.sla || 'Sin ANS'),
+          newValue: String(updateData.sla || 'Sin ANS'),
+        });
+      }
+
+      // 6. Ubicación (locationId)
+      if (updateData.locationId !== undefined && updateData.locationId !== targetTicket.locationId) {
+        const locationIds = [targetTicket.locationId, updateData.locationId].filter((lid) => Number.isInteger(lid) && lid > 0);
+        const locs = locationIds.length > 0 ? await prisma.location.findMany({ where: { id: { in: locationIds } } }) : [];
+        const oldLoc = locs.find(l => l.id === targetTicket.locationId)?.name || 'Sin Ubicación';
+        const newLoc = locs.find(l => l.id === updateData.locationId)?.name || 'Sin Ubicación';
+
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Ubicación',
+          oldValue: oldLoc,
+          newValue: newLoc,
+        });
+      }
+
+      // 7. Seguimiento / Observador (observerId)
+      if (updateData.observerId !== undefined && updateData.observerId !== targetTicket.observerId) {
+        const observerIds = [targetTicket.observerId, updateData.observerId].filter((uid) => Number.isInteger(uid) && uid > 0);
+        const obsUsers = observerIds.length > 0 ? await prisma.user.findMany({ where: { id: { in: observerIds } } }) : [];
+        const oldObs = obsUsers.find(u => u.id === targetTicket.observerId)?.name || 'Sin Asignar';
+        const newObs = obsUsers.find(u => u.id === updateData.observerId)?.name || 'Sin Asignar';
+
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Seguimiento',
+          oldValue: oldObs,
+          newValue: newObs,
+        });
+      }
+
+      // 8. Técnicos Asignados / Participantes (responsibleUserIds)
+      if (updateData.responsibleUserIds !== undefined) {
+        const oldRespIds = parseResponsibleUserIds(targetTicket.responsibleUserIds);
+        const newRespIds = parseResponsibleUserIds(updateData.responsibleUserIds);
+
+        const oldSorted = [...oldRespIds].sort().join(',');
+        const newSorted = [...newRespIds].sort().join(',');
+
+        if (oldSorted !== newSorted) {
+          const allUserIds = [...new Set([...oldRespIds, ...newRespIds])];
+          const techUsers = allUserIds.length > 0 ? await prisma.user.findMany({ where: { id: { in: allUserIds } } }) : [];
+          
+          const oldTechNames = oldRespIds.map(uid => techUsers.find(u => u.id === uid)?.name || `ID ${uid}`).join(', ') || 'Sin Asignar';
+          const newTechNames = newRespIds.map(uid => techUsers.find(u => u.id === uid)?.name || `ID ${uid}`).join(', ') || 'Sin Asignar';
+
+          activitiesToCreate.push({
+            ticketId: id,
+            user: req.auth.user.name,
+            action: 'UPDATED',
+            field: 'Técnico Asignado',
+            oldValue: oldTechNames,
+            newValue: newTechNames,
+          });
+        }
+      }
+
+      // 9. Título (title)
+      if (updateData.title !== undefined && updateData.title !== targetTicket.title) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Título',
+          oldValue: targetTicket.title,
+          newValue: updateData.title,
         });
       }
 

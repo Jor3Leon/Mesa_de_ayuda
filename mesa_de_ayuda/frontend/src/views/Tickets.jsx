@@ -869,7 +869,9 @@ export default function Tickets() {
         setTickets((currentTickets) => currentTickets.map(t => t.id === ticket.id ? ticket : t));
         setSelectedTicket(ticket);
         handleSelectTicket(ticket); // Synchronize form state with server response
-        if (ticket.activities) setActivities(ticket.activities);
+        
+        const updatedActs = await apiRequest(`/tickets/${ticket.id}/activities`).catch(() => []);
+        setActivities(updatedActs);
         
         if (wasUnassigned && isNowAssigned) {
           setFeedback('Ticket asignado correctamente.');
@@ -1177,7 +1179,7 @@ export default function Tickets() {
                   Elementos {selectedTicket.assetId && <span style={{float: 'right', background: '#e0edf9', color: '#002E5D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>1</span>}
                 </div>
                 <div onClick={() => setActiveTab('historico')} style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #e0e0e0', cursor: 'pointer', background: activeTab === 'historico' ? '#f8f9fa' : 'transparent', fontWeight: activeTab === 'historico' ? 700 : 400, borderLeft: activeTab === 'historico' ? '3px solid #29b6f6' : '3px solid transparent' }}>
-                  Histórico <span style={{float: 'right', background: '#e0edf9', color: '#002E5D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>{visibleActivities.length}</span>
+                  Histórico <span style={{float: 'right', background: '#e0edf9', color: '#002E5D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>{activities.length}</span>
                 </div>
               </div>
 
@@ -1819,7 +1821,7 @@ export default function Tickets() {
                     <div className="ticket-history-header" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '1.25rem 1.5rem', borderBottom: '1px solid #e2e8f0', background: '#f8fafc' }}>
                       <div>
                         <h3 style={{ margin: 0, fontSize: '1rem', fontWeight: 700, color: '#1e293b' }}>Línea de Tiempo</h3>
-                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{visibleActivities.length} eventos registrados</div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b' }}>{activities.length} eventos registrados</div>
                       </div>
                       <div style={{ background: '#e2e8f0', padding: '0.3rem 0.8rem', borderRadius: '20px', fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>Auditoría</div>
                     </div>
@@ -1829,24 +1831,31 @@ export default function Tickets() {
                         {/* Eje de la línea de tiempo */}
                         <div style={{ position: 'absolute', left: '0.75rem', top: '0.5rem', bottom: '0.5rem', width: '2px', background: '#f1f5f9' }} />
                         
-                        {visibleActivities.length === 0 ? (
+                        {activities.length === 0 ? (
                           <div style={{ padding: '3rem 1rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
                             <div style={{fontSize: '2rem', marginBottom: '0.5rem'}}>📋</div>
                             No hay historial registrado para este ticket.
                           </div>
                         ) : (
-                          [...visibleActivities].reverse().map((act, idx) => {
-                            const formatAction = (a) => {
+                          [...activities].reverse().map((act, idx) => {
+                            const formatAction = (activity) => {
+                              if (activity.field && activity.field !== 'Estado' && activity.field !== 'Comentario') {
+                                return activity.field.toUpperCase();
+                              }
                               const m = { 
                                 'CREATED': 'CREADO', 'UPDATED': 'ACTUALIZADO', 'SCHEDULED': 'PROGRAMADO', 
-                                'IN_PROGRESS': 'PROGRESO', 'RESOLVED': 'RESUELTO', 'CLOSED': 'CERRADO', 
+                                'IN_PROGRESS': 'EN PROGRESO', 'RESOLVED': 'RESUELTO', 'CLOSED': 'CERRADO', 
                                 'NEW': 'NUEVO', 'OPEN': 'ABIERTO', 'COMMENT': 'COMENTARIO', 'COMMENTED': 'COMENTARIO', 'POSTPONED': 'POSPUESTO' 
                               };
-                              return m[a] || a;
+                              return m[activity.action] || activity.action;
                             };
 
                             const formatValue = (v) => {
-                              const m = { 'NEW': 'Nuevo', 'OPEN': 'Abierto', 'IN_PROGRESS': 'En Progreso', 'RESOLVED': 'Resuelto', 'CLOSED': 'Cerrado', 'SCHEDULED': 'Programado' };
+                              const m = { 
+                                'NEW': 'Nuevo', 'OPEN': 'Abierto', 'IN_PROGRESS': 'En Progreso', 
+                                'RESOLVED': 'Resuelto', 'CLOSED': 'Cerrado', 'SCHEDULED': 'Programado',
+                                'POSTPONED': 'Pospuesto'
+                              };
                               return m[v] || v;
                             };
 
@@ -1860,16 +1869,36 @@ export default function Tickets() {
                               return mapped.join(', ');
                             };
 
-                            // Colores según acción
-                            let dotColor = '#cbd5e1'; // default
+                            // Colores según acción y campo
+                            let dotColor = '#64748b'; // default
                             let actionBg = '#f1f5f9';
-                            let actionColor = '#64748b';
+                            let actionColor = '#475569';
 
-                            if (act.action === 'CREATED') { dotColor = '#10b981'; actionBg = '#ecfdf5'; actionColor = '#059669'; }
-                            else if (act.action === 'RESOLVED') { dotColor = '#3b82f6'; actionBg = '#eff6ff'; actionColor = '#2563eb'; }
-                            else if (act.action === 'COMMENTED') { dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#7c3aed'; }
-                            else if (act.action === 'SCHEDULED') { dotColor = '#f59e0b'; actionBg = '#fffbeb'; actionColor = '#d97706'; }
-                            else if (act.field === 'Estado') { dotColor = '#6366f1'; actionBg = '#eef2ff'; actionColor = '#4f46e5'; }
+                            if (act.action === 'CREATED') {
+                              dotColor = '#10b981'; actionBg = '#ecfdf5'; actionColor = '#059669';
+                            } else if (act.action === 'RESOLVED') {
+                              dotColor = '#3b82f6'; actionBg = '#eff6ff'; actionColor = '#2563eb';
+                            } else if (act.action === 'COMMENTED') {
+                              dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#7c3aed';
+                            } else if (act.action === 'SCHEDULED') {
+                              dotColor = '#f59e0b'; actionBg = '#fffbeb'; actionColor = '#d97706';
+                            } else if (act.field === 'Estado') {
+                              dotColor = '#6366f1'; actionBg = '#eef2ff'; actionColor = '#4f46e5';
+                            } else if (act.field === 'Técnico Asignado' || act.field === 'Responsables') {
+                              dotColor = '#0284c7'; actionBg = '#f0f9ff'; actionColor = '#0369a1';
+                            } else if (act.field === 'Categoría') {
+                              dotColor = '#059669'; actionBg = '#ecfdf5'; actionColor = '#047857';
+                            } else if (act.field === 'Tipo') {
+                              dotColor = '#d97706'; actionBg = '#fffbeb'; actionColor = '#b45309';
+                            } else if (act.field === 'ANS') {
+                              dotColor = '#ea580c'; actionBg = '#fff7ed'; actionColor = '#c2410c';
+                            } else if (act.field === 'Ubicación') {
+                              dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#6d28d9';
+                            } else if (act.field === 'Seguimiento') {
+                              dotColor = '#0ea5e9'; actionBg = '#f0fdfa'; actionColor = '#0f766e';
+                            } else if (act.field === 'Prioridad') {
+                              dotColor = '#ef4444'; actionBg = '#fef2f2'; actionColor = '#b91c1c';
+                            }
 
                             return (
                               <div key={act.id} style={{ marginBottom: '1.5rem', position: 'relative' }}>
@@ -1889,7 +1918,7 @@ export default function Tickets() {
                                           fontSize: '0.65rem', fontWeight: 800, padding: '0.1rem 0.4rem', borderRadius: '4px',
                                           background: actionBg, color: actionColor, textTransform: 'uppercase'
                                         }}>
-                                          {formatAction(act.action)}
+                                          {formatAction(act)}
                                         </span>
                                       </div>
                                       
@@ -1915,7 +1944,7 @@ export default function Tickets() {
                                         ) : (
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
                                             <strong style={{ color: '#64748b' }}>{act.field}:</strong>
-                                            {act.oldValue && act.oldValue !== 'Ninguno' && act.oldValue !== 'Desconocida' && act.oldValue !== 'Sin asignar' && (
+                                            {act.oldValue && act.oldValue !== 'Ninguno' && act.oldValue !== 'Desconocida' && act.oldValue !== 'Sin asignar' && act.oldValue !== 'Sin Asignar' && act.oldValue !== 'Sin Ubicación' && act.oldValue !== 'Sin ANS' && act.oldValue !== 'Sin Categoría' && act.oldValue !== 'Sin Tipo' && (
                                               <>
                                                 <span style={{ color: '#94a3b8' }}>{(act.field === 'Responsables' || act.field === 'Seguimiento') ? mapUserIdsToNames(act.oldValue) : formatValue(act.oldValue)}</span>
                                                 <span style={{ color: '#cbd5e1' }}>→</span>

@@ -661,9 +661,8 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
   );
 }
 
-function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogout, isSidebarCollapsed, onToggleSidebar, onProfileUpdate }) {
+function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogout, isSidebarCollapsed, onToggleSidebar, onOpenProfile }) {
   const [searchQuery, setSearchQuery] = useState('');
-  const [isProfileOpen, setIsProfileOpen] = useState(false);
 
   const quickLinks = useMemo(
     () =>
@@ -734,19 +733,12 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
         )}
       </div>
 
-      {/* Acciones de cabecera en Mobile: Selector de Rol y Avatar */}
+      {/* Acciones de cabecera en Mobile: Avatar de perfil limpio */}
       <div className="header-mobile-actions show-mobile-flex">
-        <RoleSwitcher
-          user={user}
-          realRole={realRole}
-          viewAsRole={viewAsRole}
-          onRoleSwitch={onRoleSwitch}
-          isMobile={true}
-        />
         <button 
           type="button" 
           className="header-mobile-avatar-btn" 
-          onClick={() => setIsProfileOpen(true)}
+          onClick={onOpenProfile}
           title="Mi Perfil"
         >
           <UserAvatar user={user} size={32} />
@@ -785,7 +777,7 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
           </div>
         )}
 
-        <button type="button" className="profile-chip profile-chip-button" onClick={() => setIsProfileOpen(true)}>
+        <button type="button" className="profile-chip profile-chip-button" onClick={onOpenProfile}>
           <UserAvatar user={user} />
           <div>
             <strong>{user.name}</strong>
@@ -796,19 +788,11 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
           Salir
         </button>
       </div>
-
-      {isProfileOpen ? (
-        <ProfileModal
-          user={user}
-          onClose={() => setIsProfileOpen(false)}
-          onSave={onProfileUpdate}
-        />
-      ) : null}
     </header>
   );
 }
 
-function Sidebar({ user, navSections, isCollapsed, onClose, onLogout }) {
+function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isCollapsed, onClose, onLogout, onOpenProfile }) {
   const location = useLocation();
   const primaryItems = user?.role === 'USUARIO ESTANDAR' ? [] : [
     { name: 'Dashboard', path: '/', icon: 'dashboard', description: 'Métricas generales', requiredPermission: 'DASHBOARD_VIEW' },
@@ -915,13 +899,30 @@ function Sidebar({ user, navSections, isCollapsed, onClose, onLogout }) {
 
       {/* Footer del sidebar en mobile */}
       <div className="sidebar-mobile-footer">
-        <div className="sidebar-footer-user">
+        <div 
+          className="sidebar-footer-user" 
+          onClick={() => { onClose(); onOpenProfile(); }}
+          style={{ cursor: 'pointer' }}
+          title="Ver mi perfil"
+        >
           <UserAvatar user={user} size={36} />
           <div className="sidebar-footer-info">
             <strong>{user?.name}</strong>
             <small>{getRoleLabel(user?.role)}</small>
           </div>
         </div>
+
+        {/* Selector de rol en menú móvil */}
+        <div style={{ width: '100%' }}>
+          <RoleSwitcher
+            user={user}
+            realRole={realRole}
+            viewAsRole={viewAsRole}
+            onRoleSwitch={(role) => { onRoleSwitch(role); onClose(); }}
+            isMobile={false}
+          />
+        </div>
+
         <button 
           type="button" 
           className="sidebar-mobile-logout-btn" 
@@ -1088,7 +1089,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
         onLogout={onLogout}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
-        onProfileUpdate={onProfileUpdate}
+        onOpenProfile={() => setIsProfileOpen(true)}
       />
       <div className="main-layout">
         {/* Backdrop: toca fuera del sidebar en mobile para cerrarlo */}
@@ -1101,10 +1102,14 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
         )}
         <Sidebar
           user={effectiveUser}
+          realRole={user.role}
+          viewAsRole={viewAsRole}
+          onRoleSwitch={handleRoleSwitch}
           navSections={navSections}
           isCollapsed={isSidebarCollapsed}
           onClose={closeSidebar}
           onLogout={onLogout}
+          onOpenProfile={() => setIsProfileOpen(true)}
         />
         <main className="main-content">
           <Routes>

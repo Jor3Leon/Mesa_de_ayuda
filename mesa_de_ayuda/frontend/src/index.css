@@ -1043,19 +1043,21 @@ textarea {
 }
 
 .modal-overlay {
-  position: fixed;
-  inset: 0;
-  z-index: 2000;
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 1.25rem;
-  background: rgba(15, 23, 42, 0.55);
-  backdrop-filter: blur(6px);
-  overflow-y: auto;
+  position: fixed !important;
+  inset: 0 !important;
+  z-index: 99999 !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  padding: 1.25rem !important;
+  background: rgba(15, 23, 42, 0.65) !important;
+  backdrop-filter: blur(6px) !important;
+  overflow-y: auto !important;
 }
 
 .modal-card {
+  position: relative !important;
+  z-index: 100000 !important;
   width: min(100%, 760px);
   max-height: calc(100vh - 2.5rem);
   overflow-y: auto;
@@ -1063,12 +1065,12 @@ textarea {
   padding: 1.5rem;
   border: 1px solid rgba(255, 255, 255, 0.4);
   border-radius: 20px;
-  background: #ffffff;
-  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.22);
+  background: #ffffff !important;
+  box-shadow: 0 24px 56px rgba(0, 0, 0, 0.28);
 }
 
 .profile-modal-card {
-  width: min(100%, 480px);
+  width: min(100%, 480px) !important;
   padding: 1.5rem;
 }
 
@@ -2100,8 +2102,10 @@ tbody tr:hover {
    ════════════════════════════════════════════ */
 
 /* Utilidades de visibilidad */
-.hide-mobile { display: flex; }
-.show-mobile { display: none; }
+.hide-mobile { display: flex !important; }
+.show-mobile,
+.show-mobile-flex { display: none !important; }
+.show-mobile-block { display: none !important; }
 
 /* ── Tablet ≤960px ── */
 @media (max-width: 960px) and (hover: none), (max-width: 960px) and (pointer: coarse) {

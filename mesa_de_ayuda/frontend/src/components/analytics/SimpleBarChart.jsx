@@ -4,25 +4,8 @@ export default function SimpleBarChart({ data, title, color = '#3b82f6' }) {
   const max = Math.max(...data.map(d => d.value), 1);
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '16px',
-      padding: '24px',
-      border: '1px solid #e5e7eb',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <h4 style={{
-        margin: '0 0 24px 0',
-        fontSize: '0.9375rem',
-        color: '#1e293b',
-        fontWeight: 700,
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'space-between'
-      }}>
+    <div className="card analytics-chart-card">
+      <h4 className="analytics-card-title" style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
         {title}
         <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 500 }}>Tickets Activos</span>
       </h4>

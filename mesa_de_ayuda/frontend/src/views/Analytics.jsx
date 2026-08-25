@@ -77,38 +77,14 @@ export default function Analytics() {
   const sparklines = data?.summary?.sparklines || {};
 
   return (
-    <div style={{
-      padding: '28px 32px',
-      background: '#f1f5f9',
-      minHeight: '100vh',
-      fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif",
-    }}>
+    <div className="analytics-page view-container animate-fade-in">
       {/* ─── Header Section ─── */}
-      <div style={{
-        display: 'flex',
-        justifyContent: 'space-between',
-        alignItems: 'flex-start',
-        flexWrap: 'wrap',
-        gap: '24px',
-        marginBottom: '28px',
-      }}>
-        <div>
-          <h1 style={{
-            fontSize: '1.75rem',
-            fontWeight: 800,
-            color: '#0f172a',
-            margin: '0 0 8px 0',
-            letterSpacing: '-0.02em',
-          }}>
+      <div className="analytics-header-section">
+        <div className="analytics-header-info">
+          <h1 className="analytics-title">
             Analítica Operacional
           </h1>
-          <p style={{
-            fontSize: '0.875rem',
-            color: '#64748b',
-            margin: 0,
-            maxWidth: '520px',
-            lineHeight: 1.5,
-          }}>
+          <p className="analytics-subtitle muted-text">
             Esta vista consolida datos reales de tickets, activos y clientes para
             priorizar carga, capacidad y salud del servicio.
           </p>
@@ -118,12 +94,7 @@ export default function Analytics() {
       </div>
 
       {/* ─── KPI Cards Row ─── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(4, 1fr)',
-        gap: '20px',
-        marginBottom: '24px',
-      }}>
+      <div className="analytics-kpi-grid">
         <StatCard
           title="Total Tickets"
           value={(data?.summary?.totalTickets || 0).toLocaleString()}
@@ -157,12 +128,7 @@ export default function Analytics() {
       </div>
 
       {/* ─── Middle Row: Heatmap + Workload ─── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '20px',
-        marginBottom: '24px',
-      }}>
+      <div className="analytics-charts-grid">
         <HeatmapChart recentActivity={data.recentActivity} />
         <SimpleBarChart
           title="Carga por Técnico (Tickets Activos)"
@@ -172,11 +138,7 @@ export default function Analytics() {
       </div>
 
       {/* ─── Bottom Row: Priority + Status Donuts ─── */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: '1fr 1fr',
-        gap: '20px',
-      }}>
+      <div className="analytics-charts-grid">
         <SimplePieChart
           title="Distribución por Prioridad"
           data={priorityData}

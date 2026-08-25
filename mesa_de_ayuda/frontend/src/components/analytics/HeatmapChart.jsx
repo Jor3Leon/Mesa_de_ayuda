@@ -46,23 +46,9 @@ export default function HeatmapChart({ recentActivity = [], title = 'Mapa de Cal
   }
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '16px',
-      padding: '24px',
-      border: '1px solid #e5e7eb',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '20px' }}>
-        <h4 style={{
-          margin: 0,
-          fontSize: '0.9375rem',
-          color: '#1e293b',
-          fontWeight: 700,
-        }}>{title}</h4>
+    <div className="card analytics-chart-card">
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
+        <h4 className="analytics-card-title" style={{ margin: 0 }}>{title}</h4>
         <div style={{ textAlign: 'right' }}>
           <div style={{ fontSize: '0.875rem', fontWeight: 800, color: '#3b82f6' }}>{totalActivity}</div>
           <div style={{ fontSize: '0.625rem', color: '#94a3b8', fontWeight: 600, textTransform: 'uppercase' }}>Eventos 28d</div>

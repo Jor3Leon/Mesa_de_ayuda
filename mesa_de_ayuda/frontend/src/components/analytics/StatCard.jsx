@@ -52,94 +52,50 @@ export default function StatCard({ title, value, trend, iconType = 'tickets', co
 
   return (
     <div 
-      className="stat-card"
+      className="stat-card analytics-stat-card"
       style={{
-        background: 'white',
-        borderRadius: '16px',
-        padding: '20px 24px',
-        border: '1px solid #e5e7eb',
-        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-        display: 'flex',
-        flexDirection: 'column',
-        gap: '8px',
-        minWidth: 0,
-        position: 'relative',
-        overflow: 'hidden',
-        transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
-        cursor: 'default',
-      }}
-      onMouseEnter={(e) => {
-        e.currentTarget.style.transform = 'translateY(-4px)';
-        e.currentTarget.style.boxShadow = '0 12px 20px -8px rgba(0,0,0,0.1)';
-        e.currentTarget.style.borderColor = color;
-      }}
-      onMouseLeave={(e) => {
-        e.currentTarget.style.transform = 'translateY(0)';
-        e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.04)';
-        e.currentTarget.style.borderColor = '#e5e7eb';
+        '--card-accent': color,
+        borderLeft: `3px solid ${color}`,
       }}
     >
       {/* Header row: title + icon */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <span style={{
-          fontSize: '0.8125rem',
-          fontWeight: 600,
-          color: '#64748b',
-          letterSpacing: '0.01em',
-        }}>
+      <div className="analytics-stat-header">
+        <span className="analytics-stat-title">
           {title}
         </span>
-        <div style={{
-          width: '40px',
-          height: '40px',
-          borderRadius: '10px',
-          background: `${color}10`,
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-        }}>
+        <div 
+          className="analytics-stat-icon"
+          style={{ background: `${color}14` }}
+        >
           {CARD_ICONS[iconType] || CARD_ICONS.tickets}
         </div>
       </div>
 
       {/* Value */}
-      <h3 style={{
-        fontSize: '2.25rem',
-        fontWeight: 800,
-        color: color,
-        margin: 0,
-        lineHeight: 1.1,
-        letterSpacing: '-0.02em',
-      }}>
+      <h3 
+        className="analytics-stat-value"
+        style={{ color }}
+      >
         {value}
       </h3>
 
       {/* Footer row: Trend + Mini Sparkline */}
-      <div style={{ 
-        display: 'flex', 
-        justifyContent: 'space-between', 
-        alignItems: 'center',
-        marginTop: '4px'
-      }}>
+      <div className="analytics-stat-footer">
         {trend !== undefined && trend !== null && (
-          <span style={{
-            fontSize: '0.75rem',
-            fontWeight: 700,
-            color: trendColor,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '2px',
-            background: `${trendColor}10`,
-            padding: '2px 8px',
-            borderRadius: '12px',
-          }}>
+          <span 
+            className="analytics-stat-trend"
+            style={{
+              color: trendColor,
+              background: `${trendColor}12`,
+            }}
+          >
             {isPositive ? '↑' : trend < 0 ? '↓' : '→'} {Math.abs(trend)}%
           </span>
         )}
 
         {/* Dynamic Sparkline */}
-        <div style={{ width: '60px', height: '24px' }}>
-          <svg width="60" height="24" viewBox="0 0 100 24" fill="none">
+        <div className="analytics-stat-sparkline">
+          <svg width="100%" height="100%" viewBox="0 0 100 24" preserveAspectRatio="none" fill="none">
             <path
               d={sparkPath}
               stroke={trendColor}

@@ -39,37 +39,32 @@ export default function AnalyticsFilters({ filters, onChange }) {
   };
 
   return (
-    <div style={{
-      display: 'flex',
-      gap: '16px',
-      alignItems: 'flex-end',
-      flexWrap: 'wrap',
-    }}>
-      <div style={{ display: 'flex', gap: '12px', alignItems: 'flex-end' }}>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={labelStyle}>Desde</span>
+    <div className="analytics-filters-container">
+      <div className="analytics-filter-dates">
+        <div className="analytics-filter-item">
+          <span className="analytics-filter-label">Desde</span>
           <input
             type="date"
-            style={inputStyle}
+            className="analytics-filter-input"
             value={filters.startDate || ''}
             onChange={(e) => handleChange('startDate', e.target.value)}
           />
         </div>
-        <div style={{ display: 'flex', flexDirection: 'column' }}>
-          <span style={labelStyle}>Hasta</span>
+        <div className="analytics-filter-item">
+          <span className="analytics-filter-label">Hasta</span>
           <input
             type="date"
-            style={inputStyle}
+            className="analytics-filter-input"
             value={filters.endDate || ''}
             onChange={(e) => handleChange('endDate', e.target.value)}
           />
         </div>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={labelStyle}>Departamento</span>
+      <div className="analytics-filter-item">
+        <span className="analytics-filter-label">Departamento</span>
         <select
-          style={selectStyle}
+          className="analytics-filter-select"
           value={filters.department || 'all'}
           onChange={(e) => handleChange('department', e.target.value)}
         >
@@ -80,10 +75,10 @@ export default function AnalyticsFilters({ filters, onChange }) {
         </select>
       </div>
 
-      <div style={{ display: 'flex', flexDirection: 'column' }}>
-        <span style={labelStyle}>Vista</span>
+      <div className="analytics-filter-item">
+        <span className="analytics-filter-label">Vista</span>
         <select
-          style={selectStyle}
+          className="analytics-filter-select"
           value={filters.viewMode || 'global'}
           onChange={(e) => handleChange('viewMode', e.target.value)}
         >

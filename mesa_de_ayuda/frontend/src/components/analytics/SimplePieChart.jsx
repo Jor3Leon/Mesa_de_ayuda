@@ -29,22 +29,8 @@ export default function SimplePieChart({ data, title, colorScheme = 'priority' }
   });
 
   return (
-    <div style={{
-      background: 'white',
-      borderRadius: '16px',
-      padding: '24px',
-      border: '1px solid #e5e7eb',
-      boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
-      height: '100%',
-      display: 'flex',
-      flexDirection: 'column',
-    }}>
-      <h4 style={{
-        margin: '0 0 24px 0',
-        fontSize: '0.9375rem',
-        color: '#1e293b',
-        fontWeight: 700,
-      }}>{title}</h4>
+    <div className="card analytics-chart-card">
+      <h4 className="analytics-card-title">{title}</h4>
 
       <div style={{
         display: 'flex',

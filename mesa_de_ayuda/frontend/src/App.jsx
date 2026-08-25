@@ -459,11 +459,199 @@ function buildNavSections(user) {
   return filteredSections;
 }
 
+function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = false }) {
+  const [isOpen, setIsOpen] = useState(false);
+  const dropdownRef = useRef(null);
+  const availableRoles = getAvailableRoles(realRole);
+  const isImpersonating = viewAsRole && viewAsRole !== realRole;
+
+  useEffect(() => {
+    function handleClickOutside(event) {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsOpen(false);
+      }
+    }
+    if (isOpen) {
+      document.addEventListener('mousedown', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside);
+    }
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('touchstart', handleClickOutside);
+    };
+  }, [isOpen]);
+
+  if (availableRoles.length === 0) {
+    return (
+      <div
+        className="status-pill"
+        style={{
+          padding: isMobile ? '0.25rem 0.5rem' : undefined,
+          fontSize: isMobile ? '0.72rem' : undefined,
+          cursor: 'default',
+        }}
+      >
+        <span className="status-dot" style={{ background: getRoleColor(realRole) }} />
+        <span>{getRoleLabel(realRole)}</span>
+      </div>
+    );
+  }
+
+  return (
+    <div style={{ position: 'relative' }} ref={dropdownRef}>
+      <button
+        type="button"
+        className="status-pill"
+        onClick={() => setIsOpen(!isOpen)}
+        style={{
+          cursor: 'pointer',
+          padding: isMobile ? '0.28rem 0.55rem' : '0.45rem 0.85rem',
+          fontSize: isMobile ? '0.72rem' : '0.8rem',
+          border: isImpersonating ? `1.5px solid ${getRoleColor(viewAsRole)}` : '1px solid #e2e8f0',
+          background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : '#f8fafc',
+          transition: 'all 0.2s ease',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '0.35rem',
+          borderRadius: isMobile ? '8px' : '10px',
+          fontWeight: 700,
+          color: isImpersonating ? getRoleColor(viewAsRole) : '#334155',
+          maxWidth: isMobile ? '135px' : 'none',
+        }}
+        title="Cambiar vista de rol"
+      >
+        <span className="status-dot" style={{ background: getRoleColor(viewAsRole || realRole) }} />
+        <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+          {getRoleLabel(viewAsRole || realRole)}
+        </span>
+        <svg
+          width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          style={{ opacity: 0.6, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}
+        >
+          <polyline points="6 9 12 15 18 9" />
+        </svg>
+      </button>
+
+      {isOpen && (
+        <div style={{
+          position: 'absolute',
+          top: 'calc(100% + 8px)',
+          right: 0,
+          background: '#fff',
+          borderRadius: '14px',
+          boxShadow: '0 20px 40px -8px rgba(0, 0, 0, 0.22), 0 0 0 1px rgba(0, 0, 0, 0.06)',
+          minWidth: isMobile ? '240px' : '260px',
+          maxWidth: '90vw',
+          zIndex: 1500,
+          overflow: 'hidden',
+          animation: 'fadeIn 0.15s ease',
+        }}>
+          {/* Header del Dropdown */}
+          <div style={{ padding: '0.75rem 0.9rem 0.45rem', borderBottom: '1px solid #f1f5f9' }}>
+            <div style={{ fontSize: '0.68rem', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', fontWeight: 800 }}>
+              Cambiar Vista de Rol
+            </div>
+            <div style={{ fontSize: '0.72rem', color: '#64748b', marginTop: '2px' }}>
+              Rol real: <strong style={{ color: getRoleColor(realRole) }}>{getRoleLabel(realRole)}</strong>
+            </div>
+          </div>
+
+          {/* Opción: Volver al rol real */}
+          {isImpersonating && (
+            <button
+              type="button"
+              onClick={() => { onRoleSwitch(null); setIsOpen(false); }}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                background: '#ecfdf5',
+                border: 'none',
+                borderBottom: '1px solid #f1f5f9',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+                fontSize: '0.82rem',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#d1fae5'}
+              onMouseLeave={e => e.currentTarget.style.background = '#ecfdf5'}
+            >
+              <span style={{ fontSize: '1rem' }}>↩️</span>
+              <div>
+                <div style={{ fontWeight: 700, color: '#065f46' }}>Volver a {getRoleLabel(realRole)}</div>
+                <div style={{ fontSize: '0.68rem', color: '#10b981' }}>Restaurar mi rol original</div>
+              </div>
+            </button>
+          )}
+
+          {/* Lista de roles disponibles */}
+          {availableRoles.map((role) => (
+            <button
+              type="button"
+              key={role}
+              onClick={() => { onRoleSwitch(role); setIsOpen(false); }}
+              style={{
+                width: '100%',
+                padding: '0.65rem 0.9rem',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '0.6rem',
+                background: viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent',
+                border: 'none',
+                borderBottom: '1px solid #f1f5f9',
+                cursor: 'pointer',
+                textAlign: 'left',
+                transition: 'background 0.15s',
+                fontSize: '0.82rem',
+              }}
+              onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
+              onMouseLeave={e => e.currentTarget.style.background = viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent'}
+            >
+              <div style={{
+                width: '28px',
+                height: '28px',
+                borderRadius: '7px',
+                background: `${getRoleColor(role)}18`,
+                border: `1.5px solid ${getRoleColor(role)}40`,
+                display: 'grid',
+                placeItems: 'center',
+                fontSize: '0.8rem',
+                flexShrink: 0,
+              }}>
+                {viewAsRole === role ? '✓' : role === 'USUARIO ESTANDAR' ? '👤' : '🔧'}
+              </div>
+              <div style={{ flex: 1, minWidth: 0 }}>
+                <div style={{ fontWeight: 600, color: '#1e293b', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{getRoleLabel(role)}</div>
+                <div style={{ fontSize: '0.68rem', color: '#94a3b8', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                  {role === 'USUARIO ESTANDAR' ? 'Solo crear y ver sus tickets' :
+                   role === 'LEVEL_1' ? 'Soporte básico y tickets' :
+                   role === 'LEVEL_2' ? 'Soporte intermedio y activos' :
+                   'Soporte avanzado y gestión'}
+                </div>
+              </div>
+              {viewAsRole === role && (
+                <span style={{ fontSize: '0.68rem', fontWeight: 700, color: getRoleColor(role), background: `${getRoleColor(role)}15`, padding: '2px 6px', borderRadius: '6px', flexShrink: 0 }}>Activo</span>
+              )}
+            </button>
+          ))}
+
+          {/* Footer informativo */}
+          <div style={{ padding: '0.5rem 0.9rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
+              <span>ℹ️</span> Vista simulada: cambia la interfaz, no los permisos de BD.
+            </div>
+          </div>
+        </div>
+      )}
+    </div>
+  );
+}
+
 function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogout, isSidebarCollapsed, onToggleSidebar, onProfileUpdate }) {
   const [searchQuery, setSearchQuery] = useState('');
   const [isProfileOpen, setIsProfileOpen] = useState(false);
-  const [isRoleDropdownOpen, setIsRoleDropdownOpen] = useState(false);
-  const roleDropdownRef = useRef(null);
 
   const quickLinks = useMemo(
     () =>
@@ -482,21 +670,7 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
       )
     : [];
 
-  const availableRoles = getAvailableRoles(realRole);
   const isImpersonating = viewAsRole && viewAsRole !== realRole;
-
-  // Cerrar dropdown al hacer clic fuera
-  useEffect(() => {
-    function handleClickOutside(event) {
-      if (roleDropdownRef.current && !roleDropdownRef.current.contains(event.target)) {
-        setIsRoleDropdownOpen(false);
-      }
-    }
-    if (isRoleDropdownOpen) {
-      document.addEventListener('mousedown', handleClickOutside);
-    }
-    return () => document.removeEventListener('mousedown', handleClickOutside);
-  }, [isRoleDropdownOpen]);
 
   return (
     <header className="header">
@@ -548,159 +722,34 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
         )}
       </div>
 
-      {/* Acciones de cabecera en Mobile: Avatar de perfil */}
+      {/* Acciones de cabecera en Mobile: Selector de Rol y Avatar */}
       <div className="header-mobile-actions show-mobile-flex">
+        <RoleSwitcher
+          user={user}
+          realRole={realRole}
+          viewAsRole={viewAsRole}
+          onRoleSwitch={onRoleSwitch}
+          isMobile={true}
+        />
         <button 
           type="button" 
           className="header-mobile-avatar-btn" 
           onClick={() => setIsProfileOpen(true)}
           title="Mi Perfil"
         >
-          <UserAvatar user={user} size={34} />
+          <UserAvatar user={user} size={32} />
         </button>
       </div>
 
       {/* Meta del usuario: visible en desktop */}
       <div className="header-meta hide-mobile">
-        {/* Role Switcher Dropdown */}
-        <div style={{ position: 'relative' }} ref={roleDropdownRef}>
-          <button
-            type="button"
-            className="status-pill"
-            onClick={() => availableRoles.length > 0 && setIsRoleDropdownOpen(!isRoleDropdownOpen)}
-            style={{ 
-              cursor: availableRoles.length > 0 ? 'pointer' : 'default',
-              border: isImpersonating ? `2px solid ${getRoleColor(viewAsRole)}` : undefined,
-              background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : undefined,
-              transition: 'all 0.2s ease',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-            }}
-            title={availableRoles.length > 0 ? 'Clic para cambiar vista de rol' : getRoleLabel(user.role)}
-          >
-            <span className="status-dot" style={{ background: getRoleColor(viewAsRole || realRole) }} />
-            <span>{getRoleLabel(viewAsRole || realRole)}</span>
-            {availableRoles.length > 0 && (
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round" style={{ opacity: 0.5, transition: 'transform 0.2s', transform: isRoleDropdownOpen ? 'rotate(180deg)' : 'rotate(0deg)' }}>
-                <polyline points="6 9 12 15 18 9" />
-              </svg>
-            )}
-          </button>
-
-          {isRoleDropdownOpen && availableRoles.length > 0 && (
-            <div style={{
-              position: 'absolute',
-              top: 'calc(100% + 8px)',
-              right: 0,
-              background: '#fff',
-              borderRadius: '14px',
-              boxShadow: '0 20px 40px -8px rgba(0, 0, 0, 0.18), 0 0 0 1px rgba(0, 0, 0, 0.05)',
-              minWidth: '260px',
-              zIndex: 1000,
-              overflow: 'hidden',
-              animation: 'fadeIn 0.15s ease',
-            }}>
-              {/* Header del Dropdown */}
-              <div style={{ padding: '0.9rem 1rem 0.5rem', borderBottom: '1px solid #f1f5f9' }}>
-                <div style={{ fontSize: '0.7rem', textTransform: 'uppercase', color: '#94a3b8', letterSpacing: '0.05em', fontWeight: 700 }}>
-                  Cambiar Vista de Rol
-                </div>
-                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '2px' }}>
-                  Rol real: <strong style={{ color: getRoleColor(realRole) }}>{getRoleLabel(realRole)}</strong>
-                </div>
-              </div>
-
-              {/* Opción: Volver al rol real */}
-              {isImpersonating && (
-                <button
-                  type="button"
-                  onClick={() => { onRoleSwitch(null); setIsRoleDropdownOpen(false); }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.7rem',
-                    background: '#ecfdf5',
-                    border: 'none',
-                    borderBottom: '1px solid #f1f5f9',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'background 0.15s',
-                    fontSize: '0.85rem',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#d1fae5'}
-                  onMouseLeave={e => e.currentTarget.style.background = '#ecfdf5'}
-                >
-                  <span style={{ fontSize: '1.1rem' }}>↩️</span>
-                  <div>
-                    <div style={{ fontWeight: 700, color: '#065f46' }}>Volver a {getRoleLabel(realRole)}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#10b981' }}>Restaurar mi rol original</div>
-                  </div>
-                </button>
-              )}
-
-              {/* Lista de roles disponibles */}
-              {availableRoles.map((role) => (
-                <button
-                  type="button"
-                  key={role}
-                  onClick={() => { onRoleSwitch(role); setIsRoleDropdownOpen(false); }}
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '0.7rem',
-                    background: viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent',
-                    border: 'none',
-                    borderBottom: '1px solid #f1f5f9',
-                    cursor: 'pointer',
-                    textAlign: 'left',
-                    transition: 'background 0.15s',
-                    fontSize: '0.85rem',
-                  }}
-                  onMouseEnter={e => e.currentTarget.style.background = '#f8fafc'}
-                  onMouseLeave={e => e.currentTarget.style.background = viewAsRole === role ? `${getRoleColor(role)}10` : 'transparent'}
-                >
-                  <div style={{
-                    width: '32px',
-                    height: '32px',
-                    borderRadius: '8px',
-                    background: `${getRoleColor(role)}18`,
-                    border: `1.5px solid ${getRoleColor(role)}40`,
-                    display: 'grid',
-                    placeItems: 'center',
-                    fontSize: '0.85rem',
-                    flexShrink: 0,
-                  }}>
-                    {viewAsRole === role ? '✓' : role === 'USUARIO ESTANDAR' ? '👤' : '🔧'}
-                  </div>
-                  <div style={{ flex: 1 }}>
-                    <div style={{ fontWeight: 600, color: '#1e293b' }}>{getRoleLabel(role)}</div>
-                    <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-                      {role === 'USUARIO ESTANDAR' ? 'Solo crear y ver sus tickets' :
-                       role === 'LEVEL_1' ? 'Soporte básico y tickets' :
-                       role === 'LEVEL_2' ? 'Soporte intermedio y activos' :
-                       'Soporte avanzado y gestión'}
-                    </div>
-                  </div>
-                  {viewAsRole === role && (
-                    <span style={{ fontSize: '0.7rem', fontWeight: 700, color: getRoleColor(role), background: `${getRoleColor(role)}15`, padding: '2px 8px', borderRadius: '6px' }}>Activo</span>
-                  )}
-                </button>
-              ))}
-
-              {/* Footer informativo */}
-              <div style={{ padding: '0.6rem 1rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
-                <div style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'flex', alignItems: 'center', gap: '0.3rem' }}>
-                  <span>ℹ️</span> Vista temporal: solo cambia la interfaz, no los permisos reales.
-                </div>
-              </div>
-            </div>
-          )}
-        </div>
+        <RoleSwitcher
+          user={user}
+          realRole={realRole}
+          viewAsRole={viewAsRole}
+          onRoleSwitch={onRoleSwitch}
+          isMobile={false}
+        />
 
         {/* Indicador de impersonación */}
         {isImpersonating && (

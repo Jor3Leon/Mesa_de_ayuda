@@ -44,6 +44,31 @@ function parseSoftware(softwareData) {
   return [];
 }
 
+function getAssetDomain(asset) {
+  if (!asset) return 'N/A';
+  if (asset.domain && asset.domain.trim()) return asset.domain.trim();
+
+  // Parsear desde el usuario de sesión si tiene formato DOMAIN\usuario o usuario@domain
+  const user = asset.assignedUser || '';
+  if (user.includes('\\')) {
+    const domainPart = user.split('\\')[0].trim();
+    if (domainPart) return domainPart.toUpperCase() + (domainPart.includes('.') ? '' : '.LOCAL');
+  }
+  if (user.includes('@')) {
+    const domainPart = user.split('@')[1].trim();
+    if (domainPart) return domainPart.toUpperCase();
+  }
+
+  // Parsear desde el resumen de red o notas
+  const text = `${asset.networkSummary || ''} ${asset.notes || ''}`;
+  const domainMatch = text.match(/(?:dominio|domain|workgroup)\s*[:=]\s*([a-zA-Z0-9.-]+)/i);
+  if (domainMatch && domainMatch[1]) {
+    return domainMatch[1].toUpperCase();
+  }
+
+  return 'N/A';
+}
+
 export default function CMDB() {
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -624,6 +649,12 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                       <div className="cmdb-info-row">
                         <span className="muted-text">👤 Usuario Sesión:</span>
                         <span className="cmdb-info-val">{selectedAsset.assignedUser || 'Usuario Local'}</span>
+                      </div>
+                      <div className="cmdb-info-row">
+                        <span className="muted-text">🏰 Red / Dominio:</span>
+                        <span className={`cmdb-info-val ${getAssetDomain(selectedAsset) !== 'N/A' ? 'highlight' : 'muted-text'}`}>
+                          {getAssetDomain(selectedAsset)}
+                        </span>
                       </div>
                       <div className="cmdb-info-row">
                         <span className="muted-text">🏷️ Serial / Tag:</span>

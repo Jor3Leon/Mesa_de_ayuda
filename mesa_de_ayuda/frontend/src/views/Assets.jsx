@@ -134,6 +134,7 @@ export default function Assets() {
   const [locations, setLocations] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedAssetId, setSelectedAssetId] = useState(null);
+  const [showMobileDetail, setShowMobileDetail] = useState(false);
   const [editingAssetId, setEditingAssetId] = useState(null);
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [form, setForm] = useState(initialForm);
@@ -827,7 +828,7 @@ export default function Assets() {
           </div>
         </div>
 
-        <div className="asset-layout" style={{ '--desktop-columns': 'minmax(0, 6fr) minmax(0, 4fr)' }}>
+        <div className={`asset-layout ${showMobileDetail ? 'mobile-show-detail' : 'mobile-show-list'}`} style={{ '--desktop-columns': 'minmax(0, 6fr) minmax(0, 4fr)' }}>
           <article className="asset-list-card">
             <div className="table-shell">
               {filteredAssets.length === 0 ? (
@@ -847,7 +848,10 @@ export default function Assets() {
                       <tr
                         key={asset.id}
                         className={selectedAssetId === asset.id ? 'asset-row-active' : ''}
-                        onClick={() => setSelectedAssetId(asset.id)}
+                        onClick={() => {
+                          setSelectedAssetId(asset.id);
+                          setShowMobileDetail(true);
+                        }}
                       >
                         <td>
                           <strong>{asset.hostname}</strong>
@@ -876,7 +880,15 @@ export default function Assets() {
 
           {selectedAsset ? (
             <aside className="asset-detail-card">
-               <div className="section-heading">
+              <button 
+                type="button" 
+                className="asset-mobile-back-btn"
+                onClick={() => setShowMobileDetail(false)}
+              >
+                ← Volver a la lista de dispositivos
+              </button>
+
+              <div className="section-heading">
                 <div>
                   <h3>Detalle tecnico</h3>
                   <p>Ficha operativa y resumen rapido del dispositivo seleccionado.</p>

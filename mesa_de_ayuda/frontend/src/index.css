@@ -3800,4 +3800,60 @@ tbody tr:hover {
   }
 }
 
+/* ─── Dispositivos / Asset Layout Master-Detail for Mobile ─── */
+.asset-layout {
+  display: grid;
+  grid-template-columns: var(--desktop-columns, minmax(0, 6fr) minmax(0, 4fr));
+  gap: 1.25rem;
+  align-items: flex-start;
+  width: 100%;
+}
+
+.asset-mobile-back-btn {
+  display: none;
+}
+
+@media (max-width: 768px) {
+  .asset-layout {
+    grid-template-columns: 1fr !important;
+    gap: 1rem !important;
+  }
+
+  .asset-mobile-back-btn {
+    display: flex !important;
+    align-items: center;
+    gap: 0.5rem;
+    width: 100%;
+    margin-bottom: 0.85rem;
+    padding: 0.6rem 0.85rem;
+    background: rgba(15, 157, 58, 0.08);
+    color: var(--color-primary);
+    font-weight: 700;
+    border-radius: 10px;
+    border: 1px solid rgba(15, 157, 58, 0.2);
+    font-size: 0.8rem;
+    cursor: pointer;
+  }
+
+  .asset-layout.mobile-show-list .asset-detail-card {
+    display: none !important;
+  }
+
+  .asset-layout.mobile-show-list .asset-list-card {
+    display: block !important;
+    width: 100% !important;
+  }
+
+  .asset-layout.mobile-show-detail .asset-list-card {
+    display: none !important;
+  }
+
+  .asset-layout.mobile-show-detail .asset-detail-card {
+    display: flex !important;
+    flex-direction: column;
+    width: 100% !important;
+  }
+}
+
+
 

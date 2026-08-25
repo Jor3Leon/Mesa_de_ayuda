@@ -55,11 +55,14 @@ export async function apiRequest(path, options = {}) {
   const session = getStoredSession();
   const { headers, body, ...restOptions } = options;
   const isFormData = typeof FormData !== 'undefined' && body instanceof FormData;
+  const isObjectBody = body !== undefined && body !== null && typeof body === 'object' && !isFormData;
+  const finalBody = isObjectBody ? JSON.stringify(body) : body;
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
-    body,
+    body: finalBody,
     headers: {
-      ...(body !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
+      ...(finalBody !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
       ...(headers || {}),
     },

@@ -243,7 +243,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
       const res = await apiRequest('/tickets', {
         method: 'POST',
-        body: payload
+        body: JSON.stringify(payload)
       });
 
       setMaintSuccessTicket(res);

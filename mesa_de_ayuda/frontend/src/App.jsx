@@ -512,37 +512,49 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
   }
 
   return (
-    <div style={{ position: 'relative', width: isMobile ? '100%' : 'auto' }} ref={dropdownRef}>
+    <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={dropdownRef}>
       <button
         type="button"
         className="status-pill"
         onClick={() => setIsOpen(!isOpen)}
         style={{
           cursor: 'pointer',
-          width: isMobile ? '100%' : 'auto',
-          justifyContent: isMobile ? 'space-between' : 'flex-start',
-          padding: isMobile ? '0.5rem 0.85rem' : '0.45rem 0.85rem',
-          fontSize: isMobile ? '0.8rem' : '0.8rem',
+          width: 'auto',
+          maxWidth: isMobile ? '108px' : 'none',
+          height: isMobile ? '28px' : 'auto',
+          padding: isMobile ? '0.15rem 0.45rem' : '0.45rem 0.85rem',
+          fontSize: isMobile ? '0.68rem' : '0.8rem',
           border: isImpersonating ? `1.5px solid ${getRoleColor(viewAsRole)}` : '1px solid #e2e8f0',
           background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : '#f8fafc',
           transition: 'all 0.2s ease',
-          display: 'flex',
+          display: 'inline-flex',
           alignItems: 'center',
-          gap: '0.4rem',
-          borderRadius: '10px',
+          gap: isMobile ? '0.25rem' : '0.4rem',
+          borderRadius: isMobile ? '7px' : '10px',
           fontWeight: 700,
           color: isImpersonating ? getRoleColor(viewAsRole) : '#334155',
+          flexShrink: 0,
         }}
         title="Cambiar vista de rol"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', minWidth: 0 }}>
-          <span className="status-dot" style={{ background: getRoleColor(viewAsRole || realRole) }} />
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: isMobile ? '0.25rem' : '0.45rem', minWidth: 0, overflow: 'hidden' }}>
+          <span 
+            className="status-dot" 
+            style={{ 
+              background: getRoleColor(viewAsRole || realRole),
+              width: isMobile ? 6 : 8,
+              height: isMobile ? 6 : 8,
+              flexShrink: 0,
+            }} 
+          />
+          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '68px' : 'none' }}>
             {getRoleLabel(viewAsRole || realRole)}
           </span>
         </div>
         <svg
-          width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+          width={isMobile ? "10" : "13"}
+          height={isMobile ? "10" : "13"}
+          viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
           style={{ opacity: 0.6, transition: 'transform 0.2s', transform: isOpen ? 'rotate(180deg)' : 'rotate(0deg)', flexShrink: 0 }}
         >
           <polyline points="6 9 12 15 18 9" />
@@ -867,15 +879,22 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
         )}
       </div>
 
-      {/* Acciones de cabecera en Mobile: Avatar de perfil limpio */}
+      {/* Acciones de cabecera en Mobile: Selector de Rol ultra-compacto + Avatar */}
       <div className="header-mobile-actions show-mobile-flex">
+        <RoleSwitcher
+          user={user}
+          realRole={realRole}
+          viewAsRole={viewAsRole}
+          onRoleSwitch={onRoleSwitch}
+          isMobile={true}
+        />
         <button 
           type="button" 
           className="header-mobile-avatar-btn" 
           onClick={onOpenProfile}
           title="Mi Perfil"
         >
-          <UserAvatar user={user} size={32} />
+          <UserAvatar user={user} size={30} />
         </button>
       </div>
 
@@ -1044,17 +1063,6 @@ function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isColl
             <strong>{user?.name}</strong>
             <small>{getRoleLabel(user?.role)}</small>
           </div>
-        </div>
-
-        {/* Selector de rol en menú móvil */}
-        <div style={{ width: '100%' }}>
-          <RoleSwitcher
-            user={user}
-            realRole={realRole}
-            viewAsRole={viewAsRole}
-            onRoleSwitch={(role) => { onRoleSwitch(role); onClose(); }}
-            isMobile={false}
-          />
         </div>
 
         <button 

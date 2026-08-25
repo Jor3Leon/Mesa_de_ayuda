@@ -2538,11 +2538,11 @@ tbody tr:hover {
     right: 0 !important;
     height: 56px !important;
     min-height: 56px !important;
-    padding: 0 0.85rem !important;
+    padding: 0 0.65rem !important;
     display: flex !important;
     align-items: center !important;
     justify-content: space-between !important;
-    gap: 0.5rem !important;
+    gap: 0.35rem !important;
     background: rgba(255, 255, 255, 0.98) !important;
     backdrop-filter: blur(12px) !important;
     border-bottom: 1px solid #e2e8f0 !important;
@@ -2564,15 +2564,16 @@ tbody tr:hover {
   .brand {
     display: flex !important;
     align-items: center !important;
-    gap: 0.5rem !important;
+    gap: 0.4rem !important;
     min-width: 0 !important;
+    flex: 1 1 auto !important;
   }
 
   .brand-mark {
-    width: 32px !important;
-    height: 32px !important;
+    width: 30px !important;
+    height: 30px !important;
     border-radius: 8px !important;
-    font-size: 0.78rem !important;
+    font-size: 0.74rem !important;
     font-weight: 800 !important;
     flex-shrink: 0 !important;
     background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
@@ -2587,7 +2588,7 @@ tbody tr:hover {
   }
 
   .brand-title {
-    font-size: 0.95rem !important;
+    font-size: 0.9rem !important;
     font-weight: 700 !important;
     color: #0f172a !important;
     white-space: nowrap !important;
@@ -2603,15 +2604,15 @@ tbody tr:hover {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
-    width: 36px !important;
-    height: 36px !important;
-    border-radius: 9px !important;
+    width: 34px !important;
+    height: 34px !important;
+    border-radius: 8px !important;
     border: 1px solid #e2e8f0 !important;
     background: #f8fafc !important;
     color: #334155 !important;
     cursor: pointer !important;
     flex-shrink: 0 !important;
-    margin-right: 0.15rem !important;
+    margin-right: 0.1rem !important;
   }
 
   .sidebar-toggle-btn:active {
@@ -2622,7 +2623,9 @@ tbody tr:hover {
   .header-mobile-actions {
     display: flex !important;
     align-items: center !important;
-    gap: 0.5rem !important;
+    gap: 0.35rem !important;
+    margin-left: auto !important;
+    flex-shrink: 0 !important;
   }
 
   .header-mobile-avatar-btn {
@@ -2634,6 +2637,7 @@ tbody tr:hover {
     display: flex !important;
     align-items: center !important;
     justify-content: center !important;
+    flex-shrink: 0 !important;
     transition: transform 0.15s ease, border-color 0.15s ease !important;
   }
 

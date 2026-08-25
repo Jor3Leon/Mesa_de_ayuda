@@ -365,14 +365,6 @@ function buildNavSections(user) {
 
   const sections = [
     {
-      title: 'Operacion RMM',
-      items: [
-        { name: 'Dispositivos', path: '/assets', icon: 'assets', description: 'Inventario y salud de equipos', requiredPermission: 'ASSETS_VIEW' },
-        { name: 'Discovery', path: '/discovery', icon: 'discovery', description: 'Exploracion de red pendiente', requiredPermission: 'ASSETS_VIEW' },
-        { name: 'Politicas', path: '/scripts', icon: 'policy', description: 'Automatizacion y estandares', requiredPermission: 'ASSETS_VIEW' },
-      ],
-    },
-    {
       title: 'Mesa PSA',
       items: [
         { name: 'Tickets', path: '/tickets', icon: 'tickets', description: 'Incidentes y solicitudes', requiredPermission: 'TICKETS_VIEW' },
@@ -380,7 +372,10 @@ function buildNavSections(user) {
     },
     {
       title: 'Activos',
-      items: [{ name: 'CMDB', path: '/cmdb', icon: 'cmdb', description: 'Relacion completa de activos', requiredPermission: 'ASSETS_VIEW' }],
+      items: [
+        { name: 'Dispositivos', path: '/assets', icon: 'assets', description: 'Inventario y salud de equipos', requiredPermission: 'ASSETS_VIEW' },
+        { name: 'CMDB', path: '/cmdb', icon: 'cmdb', description: 'Relacion completa de activos', requiredPermission: 'ASSETS_VIEW' },
+      ],
     },
     {
       title: 'Despliegue',

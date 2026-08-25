@@ -1838,9 +1838,27 @@ export default function Tickets() {
                           </div>
                         ) : (
                           [...activities].reverse().map((act, idx) => {
+                            const formatFieldName = (f) => {
+                              if (!f) return 'Detalle';
+                              const norm = String(f).trim().toLowerCase();
+                              if (norm === 'sla' || norm === 'ans') return 'ANS';
+                              if (norm === 'locationid' || norm === 'location' || norm === 'ubicacion' || norm === 'ubicación') return 'Ubicación';
+                              if (norm === 'tickettype' || norm === 'tipo') return 'Tipo';
+                              if (norm === 'category' || norm === 'categoria' || norm === 'categoría') return 'Categoría';
+                              if (norm === 'priority' || norm === 'prioridad') return 'Prioridad';
+                              if (norm === 'status' || norm === 'estado') return 'Estado';
+                              if (norm === 'title' || norm === 'titulo' || norm === 'título') return 'Título';
+                              if (norm === 'description' || norm === 'descripcion' || norm === 'descripción') return 'Descripción';
+                              if (norm === 'responsibleuserids' || norm === 'assignedtoid' || norm === 'responsables' || norm === 'técnico asignado' || norm === 'tecnico asignado') return 'Técnico Asignado';
+                              if (norm === 'observerid' || norm === 'seguimiento') return 'Seguimiento';
+                              if (norm === 'comment' || norm === 'comentario') return 'Comentario';
+                              return f.charAt(0).toUpperCase() + f.slice(1);
+                            };
+
                             const formatAction = (activity) => {
-                              if (activity.field && activity.field !== 'Estado' && activity.field !== 'Comentario') {
-                                return activity.field.toUpperCase();
+                              const normField = activity.field ? String(activity.field).trim().toLowerCase() : '';
+                              if (normField && normField !== 'estado' && normField !== 'status' && normField !== 'comentario' && normField !== 'comment') {
+                                return formatFieldName(activity.field).toUpperCase();
                               }
                               const m = { 
                                 'CREATED': 'CREADO', 'UPDATED': 'ACTUALIZADO', 'SCHEDULED': 'PROGRAMADO', 
@@ -1850,17 +1868,35 @@ export default function Tickets() {
                               return m[activity.action] || activity.action;
                             };
 
-                            const formatValue = (v) => {
+                            const formatValue = (v, fieldName) => {
+                              if (!v || v === 'Ninguno' || v === 'Desconocida' || v === 'Sin asignar' || v === 'Sin Asignar' || v === 'Sin Ubicación' || v === 'Sin ANS' || v === 'Sin Categoría' || v === 'Sin Tipo') return v || 'Sin dato';
+                              
+                              const normField = fieldName ? String(fieldName).trim().toLowerCase() : '';
+
+                              // 1. Resolver ID de Ubicación
+                              if (normField === 'locationid' || normField === 'ubicacion' || normField === 'ubicación') {
+                                const matchedLoc = locations.find(l => String(l.id) === String(v));
+                                if (matchedLoc) return matchedLoc.name;
+                              }
+
+                              // 2. Resolver ID de Usuario / Observador
+                              if (normField === 'observerid' || normField === 'seguimiento') {
+                                const matchedUser = users.find(u => String(u.id) === String(v));
+                                if (matchedUser) return matchedUser.name;
+                              }
+
+                              // 3. Nombres de Estado y Prioridad
                               const m = { 
                                 'NEW': 'Nuevo', 'OPEN': 'Abierto', 'IN_PROGRESS': 'En Progreso', 
                                 'RESOLVED': 'Resuelto', 'CLOSED': 'Cerrado', 'SCHEDULED': 'Programado',
-                                'POSTPONED': 'Pospuesto'
+                                'POSTPONED': 'Pospuesto',
+                                'LOW': 'Baja', 'MEDIUM': 'Media', 'HIGH': 'Alta', 'URGENT': 'Urgente'
                               };
                               return m[v] || v;
                             };
 
                             const mapUserIdsToNames = (valStr) => {
-                              if (!valStr || valStr === 'Sin asignar' || valStr === 'Ninguno' || valStr === 'Desconocida') return valStr;
+                              if (!valStr || valStr === 'Sin asignar' || valStr === 'Sin Asignar' || valStr === 'Ninguno' || valStr === 'Desconocida') return valStr;
                               const ids = String(valStr).split(',').map(s => s.trim()).filter(Boolean);
                               const mapped = ids.map(id => {
                                 const user = users.find(u => String(u.id) === id);
@@ -1868,6 +1904,9 @@ export default function Tickets() {
                               });
                               return mapped.join(', ');
                             };
+
+                            const displayField = formatFieldName(act.field);
+                            const normF = act.field ? String(act.field).trim().toLowerCase() : '';
 
                             // Colores según acción y campo
                             let dotColor = '#64748b'; // default
@@ -1882,21 +1921,21 @@ export default function Tickets() {
                               dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#7c3aed';
                             } else if (act.action === 'SCHEDULED') {
                               dotColor = '#f59e0b'; actionBg = '#fffbeb'; actionColor = '#d97706';
-                            } else if (act.field === 'Estado') {
+                            } else if (normF === 'estado' || normF === 'status') {
                               dotColor = '#6366f1'; actionBg = '#eef2ff'; actionColor = '#4f46e5';
-                            } else if (act.field === 'Técnico Asignado' || act.field === 'Responsables') {
+                            } else if (normF.includes('tecnico') || normF.includes('técnico') || normF.includes('responsable')) {
                               dotColor = '#0284c7'; actionBg = '#f0f9ff'; actionColor = '#0369a1';
-                            } else if (act.field === 'Categoría') {
+                            } else if (normF.includes('categor')) {
                               dotColor = '#059669'; actionBg = '#ecfdf5'; actionColor = '#047857';
-                            } else if (act.field === 'Tipo') {
+                            } else if (normF === 'tipo' || normF === 'tickettype') {
                               dotColor = '#d97706'; actionBg = '#fffbeb'; actionColor = '#b45309';
-                            } else if (act.field === 'ANS') {
+                            } else if (normF === 'ans' || normF === 'sla') {
                               dotColor = '#ea580c'; actionBg = '#fff7ed'; actionColor = '#c2410c';
-                            } else if (act.field === 'Ubicación') {
+                            } else if (normF.includes('ubicacion') || normF.includes('ubicación') || normF === 'locationid') {
                               dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#6d28d9';
-                            } else if (act.field === 'Seguimiento') {
+                            } else if (normF.includes('seguimiento') || normF === 'observerid') {
                               dotColor = '#0ea5e9'; actionBg = '#f0fdfa'; actionColor = '#0f766e';
-                            } else if (act.field === 'Prioridad') {
+                            } else if (normF.includes('priorid')) {
                               dotColor = '#ef4444'; actionBg = '#fef2f2'; actionColor = '#b91c1c';
                             }
 
@@ -1943,15 +1982,21 @@ export default function Tickets() {
                                           </div>
                                         ) : (
                                           <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', flexWrap: 'wrap' }}>
-                                            <strong style={{ color: '#64748b' }}>{act.field}:</strong>
+                                            <strong style={{ color: '#64748b' }}>{displayField}:</strong>
                                             {act.oldValue && act.oldValue !== 'Ninguno' && act.oldValue !== 'Desconocida' && act.oldValue !== 'Sin asignar' && act.oldValue !== 'Sin Asignar' && act.oldValue !== 'Sin Ubicación' && act.oldValue !== 'Sin ANS' && act.oldValue !== 'Sin Categoría' && act.oldValue !== 'Sin Tipo' && (
                                               <>
-                                                <span style={{ color: '#94a3b8' }}>{(act.field === 'Responsables' || act.field === 'Seguimiento') ? mapUserIdsToNames(act.oldValue) : formatValue(act.oldValue)}</span>
+                                                <span style={{ color: '#94a3b8' }}>
+                                                  {(normF.includes('tecnico') || normF.includes('responsable') || normF.includes('seguimiento') || normF === 'observerid')
+                                                    ? mapUserIdsToNames(act.oldValue)
+                                                    : formatValue(act.oldValue, act.field)}
+                                                </span>
                                                 <span style={{ color: '#cbd5e1' }}>→</span>
                                               </>
                                             )}
                                             <span style={{ fontWeight: 600, color: '#334155', background: '#f1f5f9', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
-                                              {(act.field === 'Responsables' || act.field === 'Seguimiento') ? mapUserIdsToNames(act.newValue) : formatValue(act.newValue)}
+                                              {(normF.includes('tecnico') || normF.includes('responsable') || normF.includes('seguimiento') || normF === 'observerid')
+                                                ? mapUserIdsToNames(act.newValue)
+                                                : formatValue(act.newValue, act.field)}
                                             </span>
                                           </div>
                                         )}

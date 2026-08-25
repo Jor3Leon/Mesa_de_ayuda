@@ -506,28 +506,28 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
           type="button" 
           className="sidebar-toggle-btn"
           onClick={onToggleSidebar}
-          aria-label={isSidebarCollapsed ? "Expandir menu" : "Contraer menu"}
+          aria-label={isSidebarCollapsed ? "Expandir menú" : "Contraer menú"}
         >
-          <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="3" y1="12" x2="21" y2="12" />
             <line x1="3" y1="6" x2="21" y2="6" />
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
         <div className="brand-mark">AY</div>
-        <div>
+        <div className="brand-text">
           <p className="brand-title">Mesa de Ayuda</p>
-          <p className="brand-subtitle">Centro de operacion y soporte</p>
+          <p className="brand-subtitle">Centro de operación y soporte</p>
         </div>
       </div>
 
-      {/* Buscador: oculto en mobile para mantener header compacto */}
+      {/* Buscador: visible solo en desktop */}
       <div className="search-shell hide-mobile">
         <Icon name="discovery" size={18} />
         <input
           type="text"
           className="search-input"
-          placeholder="Buscar modulos, tickets o clientes"
+          placeholder="Buscar módulos, tickets o clientes"
           value={searchQuery}
           onChange={(event) => setSearchQuery(event.target.value)}
         />
@@ -546,6 +546,18 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
             ))}
           </div>
         )}
+      </div>
+
+      {/* Acciones de cabecera en Mobile: Avatar de perfil */}
+      <div className="header-mobile-actions show-mobile-flex">
+        <button 
+          type="button" 
+          className="header-mobile-avatar-btn" 
+          onClick={() => setIsProfileOpen(true)}
+          title="Mi Perfil"
+        >
+          <UserAvatar user={user} size={34} />
+        </button>
       </div>
 
       {/* Meta del usuario: visible en desktop */}
@@ -735,11 +747,11 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
   );
 }
 
-function Sidebar({ user, navSections, isCollapsed, onClose }) {
+function Sidebar({ user, navSections, isCollapsed, onClose, onLogout }) {
   const location = useLocation();
   const primaryItems = user?.role === 'USUARIO ESTANDAR' ? [] : [
-    { name: 'Dashboard', path: '/', icon: 'dashboard', requiredPermission: 'DASHBOARD_VIEW' },
-    { name: 'Analitica', path: '/analytics', icon: 'analytics', requiredPermission: 'ANALYTICS_VIEW' },
+    { name: 'Dashboard', path: '/', icon: 'dashboard', description: 'Métricas generales', requiredPermission: 'DASHBOARD_VIEW' },
+    { name: 'Analitica', path: '/analytics', icon: 'analytics', description: 'Reportes y estadísticas', requiredPermission: 'ANALYTICS_VIEW' },
   ].filter(item => {
     if (user?.role === 'ADMIN') return true;
     if (item.requiredPermission) return user?.permissions?.includes(item.requiredPermission);
@@ -762,54 +774,47 @@ function Sidebar({ user, navSections, isCollapsed, onClose }) {
 
   const isActive = (path) => location.pathname === path;
 
-  // Sidebar footer: perfil y logout (visible solo en mobile dentro del sidebar)
-  const sidebarFooter = (
-    <div className="sidebar-mobile-footer">
-      <div className="sidebar-footer-user">
-        <UserAvatar user={user} size={36} />
-        <div className="sidebar-footer-info">
-          <strong>{user?.name}</strong>
-          <small>{getRoleLabel(user?.role)}</small>
-        </div>
-      </div>
-    </div>
-  );
-
   return (
     <aside className={`sidebar ${isCollapsed ? 'collapsed' : ''}`}>
       {/* Header del sidebar en mobile */}
       <div className="sidebar-mobile-header">
         <div className="sidebar-mobile-brand">
-          <div className="brand-mark" style={{ width: 32, height: 32, fontSize: '0.8rem', borderRadius: '8px' }}>AY</div>
-          <span style={{ fontWeight: 700, fontSize: '0.95rem' }}>Menu</span>
+          <div className="brand-mark" style={{ width: 34, height: 34, fontSize: '0.85rem', borderRadius: '10px' }}>AY</div>
+          <div style={{ minWidth: 0 }}>
+            <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a', display: 'block', lineHeight: 1.2 }}>Mesa de Ayuda</span>
+            <small style={{ fontSize: '0.72rem', color: '#64748b' }}>Navegación del sistema</small>
+          </div>
         </div>
         <button
           type="button"
           className="sidebar-close-btn"
           onClick={onClose}
-          aria-label="Cerrar menu"
+          aria-label="Cerrar menú"
         >
-          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <line x1="18" y1="6" x2="6" y2="18" />
             <line x1="6" y1="6" x2="18" y2="18" />
           </svg>
         </button>
       </div>
 
-      {/* Contenido de navegación: igual en desktop y mobile */}
+      {/* Contenido de navegación con etiquetas de texto visibles y claras */}
       <div className="sidebar-scroll-content">
-        <div className="sidebar-group">
-          {primaryItems.map((item) => (
-            <Link key={item.path} to={item.path} className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`} onClick={onClose}>
-              <span className="sidebar-icon">
-                <Icon name={item.icon} />
-              </span>
-              <span>
-                {item.name}
-              </span>
-            </Link>
-          ))}
-        </div>
+        {primaryItems.length > 0 && (
+          <div className="sidebar-group">
+            {primaryItems.map((item) => (
+              <Link key={item.path} to={item.path} className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`} onClick={onClose}>
+                <span className="sidebar-icon">
+                  <Icon name={item.icon} />
+                </span>
+                <span className="sidebar-item-text">
+                  <strong className="sidebar-item-title">{item.name}</strong>
+                  {item.description && <small className="sidebar-item-meta">{item.description}</small>}
+                </span>
+              </Link>
+            ))}
+          </div>
+        )}
 
         {navSections.map((section) => (
           <div key={section.title} className="sidebar-group">
@@ -820,8 +825,8 @@ function Sidebar({ user, navSections, isCollapsed, onClose }) {
             >
               <span>{section.title}</span>
               <svg
-                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"
-                style={{ transition: 'transform 0.25s ease', transform: collapsed[section.title] ? 'rotate(-90deg)' : 'rotate(0deg)', opacity: 0.5 }}
+                width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"
+                style={{ transition: 'transform 0.25s ease', transform: collapsed[section.title] ? 'rotate(-90deg)' : 'rotate(0deg)', opacity: 0.6 }}
               >
                 <polyline points="6 9 12 15 18 9" />
               </svg>
@@ -829,15 +834,15 @@ function Sidebar({ user, navSections, isCollapsed, onClose }) {
             <div style={{
               overflow: 'hidden',
               maxHeight: collapsed[section.title] ? '0px' : '500px',
-              transition: 'max-height 0.3s ease',
+              transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
             }}>
               {section.items.map((item) => (
                 <Link key={item.path} to={item.path} className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`} onClick={onClose}>
                   <span className="sidebar-icon">
                     <Icon name={item.icon} />
                   </span>
-                  <span>
-                    {item.name}
+                  <span className="sidebar-item-text">
+                    <strong className="sidebar-item-title">{item.name}</strong>
                     <small className="sidebar-item-meta">{item.description}</small>
                   </span>
                 </Link>
@@ -847,8 +852,29 @@ function Sidebar({ user, navSections, isCollapsed, onClose }) {
         ))}
       </div>
 
-      {/* Footer del sidebar visible en mobile */}
-      {sidebarFooter}
+      {/* Footer del sidebar en mobile */}
+      <div className="sidebar-mobile-footer">
+        <div className="sidebar-footer-user">
+          <UserAvatar user={user} size={36} />
+          <div className="sidebar-footer-info">
+            <strong>{user?.name}</strong>
+            <small>{getRoleLabel(user?.role)}</small>
+          </div>
+        </div>
+        <button 
+          type="button" 
+          className="sidebar-mobile-logout-btn" 
+          onClick={onLogout}
+          title="Cerrar sesión"
+        >
+          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+          <span>Cerrar Sesión</span>
+        </button>
+      </div>
     </aside>
   );
 }
@@ -1017,6 +1043,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
           navSections={navSections}
           isCollapsed={isSidebarCollapsed}
           onClose={closeSidebar}
+          onLogout={onLogout}
         />
         <main className="main-content">
           <Routes>

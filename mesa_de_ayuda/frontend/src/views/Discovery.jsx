@@ -264,8 +264,16 @@ export default function Discovery() {
         </div>
 
         {/* Quick IP Presets */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#64748b' }}>
-          <span>IPs de Prueba sugeridas:</span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', fontSize: '0.8rem', color: '#64748b', flexWrap: 'wrap' }}>
+          <span>IPs detectadas:</span>
+          <button
+            type="button"
+            className="btn-ghost"
+            style={{ padding: '0.2rem 0.55rem', fontSize: '0.78rem', color: '#0284c7', borderColor: '#bae6fd' }}
+            onClick={() => setTargetIp('10.0.22.28')}
+          >
+            10.0.22.28 (Lexmark MX722)
+          </button>
           <button
             type="button"
             className="btn-ghost"

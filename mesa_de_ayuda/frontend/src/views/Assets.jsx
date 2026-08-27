@@ -312,10 +312,37 @@ export default function Assets() {
   );
 
   const stats = useMemo(() => {
+    const isComputer = (asset) => {
+      const type = (asset.deviceType || '').toLowerCase();
+      const isNonPC = [
+        'impresora',
+        'impresoras',
+        'scanner',
+        'escaner',
+        'escáner',
+        'multifuncional',
+        'multifunction',
+        'printer',
+        'impresoras / escáneres',
+        'monitor',
+        'monitores',
+        'perifericos',
+        'dispositivo de red',
+        'switch',
+        'router'
+      ].some((k) => type.includes(k));
+      return !isNonPC;
+    };
+
     const online = assets.filter((asset) => asset.status === 'ONLINE').length;
     const warning = assets.filter((asset) => asset.status === 'WARNING').length;
     const windows = assets.filter((asset) => asset.osType === 'Windows').length;
-    const withAgent = assets.filter((asset) => asset.agentVersion).length;
+    const withAgent = assets.filter(
+      (asset) =>
+        isComputer(asset) &&
+        asset.agentVersion &&
+        !['---', 'N/A', 'Sin antivirus', 'Sin agente', 'Discovery Engine 2.1'].includes(asset.agentVersion),
+    ).length;
 
     return {
       total: assets.length,

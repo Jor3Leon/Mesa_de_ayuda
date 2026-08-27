@@ -139,9 +139,15 @@ export default function CMDB() {
     const warning = assets.filter(a => a.status === 'WARNING' || a.status === 'OFFLINE').length;
     
     // Métricas de Salud y Cumplimiento
+    const isComputer = (a) => {
+      const type = (a.deviceType || '').toLowerCase();
+      return !['impresora', 'impresoras', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction', 'printer', 'monitor', 'monitores', 'perifericos', 'dispositivo de red'].some(k => type.includes(k));
+    };
+
+    const computerAssets = assets.filter(isComputer);
     const healthScore = total > 0 ? Math.round((online / total) * 100) : 100;
-    const withAgent = assets.filter(a => a.agentVersion && a.agentVersion !== '1.0.0').length;
-    const securityScore = total > 0 ? Math.round((withAgent / total) * 100) : 100;
+    const withAgent = computerAssets.filter(a => a.agentVersion && !['1.0.0', '---', 'N/A', 'Discovery Engine 2.1', 'Sin antivirus', 'Sin agente'].includes(a.agentVersion)).length;
+    const securityScore = computerAssets.length > 0 ? Math.round((withAgent / computerAssets.length) * 100) : 100;
     const storageRiskCount = assets.filter(a => {
       const s = parseStorage(a.storageSummary);
       return s?.freePercent !== undefined && s.freePercent < 15;

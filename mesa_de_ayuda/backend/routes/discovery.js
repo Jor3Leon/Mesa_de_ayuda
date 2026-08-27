@@ -579,7 +579,7 @@ function getDiscoveryRoutes(prisma) {
             networkSummary,
             notes: fullNotes || existingAsset.notes,
             lastSeenAt: new Date(),
-            agentVersion: normalizeOptionalString(agentVersion) || 'Discovery Engine 2.1',
+            agentVersion: normalizeOptionalString(agentVersion) || null,
             customerId: validCustomerId
           },
           include: { customer: true }
@@ -601,7 +601,7 @@ function getDiscoveryRoutes(prisma) {
             networkSummary,
             notes: fullNotes,
             lastSeenAt: new Date(),
-            agentVersion: normalizeOptionalString(agentVersion) || 'Discovery Engine 2.1',
+            agentVersion: normalizeOptionalString(agentVersion) || null,
             organizationId: orgId || null,
             customerId: validCustomerId
           },

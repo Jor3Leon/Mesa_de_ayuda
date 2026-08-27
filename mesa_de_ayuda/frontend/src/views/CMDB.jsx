@@ -374,8 +374,6 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                   <option value="Equipos de Computo">Equipos de Cómputo</option>
                   <option value="Impresoras y/o Escaneres">Impresoras y/o Escáneres</option>
                   <option value="Dispositivos de Red">Dispositivos de Red</option>
-                  <option value="Monitor">Monitores</option>
-                  <option value="Perifericos">Periféricos</option>
                 </select>
               </div>
               <div className="field" style={{ minWidth: '150px' }}>

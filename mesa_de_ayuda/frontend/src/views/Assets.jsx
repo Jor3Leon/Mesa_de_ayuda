@@ -249,10 +249,15 @@ export default function Assets() {
       apiRequest(`/assets/${selectedAssetId}/history`)
         .then((data) => {
           if (!ignore) {
-            setHistory(data);
+            setHistory(data || { tickets: [], maintenances: [] });
           }
         })
-        .catch(console.error)
+        .catch((err) => {
+          console.error('Error loading asset history:', err);
+          if (!ignore) {
+            setHistory({ tickets: [], maintenances: [] });
+          }
+        })
         .finally(() => {
           if (!ignore) setLoadingHistory(false);
         });
@@ -264,9 +269,11 @@ export default function Assets() {
   }, [selectedAssetId, activeTab]);
 
   const sortedHistory = useMemo(() => {
+    const tickets = Array.isArray(history?.tickets) ? history.tickets : [];
+    const maintenances = Array.isArray(history?.maintenances) ? history.maintenances : [];
     const items = [
-      ...history.tickets.map((t) => ({ ...t, _type: 'TICKET', _date: new Date(t.createdAt) })),
-      ...history.maintenances.map((m) => ({ ...m, _type: 'MAINTENANCE', _date: new Date(m.date) })),
+      ...tickets.map((t) => ({ ...t, _type: 'TICKET', _date: new Date(t.createdAt) })),
+      ...maintenances.map((m) => ({ ...m, _type: 'MAINTENANCE', _date: new Date(m.date) })),
     ];
     return items.sort((a, b) => b._date - a._date);
   }, [history]);

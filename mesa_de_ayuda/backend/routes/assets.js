@@ -282,33 +282,38 @@ function getAssetRoutes(prisma) {
       if (!asset) throw createHttpError(404, 'Asset not found.');
 
       const orConditions = [{ assetId: id }];
+      
       if (asset.hostname && asset.hostname.trim()) {
-        orConditions.push({ title: { contains: asset.hostname } });
-        orConditions.push({ description: { contains: asset.hostname } });
+        const cleanHost = asset.hostname.trim();
+        orConditions.push({ title: { contains: cleanHost, mode: 'insensitive' } });
+        orConditions.push({ description: { contains: cleanHost, mode: 'insensitive' } });
       }
       if (asset.serialNumber && asset.serialNumber.trim()) {
-        orConditions.push({ title: { contains: asset.serialNumber } });
-        orConditions.push({ description: { contains: asset.serialNumber } });
+        const cleanSerial = asset.serialNumber.trim();
+        orConditions.push({ title: { contains: cleanSerial, mode: 'insensitive' } });
+        orConditions.push({ description: { contains: cleanSerial, mode: 'insensitive' } });
       }
 
-      const tickets = await prisma.ticket.findMany({
-        where: {
-          OR: orConditions
-        },
-        include: {
-          assignedTo: { select: { id: true, name: true, username: true } },
-          createdBy: { select: { id: true, name: true, username: true } }
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      const [tickets, maintenances] = await Promise.all([
+        prisma.ticket.findMany({
+          where: {
+            OR: orConditions
+          },
+          include: {
+            assignedTo: { select: { id: true, name: true, username: true } },
+            createdBy: { select: { id: true, name: true, username: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.maintenance.findMany({
+          where: { assetId: id },
+          orderBy: { date: 'desc' }
+        })
+      ]);
 
-      const maintenances = await prisma.maintenance.findMany({
-        where: { assetId: id },
-        orderBy: { date: 'desc' }
-      });
-
-      res.json({ tickets, maintenances });
+      res.json({ tickets: tickets || [], maintenances: maintenances || [] });
     } catch (error) {
+      console.error('Error in /assets/:id/history:', error);
       next(error);
     }
   });

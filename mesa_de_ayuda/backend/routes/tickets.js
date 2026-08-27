@@ -36,6 +36,7 @@ function getTicketRoutes(prisma) {
         orderBy: { createdAt: 'desc' },
         include: {
           customer: true,
+          asset: true,
           assignedTo: { include: { role: true, location: true } },
           secondaryAssignedTo: { include: { role: true, location: true } },
           createdBy: { include: { role: true, location: true } },
@@ -96,6 +97,7 @@ function getTicketRoutes(prisma) {
         },
         include: {
           customer: true,
+          asset: true,
           assignedTo: { include: { role: true, location: true } },
           secondaryAssignedTo: { include: { role: true, location: true } },
           createdBy: { include: { role: true, location: true } },
@@ -128,6 +130,7 @@ function getTicketRoutes(prisma) {
         where: { id },
         include: {
           customer: true,
+          asset: true,
           assignedTo: { include: { role: true, location: true } },
           secondaryAssignedTo: { include: { role: true, location: true } },
           createdBy: { include: { role: true, location: true } },

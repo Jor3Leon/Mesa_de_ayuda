@@ -1442,6 +1442,65 @@ export default function Assets() {
               </div>
               ) : (
                 <div className="asset-history-body">
+                  {/* Tarjeta de Trazabilidad & Resumen Operativo */}
+                  {sortedHistory.length > 0 && (() => {
+                    const ticketCount = sortedHistory.filter(h => h._type === 'TICKET').length;
+                    const maintenanceCount = sortedHistory.filter(h => {
+                      if (h._type === 'MAINTENANCE') return true;
+                      const type = String(h.ticketType || '').toLowerCase();
+                      const cat = String(h.category || '').toLowerCase();
+                      const title = String(h.title || '').toLowerCase();
+                      const desc = String(h.description || '').toLowerCase();
+
+                      return (
+                        type.includes('mantenimiento') ||
+                        type.includes('preventivo') ||
+                        type.includes('correctivo') ||
+                        cat.includes('mantenimiento') ||
+                        cat.includes('plan de mantenimiento') ||
+                        cat.includes('tinta/tóner') ||
+                        cat.includes('tinta/toner') ||
+                        cat.includes('reabastecimiento') ||
+                        cat.includes('insumos') ||
+                        title.includes('mantenimiento') ||
+                        title.includes('preventivo') ||
+                        title.includes('correctivo') ||
+                        title.includes('reabastecimiento') ||
+                        desc.includes('mantenimiento preventivo') ||
+                        desc.includes('mantenimiento correctivo') ||
+                        desc.includes('remisión a mantenimiento') ||
+                        desc.includes('remision a mantenimiento')
+                      );
+                    }).length;
+
+                    return (
+                      <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '0.9rem', marginBottom: '1.2rem' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#002E5D', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span>⏱️</span> Trazabilidad & Vida Útil del Activo
+                          </span>
+                          <span className="badge badge-info" style={{ fontSize: '0.68rem' }}>
+                            {ticketCount} {ticketCount === 1 ? 'ticket' : 'tickets'} registrados
+                          </span>
+                        </div>
+                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem' }}>
+                          <div style={{ background: '#fff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Total Soportes</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                              🎫 {ticketCount}
+                            </div>
+                          </div>
+                          <div style={{ background: '#fff', padding: '0.5rem 0.75rem', borderRadius: '8px', border: '1px solid #e2e8f0' }}>
+                            <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Mantenimientos</div>
+                            <div style={{ fontSize: '1.1rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
+                              🛠️ {maintenanceCount}
+                            </div>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })()}
+
                   {loadingHistory ? (
                     <div className="empty-state">Cargando historial...</div>
                   ) : sortedHistory.length === 0 ? (

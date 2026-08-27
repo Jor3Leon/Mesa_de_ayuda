@@ -1304,35 +1304,67 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 </div>
               )}
 
-              {active360Tab === 'TIMELINE' && (
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-                  
-                  {/* Tarjeta de Trazabilidad & Resumen Operativo */}
-                  <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '14px', padding: '1rem' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                        <span>⏱️</span> Trazabilidad & Vida Útil
-                      </div>
-                      <span className="badge info" style={{ fontSize: '0.68rem' }}>
-                        {assetHistory.tickets.length} {assetHistory.tickets.length === 1 ? 'ticket' : 'tickets'} registrados
-                      </span>
-                    </div>
+              {active360Tab === 'TIMELINE' && (() => {
+                const maintenanceCount = (() => {
+                  const fromTickets = (assetHistory.tickets || []).filter(t => {
+                    const type = String(t.ticketType || '').toLowerCase();
+                    const cat = String(t.category || '').toLowerCase();
+                    const title = String(t.title || '').toLowerCase();
+                    const desc = String(t.description || '').toLowerCase();
 
-                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.5rem' }}>
-                      <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                        <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Total Soportes</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
-                          🎫 {assetHistory.tickets.length}
+                    return (
+                      type.includes('mantenimiento') ||
+                      type.includes('preventivo') ||
+                      type.includes('correctivo') ||
+                      cat.includes('mantenimiento') ||
+                      cat.includes('plan de mantenimiento') ||
+                      cat.includes('tinta/tóner') ||
+                      cat.includes('tinta/toner') ||
+                      cat.includes('reabastecimiento') ||
+                      cat.includes('insumos') ||
+                      title.includes('mantenimiento') ||
+                      title.includes('preventivo') ||
+                      title.includes('correctivo') ||
+                      title.includes('reabastecimiento') ||
+                      desc.includes('mantenimiento preventivo') ||
+                      desc.includes('mantenimiento correctivo') ||
+                      desc.includes('remisión a mantenimiento') ||
+                      desc.includes('remision a mantenimiento')
+                    );
+                  }).length;
+
+                  return fromTickets + (assetHistory.maintenances?.length || 0);
+                })();
+
+                return (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                    
+                    {/* Tarjeta de Trazabilidad & Resumen Operativo */}
+                    <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '14px', padding: '1rem' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                        <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>⏱️</span> Trazabilidad & Vida Útil
                         </div>
+                        <span className="badge info" style={{ fontSize: '0.68rem' }}>
+                          {assetHistory.tickets.length} {assetHistory.tickets.length === 1 ? 'ticket' : 'tickets'} registrados
+                        </span>
                       </div>
-                      <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
-                        <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Mantenimientos</div>
-                        <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
-                          🛠️ {assetHistory.maintenances.length}
+
+                      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.5rem' }}>
+                        <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                          <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Total Soportes</div>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                            🎫 {assetHistory.tickets.length}
+                          </div>
+                        </div>
+                        <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                          <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Mantenimientos</div>
+                          <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
+                            🛠️ {maintenanceCount}
+                          </div>
                         </div>
                       </div>
                     </div>
-                  </div>
 
                   {/* Historial de Tickets y Soportes Generados */}
                   <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem' }}>
@@ -1450,9 +1482,9 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                       </div>
                     </div>
                   </div>
-
                 </div>
-              )}
+              );
+            })()}
             </div>
           </aside>
         )}

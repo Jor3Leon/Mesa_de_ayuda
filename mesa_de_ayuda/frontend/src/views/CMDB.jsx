@@ -75,6 +75,42 @@ function formatAssignedUser(userName) {
   return clean || userName;
 }
 
+function isPrinterDevice(asset) {
+  if (!asset) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''}`.toLowerCase();
+  return ['impresora', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncion', 'multifunction', 'fotocopiadora', 'plotter', 'copiadora'].some(k => str.includes(k));
+}
+
+function isComputeDevice(asset) {
+  if (!asset || isPrinterDevice(asset)) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''}`.toLowerCase();
+  return ['computo', 'escritorio', 'all in one', 'all-in-one', 'portatil', 'portátil', 'desktop', 'aio', 'laptop', 'notebook', 'mini pc', 'workstation'].some(k => str.includes(k));
+}
+
+function isNetworkDevice(asset) {
+  if (!asset || isPrinterDevice(asset) || isComputeDevice(asset)) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''} ${asset.hostname || ''}`.toLowerCase();
+  // Strictly network & server infrastructure (switches, routers, servers, modems, APs, firewalls, etc.)
+  return [
+    'servidor',
+    'server',
+    'switch',
+    'router',
+    'access point',
+    'firewall',
+    'nas',
+    'modem',
+    'módem',
+    'patch panel',
+    'gateway',
+    'balanceador',
+    'antena',
+    'olt',
+    'ont',
+    'bridge'
+  ].some(k => str.includes(k)) || (asset.deviceType || '').toLowerCase() === 'dispositivo de red';
+}
+
 export default function CMDB() {
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -140,12 +176,7 @@ export default function CMDB() {
     const warning = assets.filter(a => a.status === 'WARNING' || a.status === 'OFFLINE').length;
     
     // Métricas de Salud y Cumplimiento
-    const isComputer = (a) => {
-      const type = (a.deviceType || '').toLowerCase();
-      return !['impresora', 'impresoras', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction', 'printer', 'monitor', 'monitores', 'perifericos', 'dispositivo de red'].some(k => type.includes(k));
-    };
-
-    const computerAssets = assets.filter(isComputer);
+    const computerAssets = assets.filter(isComputeDevice);
     const healthScore = total > 0 ? Math.round((online / total) * 100) : 100;
     const withAgent = computerAssets.filter(a => a.agentVersion && !['1.0.0', '---', 'N/A', 'Discovery Engine 2.1', 'Sin antivirus', 'Sin agente'].includes(a.agentVersion)).length;
     const securityScore = computerAssets.length > 0 ? Math.round((withAgent / computerAssets.length) * 100) : 100;
@@ -169,22 +200,9 @@ export default function CMDB() {
 
       const matchesCategory = (() => {
         if (filterCategory === 'ALL') return true;
-        const type = (a.deviceType || '').toLowerCase();
-        if (filterCategory === 'Equipos de Computo') {
-          const compuKeywords = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop', 'net'];
-          return compuKeywords.some(k => type.includes(k));
-        } else if (filterCategory === 'Impresoras y/o Escaneres') {
-          const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
-          return printerKeywords.some(k => type.includes(k));
-        } else if (filterCategory === 'Dispositivos de Red') {
-          const networkKeywords = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor', 'srv', 'modem', 'patch panel'];
-          return networkKeywords.some(k => (a.deviceType || '').toLowerCase().includes(k) || (a.hostname || '').toLowerCase().includes(k)) || type === 'dispositivo de red';
-        } else if (filterCategory === 'Monitor') {
-          return type.includes('monitor') || type.includes('pantalla');
-        } else if (filterCategory === 'Perifericos') {
-          const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
-          return peripheralKeywords.some(k => type.includes(k));
-        }
+        if (filterCategory === 'Equipos de Computo') return isComputeDevice(a);
+        if (filterCategory === 'Impresoras y/o Escaneres') return isPrinterDevice(a);
+        if (filterCategory === 'Dispositivos de Red') return isNetworkDevice(a);
         return a.deviceType === filterCategory;
       })();
 
@@ -195,14 +213,11 @@ export default function CMDB() {
         const s = parseStorage(a.storageSummary);
         matchesRisk = s?.freePercent !== undefined && s.freePercent < 15;
       } else if (filterRisk === 'COMPUTE') {
-        const type = (a.deviceType || '').toLowerCase();
-        matchesRisk = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop'].some(k => type.includes(k));
+        matchesRisk = isComputeDevice(a);
       } else if (filterRisk === 'PRINTERS') {
-        const type = (a.deviceType || '').toLowerCase();
-        matchesRisk = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'].some(k => type.includes(k));
+        matchesRisk = isPrinterDevice(a);
       } else if (filterRisk === 'NETWORK') {
-        const type = (a.deviceType || '').toLowerCase();
-        matchesRisk = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor'].some(k => type.includes(k));
+        matchesRisk = isNetworkDevice(a);
       }
 
       return matchesSearch && matchesType && matchesRisk && matchesCategory;

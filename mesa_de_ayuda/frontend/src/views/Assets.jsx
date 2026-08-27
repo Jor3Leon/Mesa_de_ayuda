@@ -108,6 +108,54 @@ function formatAssignedUser(userName) {
   return clean || userName;
 }
 
+export function isPrinterDevice(asset) {
+  if (!asset) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''}`.toLowerCase();
+  return ['impresora', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncion', 'multifunction', 'fotocopiadora', 'plotter', 'copiadora'].some(k => str.includes(k));
+}
+
+export function isComputeDevice(asset) {
+  if (!asset || isPrinterDevice(asset)) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''}`.toLowerCase();
+  return ['computo', 'escritorio', 'all in one', 'all-in-one', 'portatil', 'portátil', 'desktop', 'aio', 'laptop', 'notebook', 'mini pc', 'workstation'].some(k => str.includes(k));
+}
+
+export function isNetworkDevice(asset) {
+  if (!asset || isPrinterDevice(asset) || isComputeDevice(asset)) return false;
+  const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''} ${asset.hostname || ''}`.toLowerCase();
+  // Strictly network & server infrastructure (switches, routers, servers, modems, APs, firewalls, etc.)
+  return [
+    'servidor',
+    'server',
+    'switch',
+    'router',
+    'access point',
+    'firewall',
+    'nas',
+    'modem',
+    'módem',
+    'patch panel',
+    'gateway',
+    'balanceador',
+    'antena',
+    'olt',
+    'ont',
+    'bridge'
+  ].some(k => str.includes(k)) || (asset.deviceType || '').toLowerCase() === 'dispositivo de red';
+}
+
+export function isMonitorDevice(asset) {
+  if (!asset) return false;
+  const str = (asset.deviceType || '').toLowerCase();
+  return str.includes('monitor') || str.includes('pantalla');
+}
+
+export function isPeripheralDevice(asset) {
+  if (!asset || isPrinterDevice(asset) || isMonitorDevice(asset) || isNetworkDevice(asset) || isComputeDevice(asset)) return false;
+  const str = (asset.deviceType || '').toLowerCase();
+  return ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono', 'periferico', 'periférico'].some(k => str.includes(k));
+}
+
 function buildDateInputValue(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -274,25 +322,11 @@ export default function Assets() {
       const matchesLocation = locationFilter === 'ALL' || asset.location === locationFilter;
       const matchesCategory = (() => {
         if (categoryFilter === 'ALL') return true;
-        const type = (asset.deviceType || '').toLowerCase();
-        
-        if (categoryFilter === 'Equipos de Computo') {
-          const compuKeywords = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop', 'net'];
-          return compuKeywords.some((keyword) => type.includes(keyword));
-        } else if (categoryFilter === 'Dispositivo de Red') {
-          const networkKeywords = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor', 'srv', 'modem', 'patch panel'];
-          const isNetwork = (val) => networkKeywords.some((k) => (val || '').toLowerCase().includes(k));
-          return isNetwork(asset.deviceType) || isNetwork(asset.hostname) || type === 'dispositivo de red';
-        } else if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') {
-          return type.includes('monitor') || type.includes('pantalla');
-        } else if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') {
-          const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
-          return printerKeywords.some((keyword) => type.includes(keyword));
-        } else if (categoryFilter === 'Perifericos') {
-          const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
-          return peripheralKeywords.some((keyword) => type.includes(keyword));
-        }
-        
+        if (categoryFilter === 'Equipos de Computo') return isComputeDevice(asset);
+        if (categoryFilter === 'Dispositivo de Red') return isNetworkDevice(asset);
+        if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') return isPrinterDevice(asset);
+        if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') return isMonitorDevice(asset);
+        if (categoryFilter === 'Perifericos') return isPeripheralDevice(asset);
         return asset.deviceType === categoryFilter;
       })();
 
@@ -316,26 +350,14 @@ export default function Assets() {
 
   const categoryAssets = useMemo(() => {
     if (categoryFilter === 'ALL') return assets;
-    const isMatchingCategory = (asset) => {
-      const type = (asset.deviceType || '').toLowerCase();
-      if (categoryFilter === 'Equipos de Computo') {
-        const compuKeywords = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop', 'net'];
-        return compuKeywords.some((k) => type.includes(k));
-      } else if (categoryFilter === 'Dispositivo de Red') {
-        const networkKeywords = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor', 'srv', 'modem', 'patch panel'];
-        return networkKeywords.some((k) => (asset.deviceType || '').toLowerCase().includes(k) || (asset.hostname || '').toLowerCase().includes(k)) || type === 'dispositivo de red';
-      } else if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') {
-        return type.includes('monitor') || type.includes('pantalla');
-      } else if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') {
-        const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
-        return printerKeywords.some((k) => type.includes(k));
-      } else if (categoryFilter === 'Perifericos') {
-        const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
-        return peripheralKeywords.some((k) => type.includes(k));
-      }
+    return assets.filter((asset) => {
+      if (categoryFilter === 'Equipos de Computo') return isComputeDevice(asset);
+      if (categoryFilter === 'Dispositivo de Red') return isNetworkDevice(asset);
+      if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') return isPrinterDevice(asset);
+      if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') return isMonitorDevice(asset);
+      if (categoryFilter === 'Perifericos') return isPeripheralDevice(asset);
       return asset.deviceType === categoryFilter;
-    };
-    return assets.filter(isMatchingCategory);
+    });
   }, [assets, categoryFilter]);
 
   const stats = useMemo(() => {

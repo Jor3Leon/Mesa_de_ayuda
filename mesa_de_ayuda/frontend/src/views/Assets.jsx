@@ -76,6 +76,31 @@ function getAssetPlate(hostname) {
   return matches ? matches.join('') : '---';
 }
 
+function extractMacAddress(networkSummary) {
+  if (!networkSummary) return '---';
+  const match = networkSummary.match(/([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/i);
+  return match ? match[1].toUpperCase() : '---';
+}
+
+function extractNetworkCard(networkSummary) {
+  if (!networkSummary) return '---';
+  // 1. If format is NIC: Realtek PCIe ... | IP: ... | MAC: ...
+  const nicMatch = networkSummary.match(/NIC:\s*([^|]+)/i);
+  if (nicMatch && nicMatch[1].trim()) {
+    return nicMatch[1].trim();
+  }
+  // 2. If it contains a recognized adapter vendor or name
+  const adapterMatch = networkSummary.match(/((Intel|Realtek|Broadcom|Qualcomm|Atheros|MediaTek|Marvell|Killer|TP-Link|D-Link|Gigabit|Wi-Fi|Wireless|Ethernet|Fast Ethernet)[^|\n]+)/i);
+  if (adapterMatch && adapterMatch[1].trim()) {
+    return adapterMatch[1].trim();
+  }
+  // 3. Fallback: if it has IP and MAC, return "Tarjeta de Red Ethernet / Wi-Fi" or the summary
+  if (networkSummary.includes('IP:') && networkSummary.includes('MAC:')) {
+    return 'Adaptador de Red Integrado (Ethernet/Wi-Fi)';
+  }
+  return networkSummary;
+}
+
 function buildDateInputValue(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -930,83 +955,203 @@ export default function Assets() {
                 </div>
 
                 <div className="asset-specs-grid">
-                  {/* Columna Izquierda: Basicos */}
-                  <div style={
-                    ['Monitor', 'Monitores', 'Perifericos'].includes(selectedAsset.deviceType) 
-                      ? { display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', gridColumn: '1 / -1' }
-                      : { display: 'flex', flexDirection: 'column', gap: '0.75rem' }
-                  }>
-                    <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
-                    <div className="asset-spec-card">
-                      <span>Usuario</span>
-                      <strong>
-                        {(() => {
-                          let userName = selectedAsset.assignedUser;
-                          if (selectedAsset.deviceType === 'Monitor') {
-                            const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
-                            if (host && host.assignedUser) userName = host.assignedUser;
-                          }
-                          
-                          if (!userName) return 'No asignado';
-                          
-                          const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
-                          if (userMatch) {
-                            return (
-                                <button 
-                                  type="button" 
-                                  className="btn-ghost" 
-                                  style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
-                                  onClick={() => setViewingUserProfile(userMatch)}
-                                >
-                                  {userMatch.username}
-                                </button>
-                            );
-                          }
-                          
-                          return userName;
-                        })()}
-                      </strong>
-                    </div>
-                    <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
-                    <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || '---'}</strong></div>
+                  {(() => {
+                    const typeStr = (selectedAsset.deviceType || '').toLowerCase();
+                    const isMonitorOrPeripheral = ['monitor', 'monitores', 'perifericos'].some(k => typeStr.includes(k));
+                    const isPrinterOrScanner = [
+                      'impresora',
+                      'impresoras',
+                      'scanner',
+                      'escaner',
+                      'escáner',
+                      'multifuncional',
+                      'multifunction',
+                      'printer',
+                      'impresoras / escáneres',
+                      'impresora multifuncional',
+                      'impresora de red'
+                    ].some(k => typeStr.includes(k));
 
-                    {/* Vínculo hacia atrás: Si es un Monitor, buscar a qué equipo está conectado */}
-                    {selectedAsset.deviceType === 'Monitor' && (
-                      <div 
-                        className="asset-spec-card" 
-                        style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer' }}
-                        onClick={() => {
-                          const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
-                          if (host) setSelectedAssetId(host.id);
-                        }}
-                      >
-                        <span style={{ color: '#047857' }}>Vinculado al equipo:</span>
-                        {(() => {
-                          const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
-                          return <strong style={{ color: '#064e3b' }}>{host ? host.hostname : 'No vinculado'}</strong>;
-                        })()}
-                      </div>
-                    )}
-                    <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
-                    <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
-                    <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
-                  </div>
+                    if (isMonitorOrPeripheral) {
+                      return (
+                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', gridColumn: '1 / -1' }}>
+                          <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
+                          <div className="asset-spec-card">
+                            <span>Usuario</span>
+                            <strong>
+                              {(() => {
+                                let userName = selectedAsset.assignedUser;
+                                if (selectedAsset.deviceType === 'Monitor') {
+                                  const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
+                                  if (host && host.assignedUser) userName = host.assignedUser;
+                                }
+                                if (!userName) return 'No asignado';
+                                const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                                if (userMatch) {
+                                  return (
+                                    <button 
+                                      type="button" 
+                                      className="btn-ghost" 
+                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                      onClick={() => setViewingUserProfile(userMatch)}
+                                    >
+                                      {userMatch.username}
+                                    </button>
+                                  );
+                                }
+                                return userName;
+                              })()}
+                            </strong>
+                          </div>
+                          <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
+                          <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || '---'}</strong></div>
 
-                  {/* Columna Derecha: Hardware y Red */}
-                  {!['Monitor', 'Monitores', 'Perifericos'].includes(selectedAsset.deviceType) && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                      <div className="asset-spec-card"><span>Procesador</span><strong>{selectedAsset.cpuModel || '---'}</strong></div>
-                      <div className="asset-spec-card"><span>Almacenamiento</span><strong>{selectedAsset.storageSummary || '---'}</strong></div>
-                      <div className="asset-spec-card"><span>Memoria RAM</span><strong>{selectedAsset.ramSummary || '---'}</strong></div>
-                      <div className="asset-spec-card"><span>Graficadora</span><strong>{selectedAsset.graphicsInfo || '---'}</strong></div>
-                      <div className="asset-spec-card"><span>Hardware de RED</span><strong>{selectedAsset.networkSummary || '---'}</strong></div>
-                      <div className="asset-spec-card"><span>Dirección IP</span><strong>{selectedAsset.ipAddress}</strong></div>
-                      <div className="asset-spec-card"><span>Antivirus</span><strong>{selectedAsset.agentVersion || '---'}</strong></div>
-                    </div>
-                  )}
+                          {selectedAsset.deviceType === 'Monitor' && (
+                            <div 
+                              className="asset-spec-card" 
+                              style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer' }}
+                              onClick={() => {
+                                const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
+                                if (host) setSelectedAssetId(host.id);
+                              }}
+                            >
+                              <span style={{ color: '#047857' }}>Vinculado al equipo:</span>
+                              {(() => {
+                                const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
+                                return <strong style={{ color: '#064e3b' }}>{host ? host.hostname : 'No vinculado'}</strong>;
+                              })()}
+                            </div>
+                          )}
+                          <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                        </div>
+                      );
+                    }
+
+                    if (isPrinterOrScanner) {
+                      return (
+                        <>
+                          {/* Columna Izquierda: Ficha de Impresora / Multifuncional */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
+                            <div className="asset-spec-card">
+                              <span>Usuario / Área</span>
+                              <strong>
+                                {(() => {
+                                  let userName = selectedAsset.assignedUser;
+                                  if (!userName) return 'No asignado';
+                                  const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                                  if (userMatch) {
+                                    return (
+                                      <button 
+                                        type="button" 
+                                        className="btn-ghost" 
+                                        style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                        onClick={() => setViewingUserProfile(userMatch)}
+                                      >
+                                        {userMatch.username}
+                                      </button>
+                                    );
+                                  }
+                                  return userName;
+                                })()}
+                              </strong>
+                            </div>
+                            <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
+                            <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || 'Impresora Multifuncional'}</strong></div>
+                            <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
+                            <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
+                            <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                          </div>
+
+                          {/* Columna Derecha: Red y Conectividad específica de Impresora (SIN campos de PC como RAM/CPU/GPU/Antivirus) */}
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                            <div className="asset-spec-card">
+                              <span>MAC</span>
+                              <strong style={{ fontFamily: 'monospace', color: '#0284c7' }}>{extractMacAddress(selectedAsset.networkSummary)}</strong>
+                            </div>
+                            <div className="asset-spec-card">
+                              <span>Dirección IP</span>
+                              <strong>
+                                {selectedAsset.ipAddress ? (
+                                  <a 
+                                    href={`http://${selectedAsset.ipAddress}`} 
+                                    target="_blank" 
+                                    rel="noopener noreferrer" 
+                                    style={{ color: '#0284c7', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
+                                  >
+                                    {selectedAsset.ipAddress} <span style={{ fontSize: '0.75rem' }}>↗ Web Admin</span>
+                                  </a>
+                                ) : '---'}
+                              </strong>
+                            </div>
+                            <div className="asset-spec-card"><span>Firmware / Sistema</span><strong>{selectedAsset.osVersion || '---'}</strong></div>
+                            <div className="asset-spec-card">
+                              <span>Estado de Conexión</span>
+                              <strong><span className={`badge ${getStatusClass(selectedAsset.status)}`}>{selectedAsset.status}</span></strong>
+                            </div>
+                            <div className="asset-spec-card">
+                              <span>Gestión en Red</span>
+                              <strong style={{ fontSize: '0.82rem', color: '#64748b' }}>Sondeo SNMP v1/v2c &bull; Web Management</strong>
+                            </div>
+                          </div>
+                        </>
+                      );
+                    }
+
+                    // Ficha Técnica para Equipos de Cómputo (Desktop, Laptop, AIO, etc.)
+                    return (
+                      <>
+                        {/* Columna Izquierda: Datos Generales */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
+                          <div className="asset-spec-card">
+                            <span>Usuario</span>
+                            <strong>
+                              {(() => {
+                                let userName = selectedAsset.assignedUser;
+                                if (!userName) return 'No asignado';
+                                const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                                if (userMatch) {
+                                  return (
+                                    <button 
+                                      type="button" 
+                                      className="btn-ghost" 
+                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                      onClick={() => setViewingUserProfile(userMatch)}
+                                    >
+                                      {userMatch.username}
+                                    </button>
+                                  );
+                                }
+                                return userName;
+                              })()}
+                            </strong>
+                          </div>
+                          <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
+                          <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                        </div>
+
+                        {/* Columna Derecha: Hardware de Cómputo y Red */}
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                          <div className="asset-spec-card"><span>Procesador</span><strong>{selectedAsset.cpuModel || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Almacenamiento</span><strong>{selectedAsset.storageSummary || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Memoria RAM</span><strong>{selectedAsset.ramSummary || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Graficadora</span><strong>{selectedAsset.graphicsInfo || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Hardware de RED</span><strong>{extractNetworkCard(selectedAsset.networkSummary)}</strong></div>
+                          <div className="asset-spec-card"><span>Dirección IP</span><strong>{selectedAsset.ipAddress || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Antivirus</span><strong>{selectedAsset.agentVersion || '---'}</strong></div>
+                        </div>
+                      </>
+                    );
+                  })()}
                 </div>
 
-                {!['Monitor', 'Monitores', 'Perifericos'].includes(selectedAsset.deviceType) && (
+                {!['Monitor', 'Monitores', 'Perifericos', 'Impresoras / Escáneres', 'Impresora', 'Impresora Multifuncional', 'Impresora de Red', 'Escáner', 'Multifuncional', 'PRINTER', 'SCANNER'].some(k => (selectedAsset.deviceType || '').toLowerCase().includes(k.toLowerCase())) && (
                   <div className="asset-spec-card full" style={{ marginTop: '0.5rem', textAlign: 'center', background: '#f0f9ff', border: '1px solid #bae6fd' }}>
                     <span style={{ color: '#0369a1' }}>Pantalla o pantallas vinculadas</span>
                     <div style={{ display: 'flex', flexDirection: 'row', flexWrap: 'nowrap', gap: '0.8rem', justifyContent: 'center', marginTop: '0.8rem', overflowX: 'auto', paddingBottom: '0.5rem' }}>

@@ -234,7 +234,7 @@ def get_gpu_info():
 
 
 def get_network_info():
-    """Retrieve local IP address, hostname and MAC."""
+    """Retrieve local IP address, hostname, network adapter card name and MAC."""
     hostname = socket.gethostname()
     ip_address = "127.0.0.1"
     try:
@@ -249,7 +249,38 @@ def get_network_info():
             pass
 
     mac_hex = ':'.join(['{:02x}'.format((uuid.getnode() >> ele) & 0xff) for ele in range(0, 8*6, 8)][::-1])
-    network_summary = f"IP: {ip_address} | MAC: {mac_hex}"
+
+    nic_name = ""
+    if winreg:
+        try:
+            net_key = winreg.OpenKey(winreg.HKEY_LOCAL_MACHINE, r"SYSTEM\CurrentControlSet\Control\Class\{4d36e972-e325-11ce-bfc1-08002be10318}")
+            i = 0
+            while True:
+                try:
+                    subkey = winreg.EnumKey(net_key, i)
+                    if subkey.isdigit():
+                        sub = winreg.OpenKey(net_key, subkey)
+                        try:
+                            desc, _ = winreg.QueryValueEx(sub, "DriverDesc")
+                            desc_str = str(desc).strip()
+                            if desc_str and not any(skip in desc_str.lower() for skip in ["miniport", "kernel", "virtual", "tap-", "pseudo", "bluetooth", "pacer"]):
+                                nic_name = desc_str
+                                winreg.CloseKey(sub)
+                                break
+                        except Exception:
+                            pass
+                        winreg.CloseKey(sub)
+                    i += 1
+                except OSError:
+                    break
+            winreg.CloseKey(net_key)
+        except Exception:
+            pass
+
+    if nic_name:
+        network_summary = f"NIC: {nic_name} | IP: {ip_address} | MAC: {mac_hex}"
+    else:
+        network_summary = f"IP: {ip_address} | MAC: {mac_hex}"
     
     return hostname, ip_address, network_summary
 

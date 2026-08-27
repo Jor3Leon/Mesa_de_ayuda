@@ -83,6 +83,7 @@ export default function CMDB() {
   const [selectedAsset, setSelectedAsset] = useState(null);
   const [showMobile360, setShowMobile360] = useState(false);
   const [search, setSearch] = useState('');
+  const [filterCategory, setFilterCategory] = useState('ALL');
   const [filterType, setFilterType] = useState('ALL');
   const [filterRisk, setFilterRisk] = useState('ALL');
   const [active360Tab, setActive360Tab] = useState('INFO'); // 'INFO' | 'TOPOLOGY' | 'TIMELINE'
@@ -161,8 +162,31 @@ export default function CMDB() {
       const matchesSearch = (a.hostname || '').toLowerCase().includes(search.toLowerCase()) || 
                            (a.ipAddress || '').includes(search) ||
                            (a.serialNumber || '').toLowerCase().includes(search.toLowerCase()) ||
-                           (a.customer?.name || '').toLowerCase().includes(search.toLowerCase());
+                           (a.customer?.name || '').toLowerCase().includes(search.toLowerCase()) ||
+                           (a.assignedUser || '').toLowerCase().includes(search.toLowerCase()) ||
+                           (a.location || '').toLowerCase().includes(search.toLowerCase());
       const matchesType = filterType === 'ALL' || a.osType === filterType;
+
+      const matchesCategory = (() => {
+        if (filterCategory === 'ALL') return true;
+        const type = (a.deviceType || '').toLowerCase();
+        if (filterCategory === 'Equipos de Computo') {
+          const compuKeywords = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop', 'net'];
+          return compuKeywords.some(k => type.includes(k));
+        } else if (filterCategory === 'Impresoras y/o Escaneres') {
+          const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
+          return printerKeywords.some(k => type.includes(k));
+        } else if (filterCategory === 'Dispositivos de Red') {
+          const networkKeywords = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor', 'srv', 'modem', 'patch panel'];
+          return networkKeywords.some(k => (a.deviceType || '').toLowerCase().includes(k) || (a.hostname || '').toLowerCase().includes(k)) || type === 'dispositivo de red';
+        } else if (filterCategory === 'Monitor') {
+          return type.includes('monitor') || type.includes('pantalla');
+        } else if (filterCategory === 'Perifericos') {
+          const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
+          return peripheralKeywords.some(k => type.includes(k));
+        }
+        return a.deviceType === filterCategory;
+      })();
 
       let matchesRisk = true;
       if (filterRisk === 'ONLINE') matchesRisk = a.status === 'ONLINE';
@@ -173,14 +197,17 @@ export default function CMDB() {
       } else if (filterRisk === 'COMPUTE') {
         const type = (a.deviceType || '').toLowerCase();
         matchesRisk = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop'].some(k => type.includes(k));
+      } else if (filterRisk === 'PRINTERS') {
+        const type = (a.deviceType || '').toLowerCase();
+        matchesRisk = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'].some(k => type.includes(k));
       } else if (filterRisk === 'NETWORK') {
         const type = (a.deviceType || '').toLowerCase();
         matchesRisk = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor'].some(k => type.includes(k));
       }
 
-      return matchesSearch && matchesType && matchesRisk;
+      return matchesSearch && matchesType && matchesRisk && matchesCategory;
     });
-  }, [assets, search, filterType, filterRisk]);
+  }, [assets, search, filterType, filterRisk, filterCategory]);
 
   const handleCopyIp = (ipAddress) => {
     if (!ipAddress) return;
@@ -331,11 +358,25 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
               <div className="field" style={{ flex: 1, minWidth: '220px' }}>
                 <input 
                   type="text" 
-                  placeholder="Buscar por hostname, IP, serial o usuario..." 
+                  placeholder="Buscar por hostname, IP, serial, usuario o ubicación..." 
                   value={search}
                   onChange={e => setSearch(e.target.value)}
                   style={{ borderRadius: '12px', padding: '0.75rem 1.1rem', border: '1.5px solid #e2e8f0', width: '100%' }}
                 />
+              </div>
+              <div className="field" style={{ minWidth: '200px' }}>
+                <select 
+                  value={filterCategory} 
+                  onChange={e => setFilterCategory(e.target.value)} 
+                  style={{ borderRadius: '12px', padding: '0.75rem', width: '100%', borderColor: filterCategory !== 'ALL' ? 'var(--color-primary)' : '#e2e8f0', fontWeight: filterCategory !== 'ALL' ? 600 : 'normal' }}
+                >
+                  <option value="ALL">Todos los Tipos</option>
+                  <option value="Equipos de Computo">Equipos de Cómputo</option>
+                  <option value="Impresoras y/o Escaneres">Impresoras y/o Escáneres</option>
+                  <option value="Dispositivos de Red">Dispositivos de Red</option>
+                  <option value="Monitor">Monitores</option>
+                  <option value="Perifericos">Periféricos</option>
+                </select>
               </div>
               <div className="field" style={{ minWidth: '150px' }}>
                 <select value={filterType} onChange={e => setFilterType(e.target.value)} style={{ borderRadius: '12px', padding: '0.75rem', width: '100%' }}>
@@ -382,14 +423,21 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
               <button 
                 type="button" 
                 className={`chip ${filterRisk === 'COMPUTE' ? 'active' : ''}`}
-                onClick={() => setFilterRisk('COMPUTE')}
+                onClick={() => setFilterRisk(filterRisk === 'COMPUTE' ? 'ALL' : 'COMPUTE')}
               >
                 💻 Cómputo
               </button>
               <button 
                 type="button" 
+                className={`chip ${filterRisk === 'PRINTERS' ? 'active' : ''}`}
+                onClick={() => setFilterRisk(filterRisk === 'PRINTERS' ? 'ALL' : 'PRINTERS')}
+              >
+                🖨️ Impresoras / Escáneres
+              </button>
+              <button 
+                type="button" 
                 className={`chip ${filterRisk === 'NETWORK' ? 'active' : ''}`}
-                onClick={() => setFilterRisk('NETWORK')}
+                onClick={() => setFilterRisk(filterRisk === 'NETWORK' ? 'ALL' : 'NETWORK')}
               >
                 🌐 Servidores & Red
               </button>
@@ -415,58 +463,76 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                   <thead>
                     <tr>
                       <th style={{ paddingLeft: '1.5rem' }}>Identificador</th>
-                      <th>Entidad / Usuario</th>
-                      <th>Hardware & Almacenamiento</th>
+                      <th>Tipo</th>
+                      <th>Ubicación</th>
                       <th>Sistema Operativo</th>
                       <th>Estado</th>
                     </tr>
                   </thead>
                   <tbody>
-                    {filteredAssets.map((asset) => (
-                      <tr 
-                        key={asset.id} 
-                        onClick={() => {
-                          setSelectedAsset(asset);
-                          setShowMobile360(true);
-                        }}
-                        style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedAsset?.id === asset.id ? 'rgba(15, 157, 58, 0.08)' : 'transparent' }}
-                        className={selectedAsset?.id === asset.id ? 'asset-row-active' : ''}
-                      >
-                        <td style={{ paddingLeft: '1.5rem' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                            <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: asset.status === 'ONLINE' ? '#ecfdf5' : '#fff7ed', display: 'grid', placeItems: 'center', fontSize: '1.3rem' }}>
-                              {asset.osType === 'Linux' ? '🐧' : asset.osType === 'macOS' ? '🍎' : '💻'}
+                    {filteredAssets.map((asset) => {
+                      const typeStr = (asset.deviceType || '').toLowerCase();
+                      const isPrinter = ['impresora', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncion'].some(k => typeStr.includes(k));
+                      const isNet = ['switch', 'router', 'access point', 'firewall', 'red'].some(k => typeStr.includes(k));
+                      const isMon = typeStr.includes('monitor') || typeStr.includes('pantalla');
+
+                      let deviceIcon = '💻';
+                      if (isPrinter) deviceIcon = '🖨️';
+                      else if (isNet) deviceIcon = '🌐';
+                      else if (isMon) deviceIcon = '🖥️';
+                      else if (asset.osType === 'Linux') deviceIcon = '🐧';
+                      else if (asset.osType === 'macOS') deviceIcon = '🍎';
+
+                      return (
+                        <tr 
+                          key={asset.id} 
+                          onClick={() => {
+                            setSelectedAsset(asset);
+                            setShowMobile360(true);
+                          }}
+                          style={{ cursor: 'pointer', transition: 'background 0.2s', background: selectedAsset?.id === asset.id ? 'rgba(15, 157, 58, 0.08)' : 'transparent' }}
+                          className={selectedAsset?.id === asset.id ? 'asset-row-active' : ''}
+                        >
+                          <td style={{ paddingLeft: '1.5rem' }}>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <div style={{ width: '38px', height: '38px', borderRadius: '10px', background: asset.status === 'ONLINE' ? '#ecfdf5' : '#fff7ed', display: 'grid', placeItems: 'center', fontSize: '1.3rem' }}>
+                                {deviceIcon}
+                              </div>
+                              <div>
+                                <div style={{ fontWeight: 700, color: '#1e293b' }}>{asset.hostname}</div>
+                                <div className="muted-text" style={{ fontSize: '0.75rem' }}>SN: {asset.serialNumber || '---'}</div>
+                              </div>
                             </div>
-                            <div>
-                              <div style={{ fontWeight: 700, color: '#1e293b' }}>{asset.hostname}</div>
-                              <div className="muted-text" style={{ fontSize: '0.75rem' }}>SN: {asset.serialNumber || '---'}</div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#002E5D' }}>
+                              {asset.deviceType || 'Equipo de Cómputo'}
                             </div>
-                          </div>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{asset.customer?.name || 'Interno'}</div>
-                          <div className="muted-text" style={{ fontSize: '0.75rem' }}>👤 {formatAssignedUser(asset.assignedUser)}</div>
-                        </td>
-                        <td>
-                          <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
-                            {asset.deviceType || 'Equipo'} • {asset.ramSummary?.split('(')[0] || 'RAM N/A'}
-                          </div>
-                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>
-                            {asset.cpuModel ? asset.cpuModel.substring(0, 35) + (asset.cpuModel.length > 35 ? '...' : '') : 'CPU N/A'}
-                          </div>
-                        </td>
-                        <td>
-                          <span className="badge info" style={{ fontSize: '0.7rem' }}>{asset.osType}</span>
-                          <div className="muted-text" style={{ fontSize: '0.7rem', marginTop: '2px' }}>IP: {asset.ipAddress}</div>
-                        </td>
-                        <td>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                            <div className="status-dot" style={{ background: asset.status === 'ONLINE' ? 'var(--color-primary)' : '#f59e0b', width: '8px', height: '8px' }}></div>
-                            <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{asset.status}</span>
-                          </div>
-                        </td>
-                      </tr>
-                    ))}
+                            <div className="muted-text" style={{ fontSize: '0.75rem' }}>
+                              👤 {formatAssignedUser(asset.assignedUser)} {asset.customer?.name ? `• ${asset.customer.name}` : ''}
+                            </div>
+                          </td>
+                          <td>
+                            <div style={{ fontSize: '0.85rem', fontWeight: 600, color: '#1e293b' }}>
+                              📍 {asset.location || 'Sin ubicación'}
+                            </div>
+                            <div className="muted-text" style={{ fontSize: '0.7rem' }}>
+                              {asset.brand || ''} {asset.model || ''}
+                            </div>
+                          </td>
+                          <td>
+                            <span className="badge info" style={{ fontSize: '0.7rem' }}>{asset.osType}</span>
+                            <div className="muted-text" style={{ fontSize: '0.7rem', marginTop: '2px' }}>IP: {asset.ipAddress}</div>
+                          </td>
+                          <td>
+                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div className="status-dot" style={{ background: asset.status === 'ONLINE' ? 'var(--color-primary)' : '#f59e0b', width: '8px', height: '8px' }}></div>
+                              <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>{asset.status}</span>
+                            </div>
+                          </td>
+                        </tr>
+                      );
+                    })}
                   </tbody>
                 </table>
               )}

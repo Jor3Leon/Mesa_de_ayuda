@@ -285,8 +285,11 @@ export default function Assets() {
           return isNetwork(asset.deviceType) || isNetwork(asset.hostname) || type === 'dispositivo de red';
         } else if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') {
           return type.includes('monitor') || type.includes('pantalla');
+        } else if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') {
+          const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
+          return printerKeywords.some((keyword) => type.includes(keyword));
         } else if (categoryFilter === 'Perifericos') {
-          const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono', 'scanner', 'impresora'];
+          const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
           return peripheralKeywords.some((keyword) => type.includes(keyword));
         }
         
@@ -311,47 +314,161 @@ export default function Assets() {
     [assets, selectedAssetId],
   );
 
-  const stats = useMemo(() => {
-    const isComputer = (asset) => {
+  const categoryAssets = useMemo(() => {
+    if (categoryFilter === 'ALL') return assets;
+    const isMatchingCategory = (asset) => {
       const type = (asset.deviceType || '').toLowerCase();
-      const isNonPC = [
-        'impresora',
-        'impresoras',
-        'scanner',
-        'escaner',
-        'escáner',
-        'multifuncional',
-        'multifunction',
-        'printer',
-        'impresoras / escáneres',
-        'monitor',
-        'monitores',
-        'perifericos',
-        'dispositivo de red',
-        'switch',
-        'router'
-      ].some((k) => type.includes(k));
-      return !isNonPC;
+      if (categoryFilter === 'Equipos de Computo') {
+        const compuKeywords = ['computo', 'escritorio', 'all in one', 'portatil', 'desktop', 'aio', 'laptop', 'net'];
+        return compuKeywords.some((k) => type.includes(k));
+      } else if (categoryFilter === 'Dispositivo de Red') {
+        const networkKeywords = ['switch', 'router', 'access point', 'firewall', 'nas', 'ap', 'wifi', 'red', 'servidor', 'srv', 'modem', 'patch panel'];
+        return networkKeywords.some((k) => (asset.deviceType || '').toLowerCase().includes(k) || (asset.hostname || '').toLowerCase().includes(k)) || type === 'dispositivo de red';
+      } else if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') {
+        return type.includes('monitor') || type.includes('pantalla');
+      } else if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') {
+        const printerKeywords = ['impresora', 'impresoras', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction'];
+        return printerKeywords.some((k) => type.includes(k));
+      } else if (categoryFilter === 'Perifericos') {
+        const peripheralKeywords = ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'];
+        return peripheralKeywords.some((k) => type.includes(k));
+      }
+      return asset.deviceType === categoryFilter;
     };
+    return assets.filter(isMatchingCategory);
+  }, [assets, categoryFilter]);
 
-    const online = assets.filter((asset) => asset.status === 'ONLINE').length;
-    const warning = assets.filter((asset) => asset.status === 'WARNING').length;
-    const windows = assets.filter((asset) => asset.osType === 'Windows').length;
-    const withAgent = assets.filter(
-      (asset) =>
-        isComputer(asset) &&
-        asset.agentVersion &&
-        !['---', 'N/A', 'Sin antivirus', 'Sin agente', 'Discovery Engine 2.1'].includes(asset.agentVersion),
+  const stats = useMemo(() => {
+    const total = categoryAssets.length;
+    const online = categoryAssets.filter((a) => a.status === 'ONLINE').length;
+    const warning = categoryAssets.filter((a) => a.status === 'WARNING' || a.status === 'OFFLINE').length;
+
+    // Métricas interactivas según categoría seleccionada
+    if (categoryFilter === 'Equipos de Computo') {
+      const withAgent = categoryAssets.filter(
+        (a) => a.agentVersion && !['---', 'N/A', 'Sin antivirus', 'Sin agente', 'Discovery Engine 2.1'].includes(a.agentVersion)
+      ).length;
+      const windowsCount = categoryAssets.filter((a) => a.osType === 'Windows' || (a.osVersion || '').includes('Windows')).length;
+
+      return {
+        card1Title: 'Equipos de Cómputo',
+        card1Value: total,
+        card2Title: 'Agente Antivirus',
+        card2Value: withAgent,
+        card3Title: 'En línea',
+        card3Value: online,
+        card4Title: 'En advertencia / Offline',
+        card4Value: warning,
+        card5Title: 'Sistema Windows',
+        card5Value: windowsCount,
+        card6Title: 'Coincidencias',
+        card6Value: filteredAssets.length
+      };
+    }
+
+    if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') {
+      const withIp = categoryAssets.filter((a) => a.ipAddress && a.ipAddress !== '0.0.0.0' && a.ipAddress !== '---').length;
+      const multifunctionCount = categoryAssets.filter((a) => {
+        const str = `${a.deviceType || ''} ${a.model || ''} ${a.brand || ''}`.toLowerCase();
+        return str.includes('multifuncion') || str.includes('mx') || str.includes('mfp') || str.includes('all-in-one');
+      }).length;
+
+      return {
+        card1Title: 'Impresoras / Escáneres',
+        card1Value: total,
+        card2Title: 'Conectadas a Red / IP',
+        card2Value: withIp,
+        card3Title: 'En línea',
+        card3Value: online,
+        card4Title: 'En advertencia / Offline',
+        card4Value: warning,
+        card5Title: 'Multifuncionales',
+        card5Value: multifunctionCount > 0 ? multifunctionCount : total,
+        card6Title: 'Coincidencias',
+        card6Value: filteredAssets.length
+      };
+    }
+
+    if (categoryFilter === 'Dispositivo de Red') {
+      const withIp = categoryAssets.filter((a) => a.ipAddress && a.ipAddress !== '0.0.0.0').length;
+      return {
+        card1Title: 'Dispositivos de Red',
+        card1Value: total,
+        card2Title: 'Con Dirección IP',
+        card2Value: withIp,
+        card3Title: 'En línea',
+        card3Value: online,
+        card4Title: 'En advertencia / Offline',
+        card4Value: warning,
+        card5Title: 'Equipos Activos',
+        card5Value: online,
+        card6Title: 'Coincidencias',
+        card6Value: filteredAssets.length
+      };
+    }
+
+    if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') {
+      const linked = categoryAssets.filter((m) => assets.some((a) => (a.displayInfo || '').includes(m.hostname))).length;
+      return {
+        card1Title: 'Monitores',
+        card1Value: total,
+        card2Title: 'Vinculados a PC',
+        card2Value: linked,
+        card3Title: 'En línea',
+        card3Value: online,
+        card4Title: 'En advertencia / Offline',
+        card4Value: warning,
+        card5Title: 'Sin vincular',
+        card5Value: total - linked,
+        card6Title: 'Coincidencias',
+        card6Value: filteredAssets.length
+      };
+    }
+
+    if (categoryFilter === 'Perifericos') {
+      const assigned = categoryAssets.filter((p) => p.assignedUser && p.assignedUser !== 'Sin usuario').length;
+      return {
+        card1Title: 'Periféricos',
+        card1Value: total,
+        card2Title: 'Con Asignación',
+        card2Value: assigned,
+        card3Title: 'En línea',
+        card3Value: online,
+        card4Title: 'En advertencia / Offline',
+        card4Value: warning,
+        card5Title: 'Disponibles',
+        card5Value: total - assigned,
+        card6Title: 'Coincidencias',
+        card6Value: filteredAssets.length
+      };
+    }
+
+    // ALL (Todas las categorías)
+    const isComputer = (a) => {
+      const type = (a.deviceType || '').toLowerCase();
+      return !['impresora', 'impresoras', 'scanner', 'escaner', 'escáner', 'multifuncional', 'multifunction', 'printer', 'monitor', 'monitores', 'perifericos', 'dispositivo de red', 'switch', 'router'].some((k) => type.includes(k));
+    };
+    const computerList = assets.filter(isComputer);
+    const withAgent = computerList.filter(
+      (a) => a.agentVersion && !['---', 'N/A', 'Sin antivirus', 'Sin agente', 'Discovery Engine 2.1'].includes(a.agentVersion)
     ).length;
+    const windows = assets.filter((a) => a.osType === 'Windows').length;
 
     return {
-      total: assets.length,
-      online,
-      warning,
-      windows,
-      withAgent,
+      card1Title: 'Dispositivos',
+      card1Value: total,
+      card2Title: 'Agente Antivirus (PC)',
+      card2Value: withAgent,
+      card3Title: 'En linea',
+      card3Value: online,
+      card4Title: 'En advertencia',
+      card4Value: warning,
+      card5Title: 'Windows',
+      card5Value: windows,
+      card6Title: 'Coincidencias',
+      card6Value: filteredAssets.length
     };
-  }, [assets]);
+  }, [assets, categoryAssets, categoryFilter, filteredAssets.length]);
 
   function syncSelection(nextAssets) {
     if (nextAssets.length === 0) {
@@ -789,12 +906,12 @@ export default function Assets() {
         </div>
         <div className="stat-grid compact-grid">
           <div className="stat-card">
-            <span>Dispositivos</span>
-            <strong>{stats.total}</strong>
+            <span>{stats.card1Title}</span>
+            <strong>{stats.card1Value}</strong>
           </div>
           <div className="stat-card">
-            <span>Agente Antivirus</span>
-            <strong>{stats.withAgent}</strong>
+            <span>{stats.card2Title}</span>
+            <strong>{stats.card2Value}</strong>
           </div>
         </div>
       </section>
@@ -804,20 +921,20 @@ export default function Assets() {
 
       <section className="stat-grid">
         <article className="stat-card">
-          <span>En linea</span>
-          <strong>{stats.online}</strong>
+          <span>{stats.card3Title}</span>
+          <strong>{stats.card3Value}</strong>
         </article>
         <article className="stat-card">
-          <span>En advertencia</span>
-          <strong>{stats.warning}</strong>
+          <span>{stats.card4Title}</span>
+          <strong>{stats.card4Value}</strong>
         </article>
         <article className="stat-card">
-          <span>Windows</span>
-          <strong>{stats.windows}</strong>
+          <span>{stats.card5Title}</span>
+          <strong>{stats.card5Value}</strong>
         </article>
         <article className="stat-card">
-          <span>Coincidencias</span>
-          <strong>{filteredAssets.length}</strong>
+          <span>{stats.card6Title}</span>
+          <strong>{stats.card6Value}</strong>
         </article>
       </section>
 

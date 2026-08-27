@@ -275,19 +275,29 @@ function getAssetRoutes(prisma) {
     }
   });
 
-  router.get('/:id/history', requirePermission('ASSETS_VIEW'), async (req, res, next) => {
+  router.get('/:id/history', requireAnyPermission('ASSETS_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const asset = await prisma.asset.findUnique({ where: { id } });
       if (!asset) throw createHttpError(404, 'Asset not found.');
 
+      const orConditions = [{ assetId: id }];
+      if (asset.hostname && asset.hostname.trim()) {
+        orConditions.push({ title: { contains: asset.hostname } });
+        orConditions.push({ description: { contains: asset.hostname } });
+      }
+      if (asset.serialNumber && asset.serialNumber.trim()) {
+        orConditions.push({ title: { contains: asset.serialNumber } });
+        orConditions.push({ description: { contains: asset.serialNumber } });
+      }
+
       const tickets = await prisma.ticket.findMany({
         where: {
-          OR: [
-            { subject: { contains: asset.hostname } },
-            { description: { contains: asset.hostname } },
-            { description: { contains: asset.serialNumber || '---' } }
-          ]
+          OR: orConditions
+        },
+        include: {
+          assignedTo: { select: { id: true, name: true, username: true } },
+          createdBy: { select: { id: true, name: true, username: true } }
         },
         orderBy: { createdAt: 'desc' }
       });

@@ -285,6 +285,30 @@ export default function CMDB() {
   const [submittingMaint, setSubmittingMaint] = useState(false);
   const [maintSuccessTicket, setMaintSuccessTicket] = useState(null);
   const [maintError, setMaintError] = useState('');
+  const [assetHistory, setAssetHistory] = useState({ tickets: [], maintenances: [], loading: false });
+
+  useEffect(() => {
+    let ignore = false;
+    if (selectedAsset) {
+      setAssetHistory(prev => ({ ...prev, loading: true }));
+      apiRequest(`/assets/${selectedAsset.id}/history`)
+        .then((data) => {
+          if (!ignore) {
+            setAssetHistory({
+              tickets: data?.tickets || [],
+              maintenances: data?.maintenances || [],
+              loading: false
+            });
+          }
+        })
+        .catch(() => {
+          if (!ignore) {
+            setAssetHistory({ tickets: [], maintenances: [], loading: false });
+          }
+        });
+    }
+    return () => { ignore = true; };
+  }, [selectedAsset]);
 
   useEffect(() => {
     let ignore = false;
@@ -1262,34 +1286,152 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
               )}
 
               {active360Tab === 'TIMELINE' && (
-                <div className="cmdb-timeline-card" style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem' }}>
-                  <div style={{ fontSize: '0.8rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.85rem' }}>
-                    ⏱️ Trazabilidad & Auditoría de Eventos
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  
+                  {/* Tarjeta de Trazabilidad & Resumen Operativo */}
+                  <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', borderRadius: '14px', padding: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>⏱️</span> Trazabilidad & Vida Útil
+                      </div>
+                      <span className="badge info" style={{ fontSize: '0.68rem' }}>
+                        {assetHistory.tickets.length} {assetHistory.tickets.length === 1 ? 'ticket' : 'tickets'} registrados
+                      </span>
+                    </div>
+
+                    <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.6rem', marginTop: '0.5rem' }}>
+                      <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Total Soportes</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                          🎫 {assetHistory.tickets.length}
+                        </div>
+                      </div>
+                      <div style={{ background: '#fff', padding: '0.65rem 0.8rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
+                        <div className="muted-text" style={{ fontSize: '0.68rem', textTransform: 'uppercase', fontWeight: 700 }}>Mantenimientos</div>
+                        <div style={{ fontSize: '1.15rem', fontWeight: 800, color: '#10b981', marginTop: '2px' }}>
+                          🛠️ {assetHistory.maintenances.length}
+                        </div>
+                      </div>
+                    </div>
                   </div>
-                  <div className="cmdb-timeline-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#10b981', marginTop: '5px' }}></div>
-                      <div>
-                        <strong style={{ fontSize: '0.82rem' }}>Último Reporte de Agente RMM</strong>
-                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>{selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}</div>
-                        <span className="badge success" style={{ fontSize: '0.62rem', marginTop: '3px' }}>Sincronización Correcta</span>
-                      </div>
+
+                  {/* Historial de Tickets y Soportes Generados */}
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.85rem' }}>
+                      <h4 style={{ margin: 0, fontSize: '0.82rem', fontWeight: 800, color: 'var(--color-primary)', textTransform: 'uppercase', letterSpacing: '0.04em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                        <span>🎫</span> Soportes y Tickets TI
+                      </h4>
+                      <button 
+                        type="button" 
+                        className="btn-ghost" 
+                        onClick={() => openMaintenanceModal(selectedAsset, 'Mantenimiento Preventivo')}
+                        style={{ padding: '0.25rem 0.55rem', fontSize: '0.72rem', fontWeight: 700, color: '#0284c7', background: '#f0f9ff', borderRadius: '6px', border: '1px solid #bae6fd', cursor: 'pointer' }}
+                      >
+                        + Nuevo Ticket
+                      </button>
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#0284c7', marginTop: '5px' }}></div>
-                      <div>
-                        <strong style={{ fontSize: '0.82rem' }}>Inspección de Almacenamiento & RAM</strong>
-                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>RAM: {selectedAsset.ramSummary || '---'} | Disco: {selectedAsset.storageSummary || '---'}</div>
+
+                    {assetHistory.loading ? (
+                      <div style={{ padding: '1.5rem', textAlign: 'center', color: '#64748b', fontSize: '0.8rem' }}>
+                        ⏳ Cargando historial de tickets...
                       </div>
+                    ) : assetHistory.tickets.length === 0 ? (
+                      <div style={{ padding: '1.2rem', textAlign: 'center', background: '#f8fafc', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
+                        <div style={{ fontSize: '1.8rem', marginBottom: '0.3rem' }}>📋</div>
+                        <strong style={{ fontSize: '0.82rem', color: '#334155' }}>Sin tickets registrados aún</strong>
+                        <p className="muted-text" style={{ fontSize: '0.72rem', margin: '4px 0 8px 0' }}>
+                          No se han generado intervenciones o solicitudes de soporte para este dispositivo.
+                        </p>
+                        <button 
+                          type="button" 
+                          onClick={() => openMaintenanceModal(selectedAsset, 'Mantenimiento Preventivo')}
+                          style={{ padding: '0.4rem 0.8rem', fontSize: '0.75rem', fontWeight: 700, borderRadius: '8px', background: '#0284c7', color: '#fff', border: 'none', cursor: 'pointer' }}
+                        >
+                          Generar Primer Ticket
+                        </button>
+                      </div>
+                    ) : (
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                        {assetHistory.tickets.map((t) => {
+                          const statusBg = t.status === 'RESOLVED' || t.status === 'CLOSED' ? '#ecfdf5' : t.status === 'IN_PROGRESS' ? '#eff6ff' : '#fffbeb';
+                          const statusColor = t.status === 'RESOLVED' || t.status === 'CLOSED' ? '#065f46' : t.status === 'IN_PROGRESS' ? '#1e40af' : '#92400e';
+                          const statusText = t.status === 'CLOSED' ? 'Cerrado' : t.status === 'RESOLVED' ? 'Resuelto' : t.status === 'IN_PROGRESS' ? 'En Progreso' : 'Abierto';
+
+                          return (
+                            <div 
+                              key={t.id} 
+                              style={{ 
+                                background: '#fff', 
+                                border: '1px solid #e2e8f0', 
+                                borderRadius: '10px', 
+                                padding: '0.85rem', 
+                                boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
+                                transition: 'all 0.2s ease'
+                              }}
+                            >
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                <div style={{ fontWeight: 800, fontSize: '0.84rem', color: '#0f172a' }}>
+                                  #{t.id} - {t.title}
+                                </div>
+                                <span style={{ padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.65rem', fontWeight: 700, background: statusBg, color: statusColor, whiteSpace: 'nowrap' }}>
+                                  {statusText}
+                                </span>
+                              </div>
+
+                              <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '0.4rem' }}>
+                                {t.ticketType && (
+                                  <span className="badge neutral" style={{ fontSize: '0.62rem' }}>{t.ticketType}</span>
+                                )}
+                                {t.category && (
+                                  <span className="badge info" style={{ fontSize: '0.62rem' }}>{t.category}</span>
+                                )}
+                                {t.priority && (
+                                  <span className={`badge ${t.priority === 'CRITICAL' || t.priority === 'URGENTE' ? 'danger' : 'neutral'}`} style={{ fontSize: '0.62rem' }}>
+                                    {t.priority}
+                                  </span>
+                                )}
+                              </div>
+
+                              {t.description && (
+                                <p style={{ fontSize: '0.72rem', color: '#475569', margin: '0.45rem 0 0 0', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                                  {t.description}
+                                </p>
+                              )}
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.68rem', color: '#64748b', marginTop: '0.5rem', paddingTop: '0.4rem', borderTop: '1px solid #f1f5f9' }}>
+                                <span>📅 {new Date(t.createdAt).toLocaleDateString()}</span>
+                                <span>👤 {t.assignedTo?.name || t.assignedTo?.username || 'Sin asignar'}</span>
+                              </div>
+                            </div>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Auditoría de Eventos de Hardware y Conectividad */}
+                  <div style={{ background: '#fff', border: '1px solid #e2e8f0', borderRadius: '14px', padding: '1rem' }}>
+                    <div style={{ fontSize: '0.8rem', fontWeight: 800, color: '#475569', textTransform: 'uppercase', letterSpacing: '0.04em', marginBottom: '0.75rem' }}>
+                      ⚙️ Auditoría de Sincronización & Red
                     </div>
-                    <div style={{ display: 'flex', gap: '0.75rem', alignItems: 'flex-start' }}>
-                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', background: '#64748b', marginTop: '5px' }}></div>
-                      <div>
-                        <strong style={{ fontSize: '0.82rem' }}>Ficha Registrada en CMDB</strong>
-                        <div className="muted-text" style={{ fontSize: '0.72rem' }}>Serial: {selectedAsset.serialNumber || '---'} | IP: {selectedAsset.ipAddress || '---'}</div>
+                    <div className="cmdb-timeline-list" style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                      <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#10b981', marginTop: '5px' }}></div>
+                        <div>
+                          <strong style={{ fontSize: '0.8rem' }}>Último Reporte de Agente / SNMP</strong>
+                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>{selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}</div>
+                        </div>
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.65rem', alignItems: 'flex-start' }}>
+                        <div style={{ width: '8px', height: '8px', borderRadius: '50%', background: '#64748b', marginTop: '5px' }}></div>
+                        <div>
+                          <strong style={{ fontSize: '0.8rem' }}>Alta Registrada en CMDB</strong>
+                          <div className="muted-text" style={{ fontSize: '0.7rem' }}>Serial: {selectedAsset.serialNumber || '---'} | IP: {selectedAsset.ipAddress || '---'}</div>
+                        </div>
                       </div>
                     </div>
                   </div>
+
                 </div>
               )}
             </div>

@@ -401,11 +401,7 @@ def collect_system_data(organization_slug="stic"):
     antivirus = detect_antivirus(software)
 
     username = os.environ.get("USERNAME") or os.environ.get("USER") or "Usuario Local"
-    user_domain = os.environ.get("USERDOMAIN")
-    if user_domain and user_domain.lower() != hostname.lower():
-        assigned_user = f"{user_domain}\\{username}"
-    else:
-        assigned_user = username
+    assigned_user = username
 
     os_type = "Windows"
     os_version = f"{platform.system()} {platform.release()} (Build {platform.version()})"

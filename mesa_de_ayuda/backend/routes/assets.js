@@ -104,7 +104,9 @@ function getAssetRoutes(prisma) {
         motherboard: motherboard || undefined,
         graphicsInfo: graphicsInfo || undefined,
         displayInfo: displayInfo || undefined,
-        assignedUser: assignedUser || undefined,
+        assignedUser: assignedUser 
+          ? String(assignedUser).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim() 
+          : undefined,
         installedSoftware: serializedSoftware || undefined,
         lastSeenAt: new Date(),
         agentVersion: req.body.agentVersion || '1.0.0',

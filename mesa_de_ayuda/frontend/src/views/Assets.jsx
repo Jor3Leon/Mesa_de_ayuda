@@ -101,6 +101,13 @@ function extractNetworkCard(networkSummary) {
   return networkSummary;
 }
 
+function formatAssignedUser(userName) {
+  if (!userName) return 'No asignado';
+  // Strip domain prefixes e.g. "ALCYOPAL\jherson.rivera" -> "jherson.rivera"
+  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim();
+  return clean || userName;
+}
+
 function buildDateInputValue(value) {
   if (!value) return '';
   const date = new Date(value);
@@ -986,7 +993,12 @@ export default function Assets() {
                                   if (host && host.assignedUser) userName = host.assignedUser;
                                 }
                                 if (!userName) return 'No asignado';
-                                const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                                const cleanName = formatAssignedUser(userName);
+                                const userMatch = users.find(u => 
+                                  (u.name && u.name.toLowerCase() === userName.toLowerCase()) ||
+                                  (u.username && u.username.toLowerCase() === cleanName.toLowerCase()) ||
+                                  (u.name && u.name.toLowerCase() === cleanName.toLowerCase())
+                                );
                                 if (userMatch) {
                                   return (
                                     <button 
@@ -995,11 +1007,11 @@ export default function Assets() {
                                       style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
                                       onClick={() => setViewingUserProfile(userMatch)}
                                     >
-                                      {userMatch.username}
+                                      {userMatch.username || cleanName}
                                     </button>
                                   );
                                 }
-                                return userName;
+                                return cleanName;
                               })()}
                             </strong>
                           </div>
@@ -1044,7 +1056,12 @@ export default function Assets() {
                               {(() => {
                                 let userName = selectedAsset.assignedUser;
                                 if (!userName) return 'No asignado';
-                                const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                                const cleanName = formatAssignedUser(userName);
+                                const userMatch = users.find(u => 
+                                  (u.name && u.name.toLowerCase() === userName.toLowerCase()) ||
+                                  (u.username && u.username.toLowerCase() === cleanName.toLowerCase()) ||
+                                  (u.name && u.name.toLowerCase() === cleanName.toLowerCase())
+                                );
                                 if (userMatch) {
                                   return (
                                     <button 
@@ -1053,11 +1070,11 @@ export default function Assets() {
                                       style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
                                       onClick={() => setViewingUserProfile(userMatch)}
                                     >
-                                      {userMatch.username}
+                                      {userMatch.username || cleanName}
                                     </button>
                                   );
                                 }
-                                return userName;
+                                return cleanName;
                               })()}
                             </strong>
                           </div>
@@ -1088,7 +1105,12 @@ export default function Assets() {
                             {(() => {
                               let userName = selectedAsset.assignedUser;
                               if (!userName) return 'No asignado';
-                              const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                              const cleanName = formatAssignedUser(userName);
+                              const userMatch = users.find(u => 
+                                (u.name && u.name.toLowerCase() === userName.toLowerCase()) ||
+                                (u.username && u.username.toLowerCase() === cleanName.toLowerCase()) ||
+                                (u.name && u.name.toLowerCase() === cleanName.toLowerCase())
+                              );
                               if (userMatch) {
                                 return (
                                   <button 
@@ -1097,11 +1119,11 @@ export default function Assets() {
                                     style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
                                     onClick={() => setViewingUserProfile(userMatch)}
                                   >
-                                    {userMatch.username}
+                                    {userMatch.username || cleanName}
                                   </button>
                                 );
                               }
-                              return userName;
+                              return cleanName;
                             })()}
                           </strong>
                         </div>

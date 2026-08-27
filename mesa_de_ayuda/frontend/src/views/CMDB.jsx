@@ -69,6 +69,12 @@ function getAssetDomain(asset) {
   return 'N/A';
 }
 
+function formatAssignedUser(userName) {
+  if (!userName) return 'Sin usuario';
+  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim();
+  return clean || userName;
+}
+
 export default function CMDB() {
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -433,7 +439,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                         </td>
                         <td>
                           <div style={{ fontSize: '0.9rem', fontWeight: 600 }}>{asset.customer?.name || 'Interno'}</div>
-                          <div className="muted-text" style={{ fontSize: '0.75rem' }}>👤 {asset.assignedUser || 'Sin usuario'}</div>
+                          <div className="muted-text" style={{ fontSize: '0.75rem' }}>👤 {formatAssignedUser(asset.assignedUser)}</div>
                         </td>
                         <td>
                           <div style={{ fontSize: '0.85rem', fontWeight: 600 }}>
@@ -648,7 +654,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                     <div className="cmdb-info-card">
                       <div className="cmdb-info-row">
                         <span className="muted-text">👤 Usuario Sesión:</span>
-                        <span className="cmdb-info-val">{selectedAsset.assignedUser || 'Usuario Local'}</span>
+                        <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
                       </div>
                       <div className="cmdb-info-row">
                         <span className="muted-text">🏰 Red / Dominio:</span>

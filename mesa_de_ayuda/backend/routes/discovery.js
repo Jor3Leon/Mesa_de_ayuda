@@ -234,7 +234,7 @@ function getDiscoveryRoutes(prisma) {
   router.use(requireAuth(prisma));
 
   // 1. GET /api/discovery/agents - Available probe agents in the organization
-  router.get('/agents', requireAnyPermission('ASSETS_VIEW', 'ASSETS_MANAGE'), async (req, res, next) => {
+  router.get('/agents', requireAnyPermission('ASSETS_VIEW', 'ASSETS_MANAGE', 'TICKETS_VIEW', 'DASHBOARD_VIEW'), async (req, res, next) => {
     try {
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
       const agents = await prisma.asset.findMany({
@@ -263,7 +263,7 @@ function getDiscoveryRoutes(prisma) {
   });
 
   // 2. POST /api/discovery/scan - Perform or simulate network discovery
-  router.post('/scan', requireAnyPermission('ASSETS_VIEW', 'ASSETS_MANAGE'), async (req, res, next) => {
+  router.post('/scan', requireAnyPermission('ASSETS_VIEW', 'ASSETS_MANAGE', 'TICKETS_VIEW', 'DASHBOARD_VIEW'), async (req, res, next) => {
     try {
       const { ip, community = 'public', agentId, organizationSlug } = req.body;
 

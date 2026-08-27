@@ -291,12 +291,31 @@ export default function CMDB() {
     let ignore = false;
     if (selectedAsset) {
       setAssetHistory(prev => ({ ...prev, loading: true }));
-      apiRequest(`/assets/${selectedAsset.id}/history`)
-        .then((data) => {
+      Promise.all([
+        apiRequest(`/assets/${selectedAsset.id}/history`).catch(() => ({ tickets: [], maintenances: [] })),
+        apiRequest('/tickets').catch(() => [])
+      ])
+        .then(([historyData, allTickets]) => {
           if (!ignore) {
+            const host = (selectedAsset.hostname || '').toLowerCase().trim();
+            const serial = (selectedAsset.serialNumber || '').toLowerCase().trim();
+
+            const directTickets = Array.isArray(historyData?.tickets) ? historyData.tickets : [];
+            const matchedTickets = Array.isArray(allTickets)
+              ? allTickets.filter(t => 
+                  t.assetId === selectedAsset.id ||
+                  (host && (String(t.title || '').toLowerCase().includes(host) || String(t.description || '').toLowerCase().includes(host))) ||
+                  (serial && (String(t.title || '').toLowerCase().includes(serial) || String(t.description || '').toLowerCase().includes(serial)))
+                )
+              : [];
+
+            const ticketMap = new Map();
+            directTickets.forEach(t => ticketMap.set(t.id, t));
+            matchedTickets.forEach(t => ticketMap.set(t.id, t));
+
             setAssetHistory({
-              tickets: data?.tickets || [],
-              maintenances: data?.maintenances || [],
+              tickets: Array.from(ticketMap.values()).sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt)),
+              maintenances: historyData?.maintenances || [],
               loading: false
             });
           }

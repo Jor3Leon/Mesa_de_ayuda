@@ -246,10 +246,33 @@ export default function Assets() {
     let ignore = false;
     if (selectedAssetId && activeTab === 'HISTORY') {
       setLoadingHistory(true);
-      apiRequest(`/assets/${selectedAssetId}/history`)
-        .then((data) => {
+      Promise.all([
+        apiRequest(`/assets/${selectedAssetId}/history`).catch(() => ({ tickets: [], maintenances: [] })),
+        apiRequest('/tickets').catch(() => [])
+      ])
+        .then(([historyData, allTickets]) => {
           if (!ignore) {
-            setHistory(data || { tickets: [], maintenances: [] });
+            const currentAsset = assets.find(a => a.id === selectedAssetId);
+            const host = (currentAsset?.hostname || '').toLowerCase().trim();
+            const serial = (currentAsset?.serialNumber || '').toLowerCase().trim();
+
+            const directTickets = Array.isArray(historyData?.tickets) ? historyData.tickets : [];
+            const matchedTickets = Array.isArray(allTickets)
+              ? allTickets.filter(t => 
+                  t.assetId === selectedAssetId ||
+                  (host && (String(t.title || '').toLowerCase().includes(host) || String(t.description || '').toLowerCase().includes(host))) ||
+                  (serial && (String(t.title || '').toLowerCase().includes(serial) || String(t.description || '').toLowerCase().includes(serial)))
+                )
+              : [];
+
+            const ticketMap = new Map();
+            directTickets.forEach(t => ticketMap.set(t.id, t));
+            matchedTickets.forEach(t => ticketMap.set(t.id, t));
+
+            setHistory({
+              tickets: Array.from(ticketMap.values()),
+              maintenances: historyData?.maintenances || []
+            });
           }
         })
         .catch((err) => {
@@ -266,7 +289,7 @@ export default function Assets() {
     return () => {
       ignore = true;
     };
-  }, [selectedAssetId, activeTab]);
+  }, [selectedAssetId, activeTab, assets]);
 
   const sortedHistory = useMemo(() => {
     const tickets = Array.isArray(history?.tickets) ? history.tickets : [];

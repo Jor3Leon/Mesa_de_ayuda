@@ -1129,21 +1129,8 @@ export default function Assets() {
 
                 <div className="asset-specs-grid">
                   {(() => {
-                    const typeStr = (selectedAsset.deviceType || '').toLowerCase();
-                    const isMonitorOrPeripheral = ['monitor', 'monitores', 'perifericos'].some(k => typeStr.includes(k));
-                    const isPrinterOrScanner = [
-                      'impresora',
-                      'impresoras',
-                      'scanner',
-                      'escaner',
-                      'escáner',
-                      'multifuncional',
-                      'multifunction',
-                      'printer',
-                      'impresoras / escáneres',
-                      'impresora multifuncional',
-                      'impresora de red'
-                    ].some(k => typeStr.includes(k));
+                    const isMonitorOrPeripheral = isMonitorDevice(selectedAsset) || isPeripheralDevice(selectedAsset);
+                    const isPrinterOrScanner = isPrinterDevice(selectedAsset);
 
                     if (isMonitorOrPeripheral) {
                       return (

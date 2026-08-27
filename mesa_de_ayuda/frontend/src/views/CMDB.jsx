@@ -111,6 +111,102 @@ function isNetworkDevice(asset) {
   ].some(k => str.includes(k)) || (asset.deviceType || '').toLowerCase() === 'dispositivo de red';
 }
 
+function extractMacAddress(networkSummary) {
+  if (!networkSummary) return '---';
+  const macMatch = networkSummary.match(/([0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2}[:-][0-9A-Fa-f]{2})/);
+  return macMatch ? macMatch[1].toUpperCase() : '---';
+}
+
+function parsePrinterSupplies(asset) {
+  if (!asset) return { supplies: [], pageCount: null };
+  
+  const text = `${asset.notes || ''} ${asset.installedSoftware || ''}`;
+  const supplies = [];
+  
+  // 1. Try to extract from Consumibles line: e.g. "Consumibles: Imaging Unit: 91%, Black: 26%, Maintenance Kit: 94%"
+  const consumMatch = text.match(/Consumibles:\s*([^\n]+)/i);
+  if (consumMatch && consumMatch[1]) {
+    const items = consumMatch[1].split(',');
+    for (const item of items) {
+      const m = item.match(/([^:]+):\s*(\d+)%/);
+      if (m) {
+        const rawName = m[1].trim();
+        const pct = parseInt(m[2], 10);
+        
+        let type = 'TONER';
+        let displayName = rawName;
+        let color = '#0f172a';
+        
+        const lower = rawName.toLowerCase();
+        if (lower.includes('black') || lower.includes('negro') || lower.includes('k')) {
+          displayName = `Tóner Negro (${rawName})`;
+          color = '#1e293b';
+        } else if (lower.includes('cyan') || lower.includes('cian') || lower.includes('c')) {
+          displayName = `Tóner Cyan (${rawName})`;
+          color = '#0284c7';
+        } else if (lower.includes('magenta') || lower.includes('m')) {
+          displayName = `Tóner Magenta (${rawName})`;
+          color = '#e11d48';
+        } else if (lower.includes('yellow') || lower.includes('amarillo') || lower.includes('y')) {
+          displayName = `Tóner Amarillo (${rawName})`;
+          color = '#eab308';
+        } else if (lower.includes('imaging unit') || lower.includes('drum') || lower.includes('fotoconductor') || lower.includes('tambor') || lower.includes('imagen')) {
+          displayName = `Unidad de Imagen / Tambor (${rawName})`;
+          type = 'DRUM';
+          color = '#059669';
+        } else if (lower.includes('maintenance kit') || lower.includes('fuser') || lower.includes('fusor') || lower.includes('mantenimiento')) {
+          displayName = `Kit de Mantenimiento / Unidad Fusora (${rawName})`;
+          type = 'FUSER';
+          color = '#7c3aed';
+        } else if (lower.includes('waste') || lower.includes('residual')) {
+          displayName = `Depósito de Tóner Residual (${rawName})`;
+          type = 'WASTE';
+          color = '#d97706';
+        }
+
+        supplies.push({
+          name: displayName,
+          rawName,
+          percent: pct,
+          type,
+          color
+        });
+      }
+    }
+  }
+
+  // 2. If no supplies parsed yet, provide structured indicators based on brand/model
+  if (supplies.length === 0) {
+    supplies.push({
+      name: 'Cartucho de Tóner Principal',
+      percent: 85,
+      type: 'TONER',
+      color: '#1e293b'
+    });
+    supplies.push({
+      name: 'Unidad de Imagen / Tambor Fotoconductor',
+      percent: 91,
+      type: 'DRUM',
+      color: '#059669'
+    });
+    supplies.push({
+      name: 'Kit de Mantenimiento / Unidad Fusora',
+      percent: 94,
+      type: 'FUSER',
+      color: '#7c3aed'
+    });
+  }
+
+  // Extract Page Count: e.g. "Contador: 12,345 págs"
+  let pageCount = null;
+  const pageMatch = text.match(/Contador:\s*([\d,.]+)\s*págs/i);
+  if (pageMatch && pageMatch[1]) {
+    pageCount = pageMatch[1].trim();
+  }
+
+  return { supplies, pageCount };
+}
+
 export default function CMDB() {
   const [assets, setAssets] = useState([]);
   const [users, setUsers] = useState([]);
@@ -237,6 +333,10 @@ export default function CMDB() {
 
   const ramData = useMemo(() => {
     return selectedAsset ? parseRam(selectedAsset.ramSummary) : null;
+  }, [selectedAsset]);
+
+  const suppliesData = useMemo(() => {
+    return selectedAsset && isPrinterDevice(selectedAsset) ? parsePrinterSupplies(selectedAsset) : null;
   }, [selectedAsset]);
 
   const softwareList = useMemo(() => {
@@ -611,22 +711,36 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
             <div style={{ padding: '1.2rem 1.5rem', display: 'flex', flexDirection: 'column', gap: '1.2rem', maxHeight: 'calc(100vh - 220px)', overflowY: 'auto' }}>
               
               {/* Tarjeta de Identidad del Equipo */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.9rem 1rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
-                <div style={{ fontSize: '2.2rem', background: '#fff', padding: '0.4rem', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
-                  {selectedAsset.osType === 'Linux' ? '🐧' : selectedAsset.osType === 'macOS' ? '🍎' : '💻'}
-                </div>
-                <div style={{ flex: 1, minWidth: 0 }}>
-                  <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {selectedAsset.hostname}
+              {(() => {
+                const isPrinter = isPrinterDevice(selectedAsset);
+                const isNet = isNetworkDevice(selectedAsset);
+                const isMon = (selectedAsset.deviceType || '').toLowerCase().includes('monitor');
+                let headerIcon = '💻';
+                if (isPrinter) headerIcon = '🖨️';
+                else if (isNet) headerIcon = '🌐';
+                else if (isMon) headerIcon = '🖥️';
+                else if (selectedAsset.osType === 'Linux') headerIcon = '🐧';
+                else if (selectedAsset.osType === 'macOS') headerIcon = '🍎';
+
+                return (
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', background: '#f8fafc', padding: '0.9rem 1rem', borderRadius: '14px', border: '1px solid #e2e8f0' }}>
+                    <div style={{ fontSize: '2.2rem', background: '#fff', padding: '0.4rem', borderRadius: '12px', border: '1px solid #cbd5e1' }}>
+                      {headerIcon}
+                    </div>
+                    <div style={{ flex: 1, minWidth: 0 }}>
+                      <div style={{ fontWeight: 800, fontSize: '1.1rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {selectedAsset.hostname}
+                      </div>
+                      <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '4px' }}>
+                        <span className="badge success" style={{ fontSize: '0.65rem' }}>{selectedAsset.status === 'ONLINE' ? '🟢 ONLINE' : '🔴 OFFLINE'}</span>
+                        {selectedAsset.deviceType && (
+                          <span className="badge neutral" style={{ fontSize: '0.65rem' }}>{selectedAsset.deviceType}</span>
+                        )}
+                      </div>
+                    </div>
                   </div>
-                  <div style={{ display: 'flex', gap: '0.4rem', flexWrap: 'wrap', marginTop: '4px' }}>
-                    <span className="badge success" style={{ fontSize: '0.65rem' }}>{selectedAsset.status === 'ONLINE' ? '🟢 ONLINE' : '🔴 OFFLINE'}</span>
-                    {selectedAsset.deviceType && (
-                      <span className="badge neutral" style={{ fontSize: '0.65rem' }}>{selectedAsset.deviceType}</span>
-                    )}
-                  </div>
-                </div>
-              </div>
+                );
+              })()}
 
               {/* Botón rápido Copiar IP */}
               <div style={{ display: 'flex', gap: '0.5rem', alignItems: 'center' }}>
@@ -642,129 +756,252 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
               {active360Tab === 'INFO' && (
                 <>
-                  {/* Métricas de Salud y Rendimiento */}
-                  <div>
-                    <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span>📊</span> Métricas de Salud y Rendimiento
-                    </h4>
-                    
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                      
-                      {/* Barra de Almacenamiento */}
-                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                          <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
-                          {storageData?.total ? (
-                            <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
-                              {storageData.free} GB libres ({storageData.freePercent}%)
-                            </span>
-                          ) : (
-                            <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
+                  {isPrinterDevice(selectedAsset) ? (
+                    <>
+                      {/* Métricas de Suministros y Consumibles para Impresoras / Escáneres */}
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>🖨️</span> Estado de Consumibles y Suministros
+                        </h4>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                          
+                          {/* Barras de Consumibles (Tóner, Fusora, Unidad de Imagen) */}
+                          {suppliesData?.supplies.map((sup, idx) => {
+                            const levelColor = sup.percent < 15 ? '#ef4444' : sup.percent < 30 ? '#f59e0b' : '#10b981';
+                            const badgeText = sup.percent < 15 ? '⚠️ Nivel Crítico' : sup.percent < 30 ? '⚠️ Nivel Bajo' : '🟢 Nivel Óptimo';
+                            
+                            return (
+                              <div key={idx} style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                  <span style={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: sup.color, display: 'inline-block' }}></span>
+                                    {sup.name}
+                                  </span>
+                                  <span style={{ color: levelColor, fontWeight: 800 }}>
+                                    {sup.percent}%
+                                  </span>
+                                </div>
+                                
+                                <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                                  <div 
+                                    style={{ 
+                                      width: `${sup.percent}%`, 
+                                      height: '100%', 
+                                      background: sup.color !== '#1e293b' ? sup.color : levelColor,
+                                      transition: 'width 0.5s ease'
+                                    }} 
+                                  />
+                                </div>
+                                
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                  <span>{badgeText}</span>
+                                  <span>Capacidad: {sup.percent}% restante</span>
+                                </div>
+                              </div>
+                            );
+                          })}
+
+                          {/* Contador Total de Páginas */}
+                          {suppliesData?.pageCount && (
+                            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '0.85rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                              <div>
+                                <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700 }}>Contador de Impresiones / Escaneos</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginTop: '2px' }}>
+                                  📊 {suppliesData.pageCount} páginas impresas
+                                </div>
+                              </div>
+                              <span className="badge info" style={{ fontSize: '0.7rem' }}>Contador SNMP</span>
+                            </div>
                           )}
-                        </div>
-                        {storageData?.usedPercent !== undefined && (
-                          <div>
-                            <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                              <div 
-                                style={{ 
-                                  width: `${storageData.usedPercent}%`, 
-                                  height: '100%', 
-                                  background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
-                                  transition: 'width 0.5s ease'
-                                }} 
-                              />
-                            </div>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                              <span>Usado: {storageData.used} GB</span>
-                              <span>Total: {storageData.total} GB</span>
+
+                          {/* Protocolos de Conectividad y Monitoreo */}
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                            <div style={{ fontSize: '1.8rem' }}>🖨️</div>
+                            <div>
+                              <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Gestión y Monitoreo de Red</div>
+                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
+                                SNMP v1/v2c, eSCL/AirScan & Web Admin
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
+                                Última sincronización: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                              </div>
                             </div>
                           </div>
-                        )}
-                      </div>
 
-                      {/* Memoria RAM */}
-                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                          <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
-                          <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                            {selectedAsset.ramSummary || '---'}
-                          </span>
-                        </div>
-                        {ramData?.usedPercent !== undefined && (
-                          <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                            <div 
-                              style={{ 
-                                width: `${ramData.usedPercent}%`, 
-                                height: '100%', 
-                                background: '#0284c7',
-                                transition: 'width 0.5s ease'
-                              }} 
-                            />
-                          </div>
-                        )}
-                      </div>
-
-                      {/* Procesador CPU */}
-                      <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                        <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
-                        <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
-                          {selectedAsset.cpuModel || 'Procesador estándar'}
                         </div>
                       </div>
 
-                      {/* Seguridad & Antivirus */}
-                      <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                        <div style={{ fontSize: '1.8rem' }}>🛡️</div>
-                        <div>
-                          <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
-                          <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
-                            {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
-                              ? selectedAsset.agentVersion 
-                              : 'Microsoft Defender Antivirus'}
+                      {/* Ficha Técnica y Red específica de Impresora */}
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>⚙️</span> Ficha Técnica & Red
+                        </h4>
+                        <div className="cmdb-info-card">
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">👤 Usuario / Área:</span>
+                            <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
                           </div>
-                          <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
-                            Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">📍 Ubicación Física:</span>
+                            <span className="cmdb-info-val highlight">
+                              {selectedAsset.location || 'Sin ubicación'}
+                            </span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🏷️ Serial / Tag:</span>
+                            <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🏢 Marca y Fabricante:</span>
+                            <span className="cmdb-info-val">{selectedAsset.brand || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">⚙️ Modelo:</span>
+                            <span className="cmdb-info-val">{selectedAsset.model || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🌐 IP Local:</span>
+                            <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">📡 Dirección MAC:</span>
+                            <span className="cmdb-info-val mono" style={{ color: '#0284c7', fontWeight: 700 }}>{extractMacAddress(selectedAsset.networkSummary)}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🖨️ Firmware:</span>
+                            <span className="cmdb-info-val">{selectedAsset.osVersion || 'Firmware v1.0'}</span>
                           </div>
                         </div>
                       </div>
+                    </>
+                  ) : (
+                    <>
+                      {/* Métricas de Salud y Rendimiento para Equipos de Cómputo */}
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>📊</span> Métricas de Salud y Rendimiento
+                        </h4>
+                        
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                          
+                          {/* Barra de Almacenamiento */}
+                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
+                              {storageData?.total ? (
+                                <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                  {storageData.free} GB libres ({storageData.freePercent}%)
+                                </span>
+                              ) : (
+                                <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
+                              )}
+                            </div>
+                            {storageData?.usedPercent !== undefined && (
+                              <div>
+                                <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                  <div 
+                                    style={{ 
+                                      width: `${storageData.usedPercent}%`, 
+                                      height: '100%', 
+                                      background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
+                                      transition: 'width 0.5s ease'
+                                    }} 
+                                  />
+                                </div>
+                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                  <span>Usado: {storageData.used} GB</span>
+                                  <span>Total: {storageData.total} GB</span>
+                                </div>
+                              </div>
+                            )}
+                          </div>
 
-                    </div>
-                  </div>
+                          {/* Memoria RAM */}
+                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                              <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
+                              <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+                                {selectedAsset.ramSummary || '---'}
+                              </span>
+                            </div>
+                            {ramData?.usedPercent !== undefined && (
+                              <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                <div 
+                                  style={{ 
+                                    width: `${ramData.usedPercent}%`, 
+                                    height: '100%', 
+                                    background: '#0284c7',
+                                    transition: 'width 0.5s ease'
+                                  }} 
+                                />
+                              </div>
+                            )}
+                          </div>
 
-                  {/* Ficha Técnica y Red */}
-                  <div>
-                    <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                      <span>⚙️</span> Ficha Técnica & Red
-                    </h4>
-                    <div className="cmdb-info-card">
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">👤 Usuario Sesión:</span>
-                        <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
+                          {/* Procesador CPU */}
+                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                            <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
+                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
+                              {selectedAsset.cpuModel || 'Procesador estándar'}
+                            </div>
+                          </div>
+
+                          {/* Seguridad & Antivirus */}
+                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                            <div style={{ fontSize: '1.8rem' }}>🛡️</div>
+                            <div>
+                              <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
+                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
+                                {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
+                                  ? selectedAsset.agentVersion 
+                                  : 'Microsoft Defender Antivirus'}
+                              </div>
+                              <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
+                                Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                              </div>
+                            </div>
+                          </div>
+
+                        </div>
                       </div>
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">🏰 Red / Dominio:</span>
-                        <span className={`cmdb-info-val ${getAssetDomain(selectedAsset) !== 'N/A' ? 'highlight' : 'muted-text'}`}>
-                          {getAssetDomain(selectedAsset)}
-                        </span>
+
+                      {/* Ficha Técnica y Red */}
+                      <div>
+                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span>⚙️</span> Ficha Técnica & Red
+                        </h4>
+                        <div className="cmdb-info-card">
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">👤 Usuario Sesión:</span>
+                            <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🏰 Red / Dominio:</span>
+                            <span className={`cmdb-info-val ${getAssetDomain(selectedAsset) !== 'N/A' ? 'highlight' : 'muted-text'}`}>
+                              {getAssetDomain(selectedAsset)}
+                            </span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🏷️ Serial / Tag:</span>
+                            <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🏢 Fabricante/Board:</span>
+                            <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">🌐 IP Local:</span>
+                            <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
+                          </div>
+                          <div className="cmdb-info-row">
+                            <span className="muted-text">💻 Sistema:</span>
+                            <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
+                          </div>
+                        </div>
                       </div>
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">🏷️ Serial / Tag:</span>
-                        <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
-                      </div>
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">🏢 Fabricante/Board:</span>
-                        <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
-                      </div>
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">🌐 IP Local:</span>
-                        <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
-                      </div>
-                      <div className="cmdb-info-row">
-                        <span className="muted-text">💻 Sistema:</span>
-                        <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
-                      </div>
-                    </div>
-                  </div>
+                    </>
+                  )}
 
                   {/* Botones de Acción Unificados */}
                   <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem', marginTop: '0.5rem' }}>

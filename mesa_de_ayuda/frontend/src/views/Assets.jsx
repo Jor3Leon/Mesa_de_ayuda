@@ -1073,27 +1073,12 @@ export default function Assets() {
                             </div>
                             <div className="asset-spec-card">
                               <span>Dirección IP</span>
-                              <strong>
-                                {selectedAsset.ipAddress ? (
-                                  <a 
-                                    href={`http://${selectedAsset.ipAddress}`} 
-                                    target="_blank" 
-                                    rel="noopener noreferrer" 
-                                    style={{ color: '#0284c7', textDecoration: 'underline', display: 'inline-flex', alignItems: 'center', gap: '0.3rem' }}
-                                  >
-                                    {selectedAsset.ipAddress} <span style={{ fontSize: '0.75rem' }}>↗ Web Admin</span>
-                                  </a>
-                                ) : '---'}
-                              </strong>
+                              <strong>{selectedAsset.ipAddress || '---'}</strong>
                             </div>
                             <div className="asset-spec-card"><span>Firmware / Sistema</span><strong>{selectedAsset.osVersion || '---'}</strong></div>
                             <div className="asset-spec-card">
                               <span>Estado de Conexión</span>
                               <strong><span className={`badge ${getStatusClass(selectedAsset.status)}`}>{selectedAsset.status}</span></strong>
-                            </div>
-                            <div className="asset-spec-card">
-                              <span>Gestión en Red</span>
-                              <strong style={{ fontSize: '0.82rem', color: '#64748b' }}>Sondeo SNMP v1/v2c &bull; Web Management</strong>
                             </div>
                           </div>
                         </>

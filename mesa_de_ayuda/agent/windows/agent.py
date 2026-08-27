@@ -301,9 +301,67 @@ def show_status():
     print("=" * 50)
 
 
+def perform_discovery(ip, community="public", server_url=None, org_slug=None, api_key=None, proxy=None, register=False):
+    """Execute network device discovery and optionally register it with the server."""
+    logger = setup_logger()
+    try:
+        from discovery import discover_device
+    except ImportError:
+        logger.error("No se pudo cargar el modulo discovery.")
+        return False, "Modulo discovery no disponible", None
+
+    logger.info(f"Iniciando descubrimiento de red hacia IP: {ip} (Community: {community})")
+    result = discover_device(ip, community=community)
+
+    print("\n" + "=" * 60)
+    print("   DISPOSITIVO DE RED DESCUBIERTO")
+    print("=" * 60)
+    print(f"Estado:      {result['status']}")
+    print(f"IP:          {result['ip']}")
+    print(f"MAC:         {result['mac'] or 'N/A'}")
+    print(f"Fabricante:  {result['brand'] or 'Desconocido'}")
+    print(f"Modelo:      {result['model'] or 'Desconocido'}")
+    print(f"Serial:      {result['serialNumber'] or 'N/A'}")
+    print(f"Tipo:        {result['deviceType']}")
+    print(f"Capacidades: Impresion: {result['capabilities']['printing']} | Escaneo: {result['capabilities']['scanning']}")
+    print("=" * 60)
+
+    if register:
+        config = load_config()
+        server = server_url or config.get("serverUrl", DEFAULT_CONFIG["serverUrl"])
+        org = org_slug or config.get("organizationSlug", DEFAULT_CONFIG["organizationSlug"])
+        key = api_key if api_key is not None else config.get("apiKey", "")
+
+        # Format payload for Asset Sync / Registration
+        device_type_label = "Impresora Multifuncional" if result["deviceType"] == "MULTIFUNCTION" else \
+                            ("Escáner" if result["deviceType"] == "SCANNER" else "Impresora de Red")
+
+        payload = {
+            "hostname": result["hostname"],
+            "serialNumber": result["serialNumber"] or f"SN-NET-{result['ip'].replace('.', '-')}",
+            "ipAddress": result["ip"],
+            "osType": "Firmware / Embedded",
+            "osVersion": result["firmware"] or "v1.0",
+            "status": result["status"],
+            "brand": result["brand"] or "Generico",
+            "model": result["model"] or "Dispositivo de Red",
+            "deviceType": device_type_label,
+            "networkSummary": f"MAC: {result['mac'] or 'N/A'} | Web: {result['webUrl'] or 'N/A'}",
+            "notes": f"Descubierto por Agente RMM. Protocolos: {', '.join(result['protocolUsed'])}",
+            "organizationSlug": org,
+            "agentVersion": f"Discovery Engine 2.1 ({', '.join(result['protocolUsed'])})"
+        }
+
+        logger.info(f"Enviando registro de dispositivo a: {server}")
+        success, message, asset_id = sync_to_server(payload, server_url=server, api_key=key, proxy=proxy or "")
+        return success, message, asset_id
+
+    return True, "Descubrimiento completado", result
+
+
 def main():
     parser = argparse.ArgumentParser(description="STIC Agent - Mesa de Ayuda")
-    parser.add_argument("command", nargs="?", default="gui", choices=["gui", "sync", "install", "uninstall", "status", "daemon"], help="Comando a ejecutar")
+    parser.add_argument("command", nargs="?", default="gui", choices=["gui", "sync", "install", "uninstall", "status", "daemon", "discover"], help="Comando a ejecutar")
     parser.add_argument("--install", action="store_true", help="Instalar agente")
     parser.add_argument("--uninstall", action="store_true", help="Desinstalar agente")
     parser.add_argument("--daemon", action="store_true", help="Ejecutar en modo servicio silencioso")
@@ -313,6 +371,9 @@ def main():
     parser.add_argument("--api-key", type=str, help="API Key de autenticacion")
     parser.add_argument("--proxy", type=str, help="Proxy HTTP/HTTPS")
     parser.add_argument("--silent", action="store_true", help="Instalacion desatendida")
+    parser.add_argument("--ip", type=str, help="Direccion IP para Network Discovery")
+    parser.add_argument("--community", type=str, default="public", help="SNMP Community string")
+    parser.add_argument("--register", action="store_true", help="Registrar dispositivo descubierto en el servidor")
 
     args = parser.parse_args()
 
@@ -326,6 +387,9 @@ def main():
         show_status()
     elif args.command == "sync":
         perform_sync(server_url=args.server, org_slug=args.org, api_key=args.api_key, proxy=args.proxy)
+    elif args.command == "discover" or args.ip:
+        target_ip = args.ip or "127.0.0.1"
+        perform_discovery(target_ip, community=args.community, server_url=args.server, org_slug=args.org, api_key=args.api_key, proxy=args.proxy, register=args.register)
     else:
         # Default: Launch GUI installer
         try:
@@ -338,3 +402,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

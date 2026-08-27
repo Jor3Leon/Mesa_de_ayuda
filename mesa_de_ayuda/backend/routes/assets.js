@@ -240,7 +240,7 @@ function getAssetRoutes(prisma) {
     try {
       const id = Number.parseInt(req.params.id, 10);
       if (req.body.hostname !== undefined || req.body.serialNumber !== undefined) {
-        await ensureUniqueAssetIdentifiers(req.body, id);
+        await ensureUniqueAssetIdentifiers(req.body, id, req.auth.organizationId);
       }
 
       const updateData = {};

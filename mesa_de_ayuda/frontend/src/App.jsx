@@ -17,6 +17,7 @@ import Roles from './views/Roles';
 import StandarUserPortal from './views/StandarUserPortal';
 import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
+import Discovery from './views/Discovery';
 
 function getShortRoleLabel(role) {
   const normalized = (role || '').trim().toUpperCase();
@@ -399,6 +400,7 @@ function buildNavSections(user) {
       title: 'Activos',
       items: [
         { name: 'Dispositivos', path: '/assets', icon: 'assets', description: 'Inventario y salud de equipos', requiredPermission: 'ASSETS_VIEW' },
+        { name: 'Network Discovery', path: '/discovery', icon: 'discovery', description: 'Descubrimiento de impresoras y escáneres', requiredPermission: 'ASSETS_VIEW' },
         { name: 'CMDB', path: '/cmdb', icon: 'cmdb', description: 'Relacion completa de activos', requiredPermission: 'ASSETS_VIEW' },
       ],
     },
@@ -1369,7 +1371,11 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             />
             <Route
               path="/discovery"
-              element={<PlaceholderModule title="Discovery de red" description="Aqui podremos incorporar exploracion automatica y conciliacion de activos detectados." />}
+              element={(
+                <ProtectedRoute user={effectiveUser} requiredPermission="ASSETS_VIEW">
+                  <Discovery />
+                </ProtectedRoute>
+              )}
             />
             <Route
               path="/desk"

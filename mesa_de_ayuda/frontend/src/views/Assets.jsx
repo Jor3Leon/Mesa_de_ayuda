@@ -17,6 +17,7 @@ function getStatusLabel(status) {
 const initialForm = {
   hostname: '',
   ipAddress: '',
+  mac: '',
   osType: '',
   osVersion: '',
   status: '',
@@ -316,6 +317,10 @@ export default function Assets() {
       osVersion: asset.osVersion || '',
       status: asset.status || 'ONLINE',
       customerId: String(asset.customerId || ''),
+      mac: (() => {
+        const match = (asset.networkSummary || '').match(/([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/i);
+        return match ? match[1] : '';
+      })(),
       serialNumber: asset.serialNumber || '',
       brand: asset.brand || '',
       model: asset.model || '',
@@ -368,8 +373,18 @@ export default function Assets() {
       // Asegurar que customerId sea un entero válido
       const parsedCustomerId = parseInt(form.customerId, 10) || 1;
 
+      // Ensure MAC is preserved in networkSummary if provided
+      let finalNetworkSummary = form.networkSummary || '';
+      if (form.mac && form.mac.trim()) {
+        const cleanMac = form.mac.trim();
+        if (!finalNetworkSummary.includes(cleanMac)) {
+          finalNetworkSummary = `MAC: ${cleanMac}${finalNetworkSummary ? ` | ${finalNetworkSummary}` : ''}`;
+        }
+      }
+
       const payload = {
         ...form,
+        networkSummary: finalNetworkSummary,
         customerId: parsedCustomerId,
         displayInfo: serializeDisplayEntries(displayEntries),
         lastSeenAt: form.lastSeenAt || null,
@@ -777,6 +792,9 @@ export default function Assets() {
                 🗂️ JSON
               </button>
             </div>
+            <Link to="/discovery" className="btn-ghost" style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', color: '#0284c7', borderColor: '#bae6fd', background: '#f0f9ff' }}>
+              📡 Network Discovery
+            </Link>
             <button type="button" className="btn inventory-new-btn" onClick={handleNew}>
               + Nuevo dispositivo
             </button>
@@ -1197,13 +1215,17 @@ export default function Assets() {
                 <label htmlFor="asset-hostname">Hostname</label>
                 <input id="asset-hostname" value={form.hostname} onChange={(event) => setForm((current) => ({ ...current, hostname: event.target.value }))} placeholder="" />
               </div>
-              {!['Impresoras / Escáneres'].includes(form.deviceType) && (
-                <div className="field">
-                  <label htmlFor="asset-ip">Direccion IP</label>
-                  <input id="asset-ip" value={form.ipAddress} onChange={(event) => setForm((current) => ({ ...current, ipAddress: event.target.value }))} placeholder="" />
-                </div>
-              )}
-              {!['Impresoras / Escáneres', 'Dispositivo de Red'].includes(form.deviceType) && (
+              <div className="field">
+                <label htmlFor="asset-ip">Direccion IP</label>
+                <input id="asset-ip" value={form.ipAddress} onChange={(event) => setForm((current) => ({ ...current, ipAddress: event.target.value }))} placeholder="Ej: 10.0.5.56" />
+              </div>
+
+              <div className="field">
+                <label htmlFor="asset-mac">Direccion MAC</label>
+                <input id="asset-mac" value={form.mac} onChange={(event) => setForm((current) => ({ ...current, mac: event.target.value }))} placeholder="Ej: 00:1E:0B:05:8F:38" style={{ fontFamily: 'monospace' }} />
+              </div>
+
+              {!['Impresoras / Escáneres', 'Dispositivo de Red', 'Impresora Multifuncional', 'Impresora de Red', 'Escáner'].includes(form.deviceType) && (
                 <div className="field">
                   <label htmlFor="asset-os-version">Version Sistema Operativo</label>
                   <input id="asset-os-version" value={form.osVersion} onChange={(event) => setForm((current) => ({ ...current, osVersion: event.target.value }))} placeholder="" />

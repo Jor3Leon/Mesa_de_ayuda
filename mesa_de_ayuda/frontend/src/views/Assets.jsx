@@ -974,7 +974,7 @@ export default function Assets() {
 
                     if (isMonitorOrPeripheral) {
                       return (
-                        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '0.75rem', gridColumn: '1 / -1' }}>
+                        <>
                           <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
                           <div className="asset-spec-card">
                             <span>Usuario</span>
@@ -1008,7 +1008,7 @@ export default function Assets() {
 
                           {selectedAsset.deviceType === 'Monitor' && (
                             <div 
-                              className="asset-spec-card" 
+                              className="asset-spec-card full" 
                               style={{ background: '#ecfdf5', border: '1px solid #6ee7b7', cursor: 'pointer' }}
                               onClick={() => {
                                 const host = assets.find(a => (a.displayInfo || '').includes(selectedAsset.hostname));
@@ -1024,75 +1024,22 @@ export default function Assets() {
                           )}
                           <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
                           <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
-                        </div>
+                          <div className="asset-spec-card full"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                        </>
                       );
                     }
 
                     if (isPrinterOrScanner) {
                       return (
                         <>
-                          {/* Columna Izquierda: Ficha de Impresora / Multifuncional */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
-                            <div className="asset-spec-card">
-                              <span>Usuario / Área</span>
-                              <strong>
-                                {(() => {
-                                  let userName = selectedAsset.assignedUser;
-                                  if (!userName) return 'No asignado';
-                                  const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
-                                  if (userMatch) {
-                                    return (
-                                      <button 
-                                        type="button" 
-                                        className="btn-ghost" 
-                                        style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
-                                        onClick={() => setViewingUserProfile(userMatch)}
-                                      >
-                                        {userMatch.username}
-                                      </button>
-                                    );
-                                  }
-                                  return userName;
-                                })()}
-                              </strong>
-                            </div>
-                            <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
-                            <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || 'Impresora Multifuncional'}</strong></div>
-                            <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
-                            <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
-                            <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
-                          </div>
-
-                          {/* Columna Derecha: Red y Conectividad específica de Impresora (SIN campos de PC como RAM/CPU/GPU/Antivirus) */}
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                            <div className="asset-spec-card">
-                              <span>MAC</span>
-                              <strong style={{ fontFamily: 'monospace', color: '#0284c7' }}>{extractMacAddress(selectedAsset.networkSummary)}</strong>
-                            </div>
-                            <div className="asset-spec-card">
-                              <span>Dirección IP</span>
-                              <strong>{selectedAsset.ipAddress || '---'}</strong>
-                            </div>
-                            <div className="asset-spec-card"><span>Firmware / Sistema</span><strong>{selectedAsset.osVersion || '---'}</strong></div>
-                            <div className="asset-spec-card">
-                              <span>Estado de Conexión</span>
-                              <strong><span className={`badge ${getStatusClass(selectedAsset.status)}`}>{selectedAsset.status}</span></strong>
-                            </div>
-                          </div>
-                        </>
-                      );
-                    }
-
-                    // Ficha Técnica para Equipos de Cómputo (Desktop, Laptop, AIO, etc.)
-                    return (
-                      <>
-                        {/* Columna Izquierda: Datos Generales */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                           <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
                           <div className="asset-spec-card">
-                            <span>Usuario</span>
+                            <span>MAC</span>
+                            <strong style={{ fontFamily: 'monospace', color: '#0284c7' }}>{extractMacAddress(selectedAsset.networkSummary)}</strong>
+                          </div>
+
+                          <div className="asset-spec-card">
+                            <span>Usuario / Área</span>
                             <strong>
                               {(() => {
                                 let userName = selectedAsset.assignedUser;
@@ -1114,23 +1061,68 @@ export default function Assets() {
                               })()}
                             </strong>
                           </div>
+                          <div className="asset-spec-card">
+                            <span>Dirección IP</span>
+                            <strong>{selectedAsset.ipAddress || '---'}</strong>
+                          </div>
+
                           <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
-                          <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || '---'}</strong></div>
+                          <div className="asset-spec-card"><span>Firmware / Sistema</span><strong>{selectedAsset.osVersion || '---'}</strong></div>
+
+                          <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || 'Impresora Multifuncional'}</strong></div>
                           <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
+
                           <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
                           <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                        </>
+                      );
+                    }
+
+                    // Ficha Técnica para Equipos de Cómputo (Desktop, Laptop, AIO, etc.)
+                    return (
+                      <>
+                        <div className="asset-spec-card"><span>Placa</span><strong>{getAssetPlate(selectedAsset.hostname)}</strong></div>
+                        <div className="asset-spec-card">
+                          <span>Usuario</span>
+                          <strong>
+                            {(() => {
+                              let userName = selectedAsset.assignedUser;
+                              if (!userName) return 'No asignado';
+                              const userMatch = users.find(u => u.name.toLowerCase() === userName.toLowerCase());
+                              if (userMatch) {
+                                return (
+                                  <button 
+                                    type="button" 
+                                    className="btn-ghost" 
+                                    style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                    onClick={() => setViewingUserProfile(userMatch)}
+                                  >
+                                    {userMatch.username}
+                                  </button>
+                                );
+                              }
+                              return userName;
+                            })()}
+                          </strong>
                         </div>
 
-                        {/* Columna Derecha: Hardware de Cómputo y Red */}
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                          <div className="asset-spec-card"><span>Procesador</span><strong>{selectedAsset.cpuModel || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>Almacenamiento</span><strong>{selectedAsset.storageSummary || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>Memoria RAM</span><strong>{selectedAsset.ramSummary || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>Graficadora</span><strong>{selectedAsset.graphicsInfo || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>Hardware de RED</span><strong>{extractNetworkCard(selectedAsset.networkSummary)}</strong></div>
-                          <div className="asset-spec-card"><span>Dirección IP</span><strong>{selectedAsset.ipAddress || '---'}</strong></div>
-                          <div className="asset-spec-card"><span>Antivirus</span><strong>{selectedAsset.agentVersion || '---'}</strong></div>
-                        </div>
+                        <div className="asset-spec-card"><span>Ubicación</span><strong>{selectedAsset.location || 'Sin ubicación'}</strong></div>
+                        <div className="asset-spec-card"><span>Tipo</span><strong>{selectedAsset.deviceType || '---'}</strong></div>
+
+                        <div className="asset-spec-card"><span>Marca</span><strong>{selectedAsset.brand || '---'}</strong></div>
+                        <div className="asset-spec-card"><span>Modelo</span><strong>{selectedAsset.model || '---'}</strong></div>
+
+                        <div className="asset-spec-card"><span>ID device / S/N</span><strong>{selectedAsset.serialNumber || '---'}</strong></div>
+                        <div className="asset-spec-card"><span>Procesador</span><strong>{selectedAsset.cpuModel || '---'}</strong></div>
+
+                        <div className="asset-spec-card"><span>Memoria RAM</span><strong>{selectedAsset.ramSummary || '---'}</strong></div>
+                        <div className="asset-spec-card"><span>Almacenamiento</span><strong>{selectedAsset.storageSummary || '---'}</strong></div>
+
+                        <div className="asset-spec-card"><span>Graficadora</span><strong>{selectedAsset.graphicsInfo || '---'}</strong></div>
+                        <div className="asset-spec-card"><span>Antivirus</span><strong>{selectedAsset.agentVersion || '---'}</strong></div>
+
+                        <div className="asset-spec-card"><span>Dirección IP</span><strong>{selectedAsset.ipAddress || '---'}</strong></div>
+                        <div className="asset-spec-card"><span>Hardware de RED</span><strong>{extractNetworkCard(selectedAsset.networkSummary)}</strong></div>
                       </>
                     );
                   })()}

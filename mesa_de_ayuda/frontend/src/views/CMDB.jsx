@@ -274,8 +274,10 @@ export default function CMDB() {
   const [isSoftwareModalOpen, setIsSoftwareModalOpen] = useState(false);
   const [softwareSearch, setSoftwareSearch] = useState('');
 
-  // Formulario de Mantenimiento
-  const [maintType, setMaintType] = useState('Mantenimiento Preventivo');
+  // Formulario de Mantenimiento / Reabastecimiento
+  const [maintType, setMaintType] = useState('Petición');
+  const [maintCategory, setMaintCategory] = useState('Cambio de Tinta/Tóner');
+  const [isReplenishmentMode, setIsReplenishmentMode] = useState(false);
   const [maintPriority, setMaintPriority] = useState('MEDIA');
   const [maintTitle, setMaintTitle] = useState('');
   const [maintDescription, setMaintDescription] = useState('');
@@ -400,10 +402,11 @@ export default function CMDB() {
   }, [softwareList, softwareSearch]);
 
   const openMaintenanceModal = (asset, type = 'Mantenimiento Preventivo', customSupply = null) => {
-    setMaintType(type);
-    setMaintPriority(customSupply?.percent <= 15 ? 'CRITICAL' : customSupply?.percent <= 30 ? 'HIGH' : 'MEDIA');
-    
     if (customSupply) {
+      setIsReplenishmentMode(true);
+      setMaintType('Petición');
+      setMaintCategory('Cambio de Tinta/Tóner');
+      setMaintPriority(customSupply.percent <= 15 ? 'CRITICAL' : customSupply.percent <= 30 ? 'HIGH' : 'MEDIA');
       setMaintTitle(`[REABASTECIMIENTO] ${customSupply.name} - ${asset.hostname}`);
       setMaintDescription(
 `SOLICITUD DE REABASTECIMIENTO DE CONSUMIBLES TI
@@ -425,9 +428,13 @@ JUSTIFICACIÓN:
 Se requiere la asignación o compra de cartucho de reemplazo para evitar interrupción operativa del centro de impresión.`
       );
     } else {
-      setMaintTitle(`[${type.toUpperCase()}] ${asset.hostname}`);
+      setIsReplenishmentMode(false);
+      setMaintType(type || 'Mantenimiento Preventivo');
+      setMaintCategory('Hardware / Equipos');
+      setMaintPriority('MEDIA');
+      setMaintTitle(`[${(type || 'Mantenimiento').toUpperCase()}] ${asset.hostname}`);
       setMaintDescription(
-`Remisión a ${type} para el equipo ${asset.hostname}.
+`Remisión a ${type || 'Mantenimiento'} para el equipo ${asset.hostname}.
 
 DATOS DEL ACTIVO:
 • Serial / Service Tag: ${asset.serialNumber || '---'}
@@ -462,7 +469,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
         description: maintDescription.trim(),
         priority: maintPriority,
         ticketType: maintType,
-        category: 'Hardware / Equipos',
+        category: maintCategory,
         assetId: selectedAsset.id,
         customerId: selectedAsset.customerId || 1,
         responsibleUserIds: maintAssignedToId ? [parseInt(maintAssignedToId, 10)] : []
@@ -475,7 +482,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
       setMaintSuccessTicket(res);
     } catch (err) {
-      setMaintError(err.message || 'No se pudo crear el ticket de mantenimiento.');
+      setMaintError(err.message || 'No se pudo crear el ticket.');
     } finally {
       setSubmittingMaint(false);
     }
@@ -1298,9 +1305,11 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
             {/* Header del Modal */}
             <div style={{ padding: '1.5rem', background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 100%)', color: '#fff', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                <span style={{ fontSize: '1.8rem' }}>🛠️</span>
+                <span style={{ fontSize: '1.8rem' }}>{isReplenishmentMode ? '🛒' : '🛠️'}</span>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>Remisión a Mantenimiento</h3>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#fff' }}>
+                    {isReplenishmentMode ? 'SOLICITUD DE REABASTECIMIENTO' : 'Remisión a Mantenimiento'}
+                  </h3>
                   <p style={{ margin: 0, fontSize: '0.8rem', color: '#94a3b8' }}>Activo: <strong>{selectedAsset.hostname}</strong> (SN: {selectedAsset.serialNumber || '---'})</p>
                 </div>
               </div>
@@ -1316,7 +1325,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
               <div style={{ padding: '2rem', textAlign: 'center' }}>
                 <div style={{ fontSize: '3.5rem', marginBottom: '1rem' }}>🎉</div>
                 <h3 style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', margin: '0 0 0.5rem 0' }}>
-                  ¡Ticket de Mantenimiento Creado!
+                  {isReplenishmentMode ? '¡Solicitud de Reabastecimiento Creada!' : '¡Ticket de Mantenimiento Creado!'}
                 </h3>
                 <p style={{ color: '#475569', fontSize: '0.95rem', maxWidth: '400px', margin: '0 auto 1.5rem auto' }}>
                   Se ha registrado el ticket <strong>#{maintSuccessTicket.id}</strong> ({maintSuccessTicket.title}) y se ha vinculado exitosamente al equipo <strong>{selectedAsset.hostname}</strong>.
@@ -1344,60 +1353,42 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                   <div className="feedback error" style={{ margin: 0 }}>{maintError}</div>
                 )}
 
-                {/* Tipo de Mantenimiento */}
-                <div>
-                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.5rem' }}>
-                    Tipo de Mantenimiento:
+                {/* Tipo de Ticket */}
+                <div className="field">
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>
+                    Tipo
                   </label>
-                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '0.8rem' }}>
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMaintType('Mantenimiento Preventivo');
-                        setMaintTitle(`[MANTENIMIENTO PREVENTIVO] ${selectedAsset.hostname}`);
-                      }}
-                      style={{
-                        padding: '0.8rem',
-                        borderRadius: '12px',
-                        border: maintType === 'Mantenimiento Preventivo' ? '2px solid #10b981' : '1px solid #cbd5e1',
-                        background: maintType === 'Mantenimiento Preventivo' ? '#ecfdf5' : '#f8fafc',
-                        color: maintType === 'Mantenimiento Preventivo' ? '#065f46' : '#475569',
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem'
-                      }}
-                    >
-                      <span>🟢</span> Preventivo
-                    </button>
+                  <select 
+                    value={maintType} 
+                    onChange={e => setMaintType(e.target.value)}
+                    style={{ borderRadius: '10px', padding: '0.7rem', width: '100%', background: '#fff', border: '1px solid #cbd5e1', fontWeight: 600, fontSize: '0.88rem' }}
+                  >
+                    <option value="Petición">Petición</option>
+                    <option value="Incidencia">Incidencia</option>
+                    <option value="Requerimiento">Requerimiento</option>
+                    <option value="Mantenimiento Preventivo">Mantenimiento Preventivo</option>
+                    <option value="Mantenimiento Correctivo">Mantenimiento Correctivo</option>
+                  </select>
+                </div>
 
-                    <button
-                      type="button"
-                      onClick={() => {
-                        setMaintType('Mantenimiento Correctivo');
-                        setMaintTitle(`[MANTENIMIENTO CORRECTIVO] ${selectedAsset.hostname}`);
-                      }}
-                      style={{
-                        padding: '0.8rem',
-                        borderRadius: '12px',
-                        border: maintType === 'Mantenimiento Correctivo' ? '2px solid #ef4444' : '1px solid #cbd5e1',
-                        background: maintType === 'Mantenimiento Correctivo' ? '#fef2f2' : '#f8fafc',
-                        color: maintType === 'Mantenimiento Correctivo' ? '#991b1b' : '#475569',
-                        fontWeight: 700,
-                        fontSize: '0.85rem',
-                        cursor: 'pointer',
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        gap: '0.4rem'
-                      }}
-                    >
-                      <span>🔴</span> Correctivo
-                    </button>
-                  </div>
+                {/* Categoría */}
+                <div className="field">
+                  <label style={{ fontSize: '0.85rem', fontWeight: 700, color: '#334155', display: 'block', marginBottom: '0.35rem' }}>
+                    Categoría <span style={{ color: '#ef4444' }}>*</span>
+                  </label>
+                  <select 
+                    value={maintCategory} 
+                    onChange={e => setMaintCategory(e.target.value)}
+                    required
+                    style={{ borderRadius: '10px', padding: '0.7rem', width: '100%', background: '#fff', border: '1px solid #cbd5e1', fontWeight: 600, fontSize: '0.88rem' }}
+                  >
+                    <option value="Cambio de Tinta/Tóner">Cambio de Tinta/Tóner</option>
+                    <option value="Suministro de Papel/Insumos">Suministro de Papel/Insumos</option>
+                    <option value="Mantenimiento Impresora / Escáner">Mantenimiento Impresora / Escáner</option>
+                    <option value="Hardware / Equipos">Hardware / Equipos</option>
+                    <option value="Soporte Técnico">Soporte Técnico</option>
+                    <option value="Accesorios y Periféricos">Accesorios y Periféricos</option>
+                  </select>
                 </div>
 
                 {/* Prioridad y Técnico Responsable */}

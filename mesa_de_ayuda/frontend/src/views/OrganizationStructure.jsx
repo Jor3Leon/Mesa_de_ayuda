@@ -159,13 +159,13 @@ export default function OrganizationStructure() {
       if (editingItem) {
         await apiRequest(`/organization-structure/sedes/${editingItem.id}`, {
           method: 'PUT',
-          body: JSON.stringify(sedeForm),
+          body: sedeForm,
         });
         setFeedback(`Sede "${sedeForm.name}" actualizada con éxito.`);
       } else {
         await apiRequest('/organization-structure/sedes', {
           method: 'POST',
-          body: JSON.stringify(sedeForm),
+          body: sedeForm,
         });
         setFeedback(`Sede "${sedeForm.name}" creada con éxito.`);
       }
@@ -193,13 +193,13 @@ export default function OrganizationStructure() {
       if (editingItem) {
         await apiRequest(`/organization-structure/dependencias/${editingItem.id}`, {
           method: 'PUT',
-          body: JSON.stringify(payload),
+          body: payload,
         });
         setFeedback(`Dependencia "${depForm.name}" actualizada.`);
       } else {
         await apiRequest('/organization-structure/dependencias', {
           method: 'POST',
-          body: JSON.stringify(payload),
+          body: payload,
         });
         setFeedback(`Dependencia "${depForm.name}" creada.`);
       }
@@ -228,13 +228,13 @@ export default function OrganizationStructure() {
       if (editingItem) {
         await apiRequest(`/organization-structure/oficinas/${editingItem.id}`, {
           method: 'PUT',
-          body: JSON.stringify(payload),
+          body: payload,
         });
         setFeedback(`Oficina "${ofiForm.name}" actualizada.`);
       } else {
         await apiRequest('/organization-structure/oficinas', {
           method: 'POST',
-          body: JSON.stringify(payload),
+          body: payload,
         });
         setFeedback(`Oficina "${ofiForm.name}" creada.`);
       }

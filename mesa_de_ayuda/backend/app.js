@@ -94,25 +94,17 @@ function buildApp(prisma = new PrismaClient()) {
     next(createHttpError(404, `Recurso ${req.method} ${req.url} no encontrado.`));
   });
 
-  // Global error handler - Safe against information leakage
+  // Global error handler
   app.use((error, req, res, next) => {
     const statusCode = typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 600
       ? error.statusCode
       : 500;
     
-    // In production, mask internal 500 errors to prevent leaking database structure or stack traces
-    const message = statusCode === 500 && process.env.NODE_ENV === 'production'
-      ? 'Ha ocurrido un error interno en el servidor.'
-      : error.message || 'Error en el servidor.';
-    
-    if (statusCode === 500) {
-      console.error('\x1b[31m[ERROR]\x1b[0m', error);
-    }
+    console.error(`[API ERROR ${statusCode}] ${req.method} ${req.url}:`, error);
 
+    const message = error.message || 'Error en el servidor.';
     res.status(statusCode).json({
       error: message,
-      status: statusCode,
-      timestamp: new Date().toISOString()
     });
   });
 

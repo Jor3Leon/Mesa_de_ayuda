@@ -15,6 +15,7 @@ export default function CannedResponses() {
   });
   const [editingId, setEditingId] = useState(null);
   const [showForm, setShowForm] = useState(false);
+  const [copiedId, setCopiedId] = useState(null);
 
   useEffect(() => {
     loadData();
@@ -25,10 +26,10 @@ export default function CannedResponses() {
     try {
       const [resData, catData] = await Promise.all([
         apiRequest('/canned-responses'),
-        apiRequest('/categories')
+        apiRequest('/categories').catch(() => [])
       ]);
-      setResponses(resData);
-      setCategories(catData);
+      setResponses(Array.isArray(resData) ? resData : []);
+      setCategories(Array.isArray(catData) ? catData : []);
     } catch (err) {
       console.error("Error loading data", err);
     } finally {
@@ -43,7 +44,7 @@ export default function CannedResponses() {
 
     apiRequest(url, {
       method,
-      body: JSON.stringify(form)
+      body: form
     }).then(() => {
       resetForm();
       loadData();
@@ -75,267 +76,278 @@ export default function CannedResponses() {
     loadData();
   };
 
+  const handleCopy = (res) => {
+    navigator.clipboard.writeText(res.content);
+    setCopiedId(res.id);
+    setTimeout(() => setCopiedId(null), 2000);
+  };
+
   const filteredResponses = responses.filter(res => {
-    const matchesSearch = res.title.toLowerCase().includes(filters.search.toLowerCase()) || 
-                         res.content.toLowerCase().includes(filters.search.toLowerCase());
+    const matchesSearch = !filters.search || 
+      res.title.toLowerCase().includes(filters.search.toLowerCase()) || 
+      res.content.toLowerCase().includes(filters.search.toLowerCase()) ||
+      (res.shortcut && res.shortcut.toLowerCase().includes(filters.search.toLowerCase()));
     const matchesCategory = !filters.category || res.category === filters.category;
     const matchesType = !filters.type || res.ticketType === filters.type;
     return matchesSearch && matchesCategory && matchesType;
   });
 
   return (
-    <div className="view-container">
-      <section className="hero-panel">
-        <div>
-          <p className="eyebrow">Repositorio Digital</p>
-          <h2>Base de Conocimiento</h2>
-          <p className="muted-text">Optimice la gestión operativa mediante plantillas técnicas estandarizadas y respuestas formales de alta fidelidad.</p>
-        </div>
-        <div style={{ display: 'flex', justifyContent: 'flex-end', alignItems: 'center' }}>
-          <button className="btn" onClick={() => setShowForm(!showForm)}>
-            {showForm ? 'Cancelar' : 'Crear Nueva Plantilla'}
-          </button>
-        </div>
-      </section>
-
-      {showForm && (
-        <div className="card-premium animate-fade-in" style={{ 
-          marginBottom: '2rem', 
-          borderLeft: `4px solid ${form.ticketType === 'Incidencia' ? 'var(--color-danger)' : 'var(--color-primary)'}`,
-          background: 'linear-gradient(180deg, #ffffff, #f9fafb)'
-        }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '24px' }}>
-            <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: '#1a1a1a' }}>
-              {editingId ? '🛠 Editar Plantilla Técnica' : '✨ Nueva Respuesta de Conocimiento'}
-            </h3>
-            <button className="btn-icon mini" onClick={resetForm}>✕</button>
+    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+      
+      {/* 🌟 HERO CONTROL BAR */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        borderRadius: '16px',
+        padding: '1.75rem 2rem',
+        marginBottom: '1.75rem',
+        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: '#ffffff',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.25rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
+            fontSize: '1.25rem'
+          }}>
+            💬
           </div>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
+                Plantillas & Respuestas Rápidas
+              </h1>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.55rem', borderRadius: '9999px', background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.4)' }}>
+                Knowledge Base
+              </span>
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+              Respuestas estandarizadas y atajos de teclado para agilizar la atención de técnicos en los tickets.
+            </p>
+          </div>
+        </div>
 
-          <form onSubmit={handleSubmit} style={{ display: 'grid', gridTemplateColumns: 'repeat(2, 1fr)', gap: '20px' }}>
-            <div className="field" style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-muted)' }}>Título Descriptivo</label>
-              <input 
-                type="text" 
-                placeholder="Ej: Protocolo de Conectividad DNS"
-                value={form.title}
-                onChange={e => setForm({...form, title: e.target.value})}
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{
+            background: showForm ? '#f1f5f9' : 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+            color: showForm ? '#475569' : '#ffffff',
+            padding: '0.65rem 1.25rem',
+            borderRadius: '10px',
+            fontWeight: '700',
+            fontSize: '0.875rem',
+            border: 'none',
+            cursor: 'pointer',
+            boxShadow: showForm ? 'none' : '0 4px 12px rgba(37, 99, 235, 0.35)'
+          }}
+        >
+          {showForm ? 'Cancelar' : '+ Nueva Plantilla'}
+        </button>
+      </div>
+
+      {/* CREATE / EDIT FORM */}
+      {showForm && (
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          marginBottom: '1.75rem',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1.25rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+            {editingId ? '✏️ Editar Plantilla' : '➕ Crear Nueva Plantilla de Respuesta'}
+          </h3>
+
+          <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '1rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                  Título de la Plantilla *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ej: Saludo inicial y confirmación"
+                  value={form.title}
+                  onChange={(e) => setForm({ ...form, title: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                  Atajo de Teclado (Comando)
+                </label>
+                <input
+                  type="text"
+                  placeholder="Ej: /saludo o /cierre"
+                  value={form.shortcut}
+                  onChange={(e) => setForm({ ...form, shortcut: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                />
+              </div>
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                  Tipo de Solicitud
+                </label>
+                <select
+                  value={form.ticketType}
+                  onChange={(e) => setForm({ ...form, ticketType: e.target.value })}
+                  style={{ width: '100%', padding: '0.6rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                >
+                  <option value="Incidencia">Incidencia</option>
+                  <option value="Requerimiento">Requerimiento</option>
+                  <option value="General">General / Ambos</option>
+                </select>
+              </div>
+            </div>
+
+            <div>
+              <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                Contenido del Mensaje *
+              </label>
+              <textarea
                 required
-                style={{ borderRadius: '10px' }}
-              />
-            </div>
-
-            <div className="field">
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-muted)' }}>Tipo de Ticket</label>
-              <select 
-                value={form.ticketType}
-                onChange={e => setForm({...form, ticketType: e.target.value})}
-                required
-                style={{ borderRadius: '10px' }}
-              >
-                <option value="Incidencia">Incidencia</option>
-                <option value="Petición">Petición</option>
-              </select>
-            </div>
-
-            <div className="field">
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-muted)' }}>Atajo Rápido (Slash Command)</label>
-              <input 
-                type="text" 
-                placeholder="Ej: /dns-fix"
-                value={form.shortcut}
-                onChange={e => setForm({...form, shortcut: e.target.value})}
-                style={{ borderRadius: '10px' }}
-              />
-            </div>
-
-            <div className="field" style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-muted)' }}>Categoría Relacionada</label>
-              <select 
-                value={form.category}
-                onChange={e => setForm({...form, category: e.target.value})}
-                required
-                style={{ borderRadius: '10px' }}
-              >
-                <option value="General">General</option>
-                {[...new Set(categories.map(c => c.name))].map(name => (
-                  <option key={name} value={name}>{name}</option>
-                ))}
-              </select>
-            </div>
-
-            <div className="field" style={{ gridColumn: 'span 2' }}>
-              <label style={{ fontSize: '0.8rem', fontWeight: 700, color: 'var(--color-muted)' }}>Contenido Técnico y Formal</label>
-              <textarea 
-                rows="6"
-                placeholder="Redacte la solución con lenguaje profesional y técnico..."
+                rows={4}
+                placeholder="Escribe el texto de la respuesta predefinida..."
                 value={form.content}
-                onChange={e => setForm({...form, content: e.target.value})}
-                required
-                style={{ borderRadius: '12px', padding: '1rem', lineHeight: '1.6' }}
+                onChange={(e) => setForm({ ...form, content: e.target.value })}
+                style={{ width: '100%', padding: '0.75rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', fontFamily: 'inherit', boxSizing: 'border-box' }}
               />
-              <small className="muted-text" style={{ marginTop: '8px', display: 'block' }}>Utilice un tono formal, técnico y conciso para la resolución definitiva.</small>
             </div>
 
-            <div style={{ gridColumn: 'span 2', display: 'flex', gap: '12px', justifyContent: 'flex-end', marginTop: '10px' }}>
-              <button type="button" className="btn outline" onClick={resetForm}>Descartar</button>
-              <button type="submit" className="btn primary" style={{ padding: '0.75rem 2rem' }}>
-                {editingId ? 'Actualizar Registro' : 'Registrar en Base'}
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={resetForm}
+                style={{ background: '#f1f5f9', border: '1px solid #cbd5e1', color: '#475569', padding: '0.6rem 1.25rem', borderRadius: '8px', fontWeight: '600', cursor: 'pointer' }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="submit"
+                style={{ background: '#2563eb', color: '#ffffff', padding: '0.6rem 1.5rem', borderRadius: '8px', fontWeight: '700', border: 'none', cursor: 'pointer' }}
+              >
+                Guardar Plantilla
               </button>
             </div>
           </form>
         </div>
       )}
 
-      <div className="card-premium" style={{ marginBottom: '2rem' }}>
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '20px', alignItems: 'center', justifyContent: 'space-between' }}>
-          <div style={{ display: 'flex', gap: '16px', flex: '1', minWidth: '300px' }}>
-            <div className="field" style={{ flex: '1' }}>
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '8px', display: 'block' }}>🔍 Búsqueda Inteligente</label>
-              <input 
-                type="text" 
-                placeholder="Filtrar por título, atajo o contenido técnico..." 
-                value={filters.search}
-                onChange={e => setFilters({...filters, search: e.target.value})}
-                style={{ borderRadius: '12px', padding: '0.75rem 1rem' }}
-              />
-            </div>
-          </div>
-          <div style={{ display: 'flex', gap: '12px' }}>
-            <div className="field">
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '8px', display: 'block' }}>Tipo</label>
-              <select value={filters.type} onChange={e => setFilters({...filters, type: e.target.value})} style={{ borderRadius: '12px', minWidth: '140px' }}>
-                <option value="">Todos</option>
-                <option value="Incidencia">Incidencias</option>
-                <option value="Petición">Peticiones</option>
-              </select>
-            </div>
-            <div className="field">
-              <label style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '8px', display: 'block' }}>Categoría</label>
-              <select value={filters.category} onChange={e => setFilters({...filters, category: e.target.value})} style={{ borderRadius: '12px', minWidth: '180px' }}>
-                <option value="">Todas las categorías</option>
-                {[...new Set(responses.map(r => r.category))].filter(Boolean).sort().map(cat => (
-                  <option key={cat} value={cat}>{cat}</option>
-                ))}
-              </select>
-            </div>
-          </div>
-        </div>
+      {/* FILTER SEARCH BAR */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '14px',
+        border: '1px solid #e2e8f0',
+        padding: '0.75rem 1rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        gap: '0.75rem',
+        alignItems: 'center',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+      }}>
+        <input
+          type="text"
+          placeholder="Buscar plantillas por título, texto o atajo (/comando)..."
+          value={filters.search}
+          onChange={(e) => setFilters({ ...filters, search: e.target.value })}
+          style={{ flex: '1', padding: '0.55rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem' }}
+        />
       </div>
 
+      {/* RESPONSES CARDS GRID */}
       {loading ? (
-        <div style={{ padding: '60px', textAlign: 'center' }}>
-          <div className="loader" style={{ margin: '0 auto 20px' }}></div>
-          <p className="muted-text">Sincronizando repositorio de conocimiento...</p>
+        <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>Cargando repositorio de respuestas...</div>
+      ) : filteredResponses.length === 0 ? (
+        <div style={{ padding: '3rem', textAlign: 'center', background: '#ffffff', borderRadius: '14px', border: '1px dashed #cbd5e1' }}>
+          <p style={{ color: '#64748b', margin: '0 0 1rem 0' }}>No se encontraron plantillas coincidentes.</p>
+          <button onClick={() => setShowForm(true)} style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', cursor: 'pointer', fontWeight: '600' }}>
+            + Crear Plantilla
+          </button>
         </div>
       ) : (
-        <div className="knowledge-grid" style={{ 
-          display: 'grid', 
-          gridTemplateColumns: 'repeat(auto-fill, minmax(380px, 1fr))', 
-          gap: '24px' 
-        }}>
-          {filteredResponses.length === 0 ? (
-            <div style={{ gridColumn: '1/-1', textAlign: 'center', padding: '80px', background: '#fff', borderRadius: '24px', border: '2px dashed var(--color-border)' }}>
-              <span style={{ fontSize: '3rem', display: 'block', marginBottom: '1rem' }}>📂</span>
-              <h3 style={{ color: 'var(--color-text)', marginBottom: '0.5rem' }}>No se encontraron resultados</h3>
-              <p className="muted-text">Ajuste los filtros o cree una nueva plantilla para enriquecer la base.</p>
-            </div>
-          ) : (
-            filteredResponses.map(res => (
-              <div key={res.id} className="card-premium hover-lift" style={{ 
-                display: 'flex', 
-                flexDirection: 'column', 
-                height: '100%', 
-                padding: '24px',
-                position: 'relative',
-                overflow: 'hidden',
-                transition: 'all 0.3s cubic-bezier(0.4, 0, 0.2, 1)'
-              }}>
-                <div style={{ 
-                  position: 'absolute', 
-                  top: 0, 
-                  left: 0, 
-                  width: '4px', 
-                  height: '100%', 
-                  background: res.ticketType === 'Incidencia' ? 'var(--color-danger)' : 'var(--color-primary)' 
-                }} />
-                
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '16px' }}>
-                  <div style={{ display: 'flex', flexWrap: 'wrap', gap: '8px' }}>
-                    <span className={`badge ${res.ticketType === 'Incidencia' ? 'danger' : 'success'}`} style={{ fontSize: '0.68rem', padding: '4px 10px', borderRadius: '6px' }}>
-                      {res.ticketType === 'Incidencia' ? '🚨 Incidencia' : '📋 Petición'}
-                    </span>
-                    <span className="badge" style={{ fontSize: '0.68rem', padding: '4px 10px', borderRadius: '6px', background: 'rgba(0,0,0,0.04)', color: '#444' }}>
-                      📁 {res.category}
-                    </span>
-                  </div>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))', gap: '1.25rem' }}>
+          {filteredResponses.map((res) => (
+            <div
+              key={res.id}
+              style={{
+                background: '#ffffff',
+                borderRadius: '14px',
+                border: '1px solid #e2e8f0',
+                padding: '1.25rem',
+                boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+                display: 'flex',
+                flexDirection: 'column',
+                justifyContent: 'space-between'
+              }}
+            >
+              <div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                  <h4 style={{ margin: 0, fontSize: '1rem', fontWeight: '800', color: '#0f172a' }}>
+                    {res.title}
+                  </h4>
                   {res.shortcut && (
-                    <code style={{ 
-                      fontSize: '0.75rem', 
-                      padding: '4px 8px', 
-                      background: '#1a1a1a', 
-                      color: '#f4f4f4', 
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '0.2rem 0.5rem',
                       borderRadius: '6px',
-                      fontWeight: 600,
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.1)'
-                    }}>{res.shortcut}</code>
+                      background: '#eff6ff',
+                      color: '#2563eb',
+                      border: '1px solid #bfdbfe'
+                    }}>
+                      {res.shortcut}
+                    </span>
                   )}
                 </div>
-                
-                <h4 style={{ fontSize: '1.15rem', marginBottom: '12px', color: '#1a1a1a', fontWeight: 700, lineHeight: 1.3 }}>{res.title}</h4>
-                
-                <div style={{ 
-                  fontSize: '0.92rem', 
-                  color: '#4b5563', 
-                  flex: '1', 
-                  lineHeight: 1.6,
-                  marginBottom: '24px',
-                  background: '#f9fafb',
-                  padding: '12px',
-                  borderRadius: '10px',
-                  border: '1px solid #f1f5f9',
-                  whiteSpace: 'pre-wrap'
-                }}>
-                  {res.content.length > 220 ? res.content.substring(0, 220) + '...' : res.content}
-                </div>
-                
-                <div style={{ 
-                  display: 'flex', 
-                  justifyContent: 'space-between', 
-                  alignItems: 'center', 
-                  paddingTop: '16px', 
-                  borderTop: '1px solid #f1f5f9' 
-                }}>
-                  <div style={{ display: 'flex', gap: '10px' }}>
-                    <button className="btn-icon mini" onClick={() => handleEdit(res)} title="Editar" style={{ background: '#f3f4f6' }}>✎</button>
-                    <button className="btn-icon mini danger" onClick={() => handleDelete(res.id)} title="Eliminar" style={{ background: '#fee2e2' }}>🗑</button>
-                  </div>
-                  <button 
-                    className="btn mini" 
-                    style={{ 
-                      background: 'var(--color-primary)', 
-                      color: '#fff', 
-                      borderRadius: '8px',
+
+                <p style={{ margin: '0 0 1rem 0', fontSize: '0.85rem', color: '#475569', lineHeight: 1.5, background: '#f8fafc', padding: '0.75rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                  "{res.content}"
+                </p>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+                <span style={{ fontSize: '0.75rem', fontWeight: '600', color: '#94a3b8' }}>
+                  {res.ticketType || 'General'}
+                </span>
+
+                <div style={{ display: 'flex', gap: '0.5rem' }}>
+                  <button
+                    onClick={() => handleCopy(res)}
+                    style={{
+                      background: copiedId === res.id ? '#ecfdf5' : '#f1f5f9',
+                      border: `1px solid ${copiedId === res.id ? '#a7f3d0' : '#cbd5e1'}`,
+                      color: copiedId === res.id ? '#047857' : '#334155',
+                      padding: '0.35rem 0.75rem',
+                      borderRadius: '6px',
                       fontSize: '0.75rem',
-                      padding: '0.5rem 1rem'
-                    }}
-                    onClick={() => {
-                      navigator.clipboard.writeText(res.content);
-                      const btn = document.activeElement;
-                      const originalText = btn.innerText;
-                      btn.innerText = '¡Copiado!';
-                      btn.style.background = '#059669';
-                      setTimeout(() => {
-                        btn.innerText = originalText;
-                        btn.style.background = 'var(--color-primary)';
-                      }, 2000);
+                      fontWeight: '700',
+                      cursor: 'pointer'
                     }}
                   >
-                    Copiar Solución
+                    {copiedId === res.id ? '✓ Copiado' : '📋 Copiar'}
                   </button>
+                  <button onClick={() => handleEdit(res)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>✏️</button>
+                  <button onClick={() => handleDelete(res.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>🗑️</button>
                 </div>
               </div>
-            ))
-          )}
+            </div>
+          ))}
         </div>
       )}
     </div>

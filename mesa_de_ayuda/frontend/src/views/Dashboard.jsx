@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
 import { 
   AreaChart, 
@@ -10,7 +10,6 @@ import {
   Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
-import { Icon, BentoCard } from '../components/dashboard/DashboardComponents';
 
 const initialData = {
   global: {
@@ -35,113 +34,11 @@ const initialData = {
   chartData: [],
 };
 
-// --- Utilities ---
 const formatTime = (dateStr) => {
   if (!dateStr) return '--:--';
   const date = new Date(dateStr);
   return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
 };
-
-// --- Sub-components ---
-
-function StatusPills({ data }) {
-  return (
-    <div className="hero-status-pills">
-      <div className="status-pill" style={{ background: 'rgba(15, 157, 58, 0.1)', borderColor: 'rgba(15, 157, 58, 0.2)', color: 'var(--color-primary)' }}>
-        <div className="status-dot" />
-        RMM Conectado
-      </div>
-      {data.global.offlineAssets > 0 && (
-        <div className="status-pill" style={{ background: 'rgba(226, 27, 35, 0.1)', borderColor: 'rgba(226, 27, 35, 0.2)', color: 'var(--color-danger)' }}>
-          <Icon name="alert" size={14} />
-          {data.global.offlineAssets} Equipos Offline
-        </div>
-      )}
-      <div className="status-pill">
-        <Icon name="shield" size={14} style={{ color: 'var(--color-primary)' }} />
-        Seguridad Ok
-      </div>
-      {data.global.slaRiskCount > 0 && (
-        <div className="status-pill animate-pulse" style={{ background: 'rgba(255, 152, 0, 0.1)', borderColor: 'rgba(255, 152, 0, 0.2)', color: '#ff9800' }}>
-          <Icon name="clock" size={14} />
-          {data.global.slaRiskCount} SLA en Riesgo
-        </div>
-      )}
-    </div>
-  );
-}
-
-function PrioritiesWidget({ ticketsByPriority, openTickets }) {
-  const colors = {
-    CRITICAL: 'var(--color-danger)',
-    HIGH: 'var(--color-secondary)',
-    MEDIUM: '#2e5aac',
-    LOW: 'var(--color-primary)'
-  };
-
-  return (
-    <div className="priorities-list">
-      {['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'].map(prio => {
-        const count = ticketsByPriority?.[prio] || 0;
-        const percentage = openTickets > 0 ? (count / openTickets) * 100 : 0;
-        
-        return (
-          <div key={prio} className="priority-row">
-            <div className="priority-label-container">
-              <span className="priority-name">{prio}</span>
-              <span className="muted-text">{count}</span>
-            </div>
-            <div className="priority-bar-bg">
-              <div className="priority-bar-fill" style={{ 
-                width: `${percentage}%`, 
-                background: colors[prio]
-              }} />
-            </div>
-          </div>
-        );
-      })}
-    </div>
-  );
-}
-
-function InfraHealthWidget({ data, recentAssets, navigate }) {
-  return (
-    <div className="infra-status-list">
-      <div className="infra-stat-row" onClick={() => navigate('/assets?status=ONLINE')} style={{ cursor: 'pointer' }}>
-        <span className="muted-text">Equipos en Línea</span>
-        <span style={{ fontWeight: 700, color: 'var(--color-success)' }}>{data.global.onlineAssets}</span>
-      </div>
-      <div className="infra-stat-row" onClick={() => navigate('/assets?status=OFFLINE')} style={{ cursor: 'pointer' }}>
-        <span className="muted-text">Equipos Offline</span>
-        <span style={{ fontWeight: 700, color: data.global.offlineAssets > 0 ? 'var(--color-danger)' : 'inherit' }}>{data.global.offlineAssets}</span>
-      </div>
-      
-      {data.global.longOfflineAssets > 0 && (
-        <div className="infra-alert-banner" onClick={() => navigate('/assets?status=OFFLINE')}>
-          <Icon name="alert" size={20} style={{ color: 'var(--color-danger)' }} />
-          <div style={{ fontSize: '0.8rem' }}>
-            <strong style={{ color: 'var(--color-danger)', display: 'block' }}>Alerta de Inactividad</strong>
-            <span className="muted-text">{data.global.longOfflineAssets} equipos llevan más de 24h sin conexión.</span>
-          </div>
-        </div>
-      )}
-
-      {recentAssets.length > 0 && (
-        <div className="recent-syncs">
-          <p className="recent-syncs-title">Últimas Sincronizaciones</p>
-          {recentAssets.slice(0, 3).map(asset => (
-            <div key={asset.id} className="sync-row" onClick={() => navigate(`/assets?search=${asset.hostname}`)} style={{ cursor: 'pointer' }}>
-              <span style={{ fontWeight: 500 }}>{asset.hostname}</span>
-              <span className="badge success" style={{ fontSize: '10px' }}>{formatTime(asset.lastSeenAt)}</span>
-            </div>
-          ))}
-        </div>
-      )}
-    </div>
-  );
-}
-
-// --- Main Component ---
 
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
@@ -154,10 +51,6 @@ export default function Dashboard({ user }) {
   const isTechnician = isAdmin || user?.role?.toUpperCase() === 'TECNICO' || user?.role?.toUpperCase() === 'TECHNICIAN' || user?.role?.toUpperCase() === 'LEVEL_1' || user?.role?.toUpperCase() === 'LEVEL_2' || user?.role?.toUpperCase() === 'LEVEL_3';
   const isStandardUser = user?.role === 'USUARIO ESTANDAR';
 
-  const roleUpper = (user?.role || '').trim().toUpperCase();
-  const isLevel1Or2 = roleUpper === 'LEVEL_1' || roleUpper === 'NIVEL 1' || roleUpper === 'LEVEL_2' || roleUpper === 'NIVEL 2' || roleUpper === 'USUARIO ESTANDAR';
-  const showInfrastructureAndActions = !isLevel1Or2;
-
   useEffect(() => {
     let ignore = false;
 
@@ -165,12 +58,12 @@ export default function Dashboard({ user }) {
       try {
         const [dashboardData, assetsData] = await Promise.all([
           apiRequest('/dashboard/data'),
-          apiRequest('/assets/recent')
+          apiRequest('/assets/recent').catch(() => [])
         ]);
 
         if (!ignore) {
           setData(dashboardData);
-          setRecentAssets(assetsData);
+          setRecentAssets(Array.isArray(assetsData) ? assetsData : []);
           setLoading(false);
           setError('');
         }
@@ -191,12 +84,22 @@ export default function Dashboard({ user }) {
     };
   }, []);
 
-  if (loading) return (
-    <div className="view-container">
-      <div className="loader"></div>
-      <p style={{ textAlign: 'center', color: 'var(--color-muted)' }}>Cargando tablero inteligente...</p>
-    </div>
-  );
+  if (loading) {
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#2563eb',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 1rem auto'
+        }} />
+        <p style={{ fontWeight: '600', fontSize: '0.95rem' }}>Cargando consola de control y telemetría...</p>
+      </div>
+    );
+  }
 
   const global = data?.global || initialData.global;
   const personal = data?.personal || initialData.personal;
@@ -204,198 +107,523 @@ export default function Dashboard({ user }) {
   const chart = data?.chartData || [];
 
   return (
-    <div className="view-container animate-fade-in">
-      <header className="hero-panel glass-card">
-        <div className="hero-content">
-          <p className="eyebrow">Resumen Operativo</p>
-          <h2>Hola, {user?.name?.split(' ')[0] || 'Usuario'}</h2>
-          <p className="muted-text">
+    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+      
+      {/* 🌟 HERO OPERATIONAL PANEL */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        borderRadius: '16px',
+        padding: '1.75rem 2rem',
+        marginBottom: '1.75rem',
+        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3), 0 8px 10px -6px rgba(15, 23, 42, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: '#ffffff',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.5rem'
+      }}>
+        <div style={{ flex: '1', minWidth: '280px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+            <span style={{
+              fontSize: '0.75rem',
+              fontWeight: '700',
+              padding: '0.2rem 0.6rem',
+              borderRadius: '9999px',
+              background: 'rgba(59, 130, 246, 0.2)',
+              border: '1px solid rgba(59, 130, 246, 0.4)',
+              color: '#93c5fd'
+            }}>
+              ITSM & RMM Operations
+            </span>
+            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>• Centro de Monitoreo Activo</span>
+          </div>
+
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em' }}>
+            Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
+          </h1>
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '600px', lineHeight: 1.5 }}>
             {isAdmin 
-              ? `El sistema reporta ${global.openTickets || 0} tickets activos y ${global.totalAssets || 0} activos bajo monitoreo.`
-              : `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} tareas pendientes por completar.`
+              ? `El parque tecnológico cuenta con ${global.totalAssets || 0} activos y ${global.openTickets || 0} incidentes en gestión.`
+              : `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} tareas pendientes en tu flujo operativo.`
             }
           </p>
-          <StatusPills data={{ global, personal }} />
+
+          {/* Quick status chips */}
+          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
+            <div style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'rgba(16, 185, 129, 0.15)',
+              border: '1px solid rgba(16, 185, 129, 0.3)',
+              color: '#34d399',
+              fontSize: '0.75rem',
+              fontWeight: '600',
+              padding: '0.25rem 0.65rem',
+              borderRadius: '9999px'
+            }}>
+              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
+              RMM & Telemetría Conectado
+            </div>
+
+            {global.criticalTickets > 0 && (
+              <div 
+                onClick={() => navigate('/tickets?priority=CRITICAL')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: 'rgba(239, 68, 68, 0.2)',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  color: '#f87171',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer'
+                }}
+              >
+                ⚠️ {global.criticalTickets} Tickets Críticos
+              </div>
+            )}
+
+            {global.slaRiskCount > 0 && (
+              <div style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: 'rgba(245, 158, 11, 0.2)',
+                border: '1px solid rgba(245, 158, 11, 0.4)',
+                color: '#fbbf24',
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                padding: '0.25rem 0.65rem',
+                borderRadius: '9999px'
+              }}>
+                ⏱️ {global.slaRiskCount} SLA en Riesgo
+              </div>
+            )}
+          </div>
         </div>
-        <div className="stat-grid compact-grid">
-          <div className="stat-card glass-card" style={{ textAlign: 'center' }}>
-            <span>Salud Global</span>
-            <strong style={{ color: (global.healthScore || 0) > 90 ? 'var(--color-success)' : 'var(--color-warning)' }}>
+
+        {/* Global Health Score Badge */}
+        <div style={{
+          display: 'flex',
+          gap: '1rem',
+          alignItems: 'center'
+        }}>
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '14px',
+            padding: '1rem 1.5rem',
+            textAlign: 'center',
+            backdropFilter: 'blur(8px)',
+            minWidth: '130px'
+          }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Salud Infraestructura
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: '900',
+              color: (global.healthScore || 0) > 85 ? '#34d399' : '#fbbf24',
+              marginTop: '0.25rem'
+            }}>
               {global.healthScore || 0}%
-            </strong>
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+              {global.onlineAssets} de {global.totalAssets} online
+            </div>
           </div>
-          <div className="stat-card glass-card" style={{ textAlign: 'center' }}>
-            <span>ANS Mes</span>
-            <strong style={{ color: 'var(--color-primary)' }}>98.4%</strong>
+
+          <div style={{
+            background: 'rgba(255, 255, 255, 0.05)',
+            border: '1px solid rgba(255, 255, 255, 0.1)',
+            borderRadius: '14px',
+            padding: '1rem 1.5rem',
+            textAlign: 'center',
+            backdropFilter: 'blur(8px)',
+            minWidth: '130px'
+          }}>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Cumplimiento ANS
+            </div>
+            <div style={{
+              fontSize: '2rem',
+              fontWeight: '900',
+              color: '#60a5fa',
+              marginTop: '0.25rem'
+            }}>
+              98.4%
+            </div>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
+              Tiempo promedio: 1.2h
+            </div>
           </div>
         </div>
-      </header>
+      </div>
 
-      {error && <div className="feedback error">{error}</div>}
+      {error && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          color: '#991b1b',
+          borderRadius: '10px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.25rem',
+          fontSize: '0.875rem'
+        }}>
+          {error}
+        </div>
+      )}
 
-      <div className="bento-grid">
-        {/* Row 1: Metrics */}
-        {(isTechnician || isStandardUser) && (
-          <BentoCard 
-            title={isStandardUser ? "Mis Solicitudes" : "Mis Tickets"} 
-            value={personal.myTickets} 
-            icon="user"
-            onClick={() => navigate('/tickets')}
-            footer={<span style={{ color: 'var(--color-primary)' }}>{isStandardUser ? "Ver mis solicitudes →" : "Gestionar mis asignados →"}</span>}
-          />
-        )}
+      {/* 📊 BENTO KPI CARDS GRID */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gap: '1.25rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* Card 1 */}
+        <div 
+          onClick={() => navigate('/tickets')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
+              {isStandardUser ? 'Mis Solicitudes' : 'Mis Tickets Asignados'}
+            </span>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              👤
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            {personal.myTickets || 0}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600', marginTop: '0.5rem' }}>
+            {isStandardUser ? 'Ver solicitudes creadas →' : 'Gestionar mi bandeja de trabajo →'}
+          </div>
+        </div>
 
-        {isStandardUser ? (
-          <BentoCard 
-            title="Por Calificar" 
-            value={personal.myTasks} 
-            icon="check"
-            style={{ background: 'rgba(15, 157, 58, 0.05)' }}
-            onClick={() => navigate('/tickets?status=resolved')}
-            footer={<span style={{ color: 'var(--color-success)' }}>Tickets por aprobar →</span>}
-          />
-        ) : isTechnician && (personal.myTasks || 0) > 0 ? (
-          <BentoCard 
-            title="Tareas en Curso" 
-            value={personal.myTasks} 
-            icon="tasks"
-            style={{ background: 'rgba(46, 90, 172, 0.05)' }}
-            onClick={() => navigate('/tickets?status=in_progress&assigned=me')}
-            footer={<span style={{ color: '#2e5aac' }}>Prioridad operativa →</span>}
-          />
-        ) : (
-          <BentoCard 
-            title="Tickets Críticos" 
-            value={global.criticalTickets} 
-            icon="alert"
-            className={(global.criticalTickets || 0) > 0 ? "highlight-card-danger" : ""}
-            onClick={() => navigate('/tickets?priority=critical')}
-            footer={<span>SLA en riesgo: {global.criticalTickets || 0}</span>}
-          />
-        )}
+        {/* Card 2 */}
+        <div 
+          onClick={() => navigate('/tickets?priority=CRITICAL')}
+          style={{
+            background: (global.criticalTickets || 0) > 0 ? '#fff5f5' : '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: (global.criticalTickets || 0) > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase' }}>
+              Tickets Críticos
+            </span>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              🚨
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '800', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#0f172a', lineHeight: 1.2 }}>
+            {global.criticalTickets || 0}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: '600', marginTop: '0.5rem' }}>
+            {(global.criticalTickets || 0) > 0 ? 'Requiere atención urgente inmediata →' : 'Sin emergencias críticas activas'}
+          </div>
+        </div>
 
-        <BentoCard 
-          title="Tickets Abiertos" 
-          value={global.openTickets} 
-          icon="tickets"
-          onClick={() => navigate('/tickets?status=open')}
-          footer={<span>Total en la mesa →</span>}
-        />
+        {/* Card 3 */}
+        <div 
+          onClick={() => navigate('/tickets?assigned=none')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
+              Tickets Sin Asignar
+            </span>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              📥
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            {global.unassignedTickets || 0}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: '600', marginTop: '0.5rem' }}>
+            Asignar a técnicos disponibles →
+          </div>
+        </div>
 
-        {isAdmin ? (
-          <BentoCard 
-            title="Sin Asignar" 
-            value={global.unassignedTickets} 
-            icon="alert"
-            className={(global.unassignedTickets || 0) > 0 ? "highlight-card-danger" : ""}
-            onClick={() => navigate('/tickets?assigned=none')}
-            footer={<span style={{ color: (global.unassignedTickets || 0) > 0 ? 'var(--color-danger)' : 'inherit' }}>{(global.unassignedTickets || 0) > 0 ? 'Requiere atención inmediata' : 'Bandeja limpia'} →</span>}
-          />
-        ) : (
-          <BentoCard 
-            title="Disponibilidad RMM" 
-            value={`${global.onlineAssets || 0}/${global.totalAssets || 0}`} 
-            icon="assets"
-            onClick={() => navigate('/assets')}
-            footer={<span>Infraestructura global</span>}
-          />
-        )}
+        {/* Card 4 */}
+        <div 
+          onClick={() => navigate('/assets')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
+              Dispositivos RMM
+            </span>
+            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              💻
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            {global.onlineAssets || 0} / {global.totalAssets || 0}
+          </div>
+          <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: '600', marginTop: '0.5rem' }}>
+            Inventario & Monitoreo TI →
+          </div>
+        </div>
+      </div>
 
-        {/* Row 2: Analytics & Activity */}
-        <BentoCard title="Volumen de Tickets" icon="chart" className="bento-span-2" onClick={() => navigate('/analytics')}>
-          <div style={{ width: '100%', height: 220, marginTop: '1rem' }}>
+      {/* 📈 MAIN SECTION: CHARTS & INFRASTRUCTURE MONITOR */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* CHART: TICKET TREND */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+                Tendencia de Incidentes & Requerimientos
+              </h3>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Volumen de tickets ingresados en los últimos 7 días
+              </p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '4px', background: '#f1f5f9', color: '#475569' }}>
+              En tiempo real
+            </span>
+          </div>
+
+          <div style={{ height: '240px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chart}>
+              <AreaChart data={chart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="colorTickets" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="var(--color-primary)" stopOpacity={0.3}/>
-                    <stop offset="95%" stopColor="var(--color-primary)" stopOpacity={0}/>
+                  <linearGradient id="ticketGradient" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
-                <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="rgba(0,0,0,0.05)" />
-                <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{ fontSize: 10, fill: 'var(--color-muted)' }} />
-                <YAxis hide />
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} allowDecimals={false} />
                 <Tooltip 
-                  contentStyle={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: '12px', fontSize: '12px', boxShadow: 'var(--shadow-premium)' }}
-                  itemStyle={{ color: 'var(--color-primary)', fontWeight: 700 }}
-                  cursor={{ stroke: 'var(--color-primary)', strokeWidth: 1 }}
+                  contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  labelStyle={{ color: '#93c5fd', fontWeight: '700' }}
                 />
-                <Area type="monotone" dataKey="tickets" stroke="var(--color-primary)" strokeWidth={3} fillOpacity={1} fill="url(#colorTickets)" />
+                <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#ticketGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
-        </BentoCard>
+        </div>
 
-        <BentoCard title="Actividad Reciente" icon="activity" className="bento-span-2 bento-row-2">
-          <div className="activity-list" style={{ marginTop: '0.5rem' }}>
-            {activities.length > 0 ? (
-              activities.map((act) => (
-                <div key={act.id} className="activity-item" onClick={() => navigate(`/tickets?ticketId=${act.ticketId}`)} style={{ cursor: 'pointer' }}>
-                  <div className="activity-dot" style={{ background: act.action === 'COMMENTED' ? 'var(--color-secondary)' : 'var(--color-primary)' }}></div>
-                  <div className="activity-content">
-                    <div className="activity-title">
-                      <strong>{act.user || 'Sistema'}</strong>
-                      <span className="muted-text"> {act.action === 'COMMENTED' ? 'añadió comentario' : 'actualizó ticket'} </span>
+        {/* PRIORITY & INFRASTRUCTURE STATUS */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
+        }}>
+          <div>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+              Distribución por Severidad
+            </h3>
+            <p style={{ margin: '0.2rem 0 1rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Proporción de tickets abiertos según nivel de impacto
+            </p>
+
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
+              {[
+                { key: 'CRITICAL', label: 'Crítico / Emergencia', color: '#dc2626', bg: '#fee2e2' },
+                { key: 'HIGH', label: 'Alta Prioridad', color: '#ea580c', bg: '#ffedd5' },
+                { key: 'MEDIUM', label: 'Media Prioridad', color: '#2563eb', bg: '#dbeafe' },
+                { key: 'LOW', label: 'Baja Prioridad', color: '#059669', bg: '#d1fae5' },
+              ].map(({ key, label, color, bg }) => {
+                const count = global.ticketsByPriority?.[key] || 0;
+                const total = global.openTickets || 1;
+                const pct = Math.round((count / total) * 100);
+
+                return (
+                  <div key={key}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                      <span style={{ color: '#334155' }}>{label}</span>
+                      <span style={{ color }}>{count} ({pct}%)</span>
                     </div>
-                    <span className="activity-link">
-                      #{act.ticketId} - {act.ticket?.title || 'Ticket'}
+                    <div style={{ height: '8px', width: '100%', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
+                      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '9999px', transition: 'width 0.5s ease' }} />
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+
+          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>¿Deseas emitir un reporte operacional?</span>
+            <button
+              onClick={() => navigate('/analytics')}
+              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', padding: '0.4rem 0.85rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}
+            >
+              Ver Analytics →
+            </button>
+          </div>
+        </div>
+      </div>
+
+      {/* 🕒 BOTTOM ROW: RECENT ACTIVITIES & TELEMETRY SYNCS */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '1.5rem'
+      }}>
+        {/* RECENT ACTIVITIES */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+            Actividad Reciente del Service Desk
+          </h3>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {activities.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+                No hay actividades registradas recientemente.
+              </div>
+            ) : (
+              activities.slice(0, 5).map((act, index) => (
+                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid #f8fafc' }}>
+                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700' }}>
+                    {act.user?.charAt(0) || 'S'}
+                  </div>
+                  <div style={{ flex: '1', fontSize: '0.85rem' }}>
+                    <div>
+                      <strong style={{ color: '#0f172a' }}>{act.user}</strong>{' '}
+                      <span style={{ color: '#64748b' }}>{act.action} en</span>{' '}
+                      <strong style={{ color: '#2563eb' }}>{act.ticket?.title || 'Ticket'}</strong>
+                    </div>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                      {formatTime(act.createdAt)}
                     </span>
-                    <div className="activity-meta">
-                      <Icon name="clock" size={10} style={{ display: 'inline', marginRight: '4px' }} />
-                      {act.createdAt ? new Date(act.createdAt).toLocaleDateString() : ''} • {formatTime(act.createdAt)}
-                    </div>
                   </div>
                 </div>
               ))
-            ) : (
-              <p className="muted-text" style={{ padding: '2rem', textAlign: 'center' }}>No hay actividad reciente para mostrar.</p>
             )}
           </div>
-        </BentoCard>
+        </div>
 
-        {/* Row 3: Priorities (aligned with Activity feed) */}
-        <BentoCard title="Prioridades de Trabajo" icon="priority" className="bento-span-2" onClick={() => navigate('/tickets')}>
-          <PrioritiesWidget 
-            ticketsByPriority={global.ticketsByPriority} 
-            openTickets={global.openTickets} 
-          />
-        </BentoCard>
+        {/* TELEMETRY AGENTS RECENTLY SEEN */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+              Telemetría RMM de Endpoints
+            </h3>
+            <button
+              onClick={() => navigate('/assets')}
+              style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}
+            >
+              Ver todos ({global.totalAssets}) →
+            </button>
+          </div>
 
-        {/* Row 4: Infrastructure & Quick Actions (Oculto para Nivel 1 y Nivel 2) */}
-        {showInfrastructureAndActions && (
-          <>
-            <BentoCard title="Salud de Infraestructura" icon="shield" className="bento-span-2">
-              <InfraHealthWidget 
-                data={{ global, personal }} 
-                recentAssets={recentAssets || []} 
-                navigate={navigate} 
-              />
-            </BentoCard>
-
-            <BentoCard title="Acciones Rápidas" icon="plus" className="bento-span-2">
-              <div className="quick-actions-container">
-                <Link to="/tickets" className="quick-action-btn hover-lift">
-                  <Icon name="plus" size={24} style={{ color: 'var(--color-primary)' }} />
-                  <span>Nuevo Ticket</span>
-                </Link>
-                {isAdmin && (
-                  <Link to="/assets" className="quick-action-btn hover-lift">
-                    <Icon name="assets" size={24} style={{ color: 'var(--color-secondary)' }} />
-                    <span>Registrar Activo</span>
-                  </Link>
-                )}
-                <Link to="/analytics" className="quick-action-btn hover-lift">
-                  <Icon name="chart" size={24} style={{ color: '#2e5aac' }} />
-                  <span>Reportes</span>
-                </Link>
-                <Link to="/users" className="quick-action-btn hover-lift">
-                  <Icon name="user" size={24} style={{ color: '#8b5cf6' }} />
-                  <span>Usuarios</span>
-                </Link>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {recentAssets.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
+                No hay activos con telemetría reciente.
               </div>
-            </BentoCard>
-          </>
-        )}
+            ) : (
+              recentAssets.slice(0, 5).map((asset) => (
+                <div
+                  key={asset.id}
+                  onClick={() => navigate(`/assets?search=${asset.hostname}`)}
+                  style={{
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    padding: '0.6rem 0.75rem',
+                    background: '#f8fafc',
+                    borderRadius: '8px',
+                    cursor: 'pointer',
+                    transition: 'background 0.2s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                    <span style={{ fontSize: '1.1rem' }}>
+                      {asset.deviceType?.includes('Impresora') ? '🖨️' : asset.deviceType?.includes('Portátil') ? '💻' : '🖥️'}
+                    </span>
+                    <div>
+                      <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a' }}>
+                        {asset.hostname}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                        📍 {asset.location || 'Sede Principal'} {asset.ipAddress && `• ${asset.ipAddress}`}
+                      </div>
+                    </div>
+                  </div>
+
+                  <span style={{
+                    fontSize: '0.7rem',
+                    fontWeight: '700',
+                    padding: '0.2rem 0.5rem',
+                    borderRadius: '4px',
+                    background: asset.status === 'ONLINE' ? '#ecfdf5' : '#fee2e2',
+                    color: asset.status === 'ONLINE' ? '#047857' : '#b91c1c'
+                  }}>
+                    {asset.status === 'ONLINE' ? '🟢 En línea' : '🔴 Desconectado'}
+                  </span>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
       </div>
     </div>
   );

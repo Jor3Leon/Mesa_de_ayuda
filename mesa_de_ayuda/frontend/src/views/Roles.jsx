@@ -2,16 +2,13 @@ import { useEffect, useMemo, useState } from 'react';
 import { apiRequest } from '../lib/api';
 
 const MODULE_LABELS = {
-  ADMINISTRACION: 'ADMINISTRACION',
-  DASHBOARD: 'Dashboard',
-  ANALYTICS: 'Analitica',
-  ASSETS: 'Inventario',
-  CMDB: 'CMDB',
-  CUSTOMERS: 'Clientes',
-  KNOWLEDGE: 'Base de conocimiento',
-  PATCH: 'Parches',
-  SCRIPTS: 'Politicas',
-  TICKETS: 'Tickets',
+  ADMINISTRACION: 'Seguridad & Administración',
+  DASHBOARD: 'Dashboard Operacional',
+  ANALYTICS: 'Analítica & Reportes',
+  ASSETS: 'Inventario ITAM & Hardware',
+  CMDB: 'CMDB & Topología',
+  CUSTOMERS: 'Estructura Organizacional',
+  TICKETS: 'Mesa de Ayuda & Service Desk',
 };
 
 const ACTION_LABELS = {
@@ -41,50 +38,33 @@ function getPermissionMeta(code) {
 
 function getPermissionDisplay(permission) {
   if (permission.code === 'DASHBOARD_VIEW') {
-    return {
-      title: 'Consultar',
-      subtitle: 'Ver Dashboard Operacional',
-    };
+    return { title: 'Ver Dashboard', subtitle: 'Acceso a la consola principal de operaciones.' };
   }
-
   if (permission.code === 'ANALYTICS_VIEW') {
-    return {
-      title: 'Consultar',
-      subtitle: 'Ver Estadísticas y Analítica',
-    };
+    return { title: 'Ver Analítica', subtitle: 'Acceso a gráficos de rendimiento y ANS.' };
   }
-
   if (permission.code === 'USERS_MANAGE') {
-    return {
-      title: 'Usuarios',
-      subtitle: 'Gestionar usuarios',
-    };
+    return { title: 'Gestionar Usuarios', subtitle: 'Crear, editar y desactivar cuentas.' };
   }
-
   if (permission.code === 'ROLES_MANAGE') {
-    return {
-      title: 'Roles y Permisos',
-      subtitle: 'Gestionar roles y permisos',
-    };
+    return { title: 'Gestionar Roles & RBAC', subtitle: 'Modificar matrices de permisos.' };
   }
-
   if (permission.code === 'TICKETS_CONFIGURE') {
-    return {
-      title: 'Campos Administrativos',
-      subtitle: 'Modificar tipo, categoria, ANS y asignaciones',
-    };
+    return { title: 'Campos Administrativos', subtitle: 'Modificar tipo, categoría, ANS y técnicos.' };
   }
-
   if (permission.code === 'TICKETS_VIEW_STATS') {
-    return {
-      title: 'Tablero Estadísticas',
-      subtitle: 'Ver contadores de tickets (Total, Nuevos, En Progreso, Resueltos, Vencidos)',
-    };
+    return { title: 'Estadísticas de Tickets', subtitle: 'Ver contadores y tablero de métricas.' };
+  }
+  if (permission.code === 'ASSETS_MANAGE') {
+    return { title: 'Gestionar Activos', subtitle: 'Crear, editar y dar de baja hardware.' };
+  }
+  if (permission.code === 'ASSETS_VIEW') {
+    return { title: 'Ver Inventario', subtitle: 'Consultar catálogo de equipos y telemetría.' };
   }
 
   return {
-    title: permission.actionLabel,
-    subtitle: permission.name,
+    title: permission.name || permission.code,
+    subtitle: permission.description || 'Permiso del sistema',
   };
 }
 
@@ -103,8 +83,16 @@ export default function Roles() {
       apiRequest('/permissions'),
     ])
       .then(([rolesRes, permsRes]) => {
-        setRoles(rolesRes);
-        setPermissions(permsRes);
+        const roleList = Array.isArray(rolesRes) ? rolesRes : [];
+        const permList = Array.isArray(permsRes) ? permsRes : [];
+        setRoles(roleList);
+        setPermissions(permList);
+        if (roleList.length > 0) {
+          setSelectedRole({
+            ...roleList[0],
+            permissionCodes: [...(roleList[0].permissionCodes || [])],
+          });
+        }
       })
       .catch((err) => setError(err.message))
       .finally(() => setLoading(false));
@@ -129,25 +117,13 @@ export default function Roles() {
       return acc;
     }, new Map());
 
-    return Array.from(groups.values())
-      .map((group) => ({
-        ...group,
-        permissions: group.permissions.sort((a, b) => {
-          if (group.moduleCode === 'ADMINISTRACION') {
-            const adminOrder = { USERS_MANAGE: 0, ROLES_MANAGE: 1 };
-            return (adminOrder[a.code] ?? 99) - (adminOrder[b.code] ?? 99);
-          }
-
-          return a.actionLabel.localeCompare(b.actionLabel);
-        }),
-      }))
-      .sort((a, b) => a.moduleLabel.localeCompare(b.moduleLabel));
+    return Array.from(groups.values()).sort((a, b) => a.moduleLabel.localeCompare(b.moduleLabel));
   }, [permissions]);
 
   function handleSelectRole(role) {
     setSelectedRole({
       ...role,
-      permissionCodes: [...role.permissionCodes],
+      permissionCodes: [...(role.permissionCodes || [])],
     });
     setFeedback('');
     setError('');
@@ -189,25 +165,21 @@ export default function Roles() {
     try {
       const updated = await apiRequest(`/roles/${selectedRole.id}`, {
         method: 'PUT',
-        body: JSON.stringify({
+        body: {
           name: selectedRole.name,
           description: selectedRole.description,
           permissionCodes: selectedRole.permissionCodes,
-        }),
+        },
       });
 
       const mappedRole = {
         ...updated,
-        permissionCodes: updated.permissionCodes || updated.permissions?.map((p) => p.permission?.code || p.code) || []
+        permissionCodes: updated.permissionCodes || selectedRole.permissionCodes,
       };
 
-      setRoles((prev) => prev.map((role) => (
-        role.id === updated.id ? mappedRole : role
-      )));
-      setFeedback('Rol actualizado con exito.');
-      
-      // Notificar a toda la aplicación para actualizar la barra lateral y permisos activos
-      window.dispatchEvent(new CustomEvent('roles-updated'));
+      setRoles((prev) => prev.map((r) => (r.id === selectedRole.id ? mappedRole : r)));
+      setSelectedRole(mappedRole);
+      setFeedback(`Matriz de permisos para el rol "${selectedRole.name}" guardada con éxito.`);
     } catch (err) {
       setError(err.message);
     } finally {
@@ -215,155 +187,285 @@ export default function Roles() {
     }
   }
 
-  const assignedModules = selectedRole
-    ? groupedPermissions.filter((group) => group.permissions.some((permission) => selectedRole.permissionCodes.includes(permission.code))).length
-    : 0;
+  if (loading) {
+    return (
+      <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+        <p style={{ fontWeight: '600' }}>Cargando matriz RBAC...</p>
+      </div>
+    );
+  }
 
   return (
-    <div className="view-container">
-      <section className="section-heading">
-        <div>
-          <h2>Roles y Permisos</h2>
-          <p>Configura niveles de acceso con una asignacion estructurada por modulo y capacidad operativa.</p>
-        </div>
-      </section>
-
-      {error && <div className="feedback error">{error}</div>}
-      {feedback && <div className="feedback">{feedback}</div>}
-
-      <section className="split-card">
-        <article className="card">
-          <h3>Roles del Sistema</h3>
-          <p className="muted-text" style={{ marginBottom: '1rem' }}>Selecciona un rol para editar su perfil funcional y sus permisos.</p>
-
-          <div className="table-shell">
-            {loading ? (
-              <div className="empty-state">Cargando roles...</div>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Nombre</th>
-                    <th>Descripcion</th>
-                    <th>Permisos</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {roles.map((role) => (
-                    <tr
-                      key={role.id}
-                      onClick={() => handleSelectRole(role)}
-                      className={selectedRole?.id === role.id ? 'row-selected' : ''}
-                      style={{ cursor: 'pointer' }}
-                    >
-                      <td><strong>{role.name}</strong></td>
-                      <td><small>{role.description}</small></td>
-                      <td><span className="badge badge-neutral">{role.permissionCodes.length}</span></td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+      
+      {/* 🌟 HERO CONTROL BAR */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        borderRadius: '16px',
+        padding: '1.75rem 2rem',
+        marginBottom: '1.75rem',
+        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: '#ffffff',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.25rem'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div style={{
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
+            background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
+            fontSize: '1.25rem'
+          }}>
+            🛡️
           </div>
-        </article>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
+                Matriz de Roles & Permisos (RBAC)
+              </h1>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.55rem', borderRadius: '9999px', background: 'rgba(124, 58, 237, 0.2)', color: '#c4b5fd', border: '1px solid rgba(124, 58, 237, 0.4)' }}>
+                Security v2.2
+              </span>
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+              Define privilegios operativos para cada nivel técnico y perfil institucional.
+            </p>
+          </div>
+        </div>
 
-        <article className="card">
-          <h3>{selectedRole ? `Editando Rol: ${selectedRole.name}` : 'Seleccione un rol'}</h3>
+        <div style={{ display: 'flex', gap: '1rem' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '0.6rem 1.25rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>Roles Definidos</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#ffffff' }}>{roles.length}</div>
+          </div>
+          <div style={{ background: 'rgba(255, 255, 255, 0.05)', border: '1px solid rgba(255, 255, 255, 0.1)', borderRadius: '10px', padding: '0.6rem 1.25rem', textAlign: 'center' }}>
+            <div style={{ fontSize: '0.7rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: '700' }}>Total Permisos</div>
+            <div style={{ fontSize: '1.25rem', fontWeight: '800', color: '#a78bfa' }}>{permissions.length}</div>
+          </div>
+        </div>
+      </div>
 
-          {!selectedRole ? (
-            <div className="empty-state">Selecciona un rol de la lista para ver y editar sus permisos.</div>
-          ) : (
-            <form className="form-grid" style={{ marginTop: '1rem' }} onSubmit={handleSave}>
-              <div className="field full">
-                <label>Nombre del Rol</label>
-                <input
-                  value={selectedRole.name}
-                  onChange={(event) => setSelectedRole({ ...selectedRole, name: event.target.value.toUpperCase() })}
-                  placeholder="Ej: COORDINADOR"
-                />
-              </div>
+      {feedback && (
+        <div style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#065f46', borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontSize: '0.875rem', fontWeight: '600' }}>
+          ✅ {feedback}
+        </div>
+      )}
 
-              <div className="field full">
-                <label>Descripcion</label>
-                <textarea
-                  value={selectedRole.description || ''}
-                  onChange={(event) => setSelectedRole({ ...selectedRole, description: event.target.value })}
-                  placeholder="Describe la funcion de este rol..."
-                />
-              </div>
+      {error && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', borderRadius: '10px', padding: '0.85rem 1.25rem', marginBottom: '1.25rem', fontSize: '0.875rem', fontWeight: '600' }}>
+          ⚠️ {error}
+        </div>
+      )}
 
-              <div className="field full">
-                <label>Matriz de Permisos</label>
+      {/* 🧭 SPLIT LAYOUT (ROLES LIST + PERMISSIONS MATRIX) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
+        gap: '1.5rem',
+        alignItems: 'start'
+      }}>
+        
+        {/* LEFT COLUMN: ROLES SELECTOR */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '1.5rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+            Niveles & Perfiles ({roles.length})
+          </h3>
 
-                <div className="permissions-shell">
-                  <div className="permissions-summary">
-                    <div className="permissions-summary-card">
-                      <span>Permisos activos</span>
-                      <strong>{selectedRole.permissionCodes.length}</strong>
-                    </div>
-                    <div className="permissions-summary-card">
-                      <span>Modulos configurados</span>
-                      <strong>{assignedModules}</strong>
-                    </div>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+            {roles.map((r) => {
+              const isSelected = selectedRole?.id === r.id;
+              const permCount = r.permissionCodes?.length || 0;
+              return (
+                <div
+                  key={r.id}
+                  onClick={() => handleSelectRole(r)}
+                  style={{
+                    padding: '1rem',
+                    borderRadius: '12px',
+                    border: isSelected ? '2px solid #7c3aed' : '1px solid #e2e8f0',
+                    background: isSelected ? '#f5f3ff' : '#ffffff',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.15)' : 'none'
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+                    <span style={{ fontWeight: '800', fontSize: '0.95rem', color: isSelected ? '#5b21b6' : '#0f172a' }}>
+                      {r.name}
+                    </span>
+                    <span style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '0.2rem 0.55rem',
+                      borderRadius: '9999px',
+                      background: isSelected ? '#ddd6fe' : '#f1f5f9',
+                      color: isSelected ? '#4c1d95' : '#475569'
+                    }}>
+                      {permCount} permisos
+                    </span>
                   </div>
+                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
+                    {r.description || 'Perfil de acceso estándar del sistema.'}
+                  </p>
+                </div>
+              );
+            })}
+          </div>
+        </div>
 
-                  <div className="permissions-module-grid">
-                    {groupedPermissions.map((group) => {
-                      const selectedCount = group.permissions.filter((permission) => selectedRole.permissionCodes.includes(permission.code)).length;
-                      const allSelected = selectedCount === group.permissions.length;
+        {/* RIGHT COLUMN: PERMISSIONS MATRIX */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '1.5rem',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          gridColumn: 'span 2'
+        }}>
+          {selectedRole ? (
+            <form onSubmit={handleSave}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', borderBottom: '1px solid #f1f5f9', paddingBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: '#0f172a' }}>
+                    Privilegios para: <span style={{ color: '#7c3aed' }}>{selectedRole.name}</span>
+                  </h3>
+                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                    {selectedRole.description || 'Configura qué acciones tiene permitido realizar este perfil.'}
+                  </p>
+                </div>
 
-                      return (
-                        <section key={group.moduleCode} className="permission-module-card">
-                          <div className="permission-module-head">
-                            <div>
-                              <h4>{group.moduleLabel}</h4>
-                              <p>{selectedCount} de {group.permissions.length} permisos asignados</p>
-                            </div>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+                    color: '#ffffff',
+                    padding: '0.65rem 1.5rem',
+                    borderRadius: '10px',
+                    fontWeight: '700',
+                    fontSize: '0.875rem',
+                    border: 'none',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)'
+                  }}
+                >
+                  {saving ? 'Guardando...' : '💾 Guardar Matriz'}
+                </button>
+              </div>
 
-                            <label className={`permission-module-toggle ${allSelected ? 'is-active' : ''}`}>
+              {/* MODULES PERMISSION ACCORDION */}
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+                {groupedPermissions.map((group) => {
+                  const moduleCodes = group.permissions.map((p) => p.code);
+                  const isAllChecked = moduleCodes.every((code) => selectedRole.permissionCodes.includes(code));
+                  const isSomeChecked = moduleCodes.some((code) => selectedRole.permissionCodes.includes(code));
+
+                  return (
+                    <div
+                      key={group.moduleCode}
+                      style={{
+                        border: '1px solid #e2e8f0',
+                        borderRadius: '12px',
+                        overflow: 'hidden',
+                        background: '#ffffff'
+                      }}
+                    >
+                      {/* Module Header */}
+                      <div style={{
+                        padding: '0.75rem 1rem',
+                        background: '#f8fafc',
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        borderBottom: '1px solid #e2e8f0'
+                      }}>
+                        <span style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1e293b' }}>
+                          📦 {group.moduleLabel}
+                        </span>
+                        <button
+                          type="button"
+                          onClick={() => handleToggleModule(moduleCodes)}
+                          style={{
+                            background: isAllChecked ? '#ede9fe' : '#f1f5f9',
+                            border: `1px solid ${isAllChecked ? '#c4b5fd' : '#cbd5e1'}`,
+                            color: isAllChecked ? '#5b21b6' : '#475569',
+                            padding: '0.25rem 0.65rem',
+                            borderRadius: '6px',
+                            fontSize: '0.75rem',
+                            fontWeight: '700',
+                            cursor: 'pointer'
+                          }}
+                        >
+                          {isAllChecked ? 'Deseleccionar Módulo' : 'Seleccionar Todo'}
+                        </button>
+                      </div>
+
+                      {/* Permissions Checkbox Grid */}
+                      <div style={{ padding: '1rem', display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                        {group.permissions.map((perm) => {
+                          const isChecked = selectedRole.permissionCodes.includes(perm.code);
+                          const display = getPermissionDisplay(perm);
+
+                          return (
+                            <label
+                              key={perm.code}
+                              style={{
+                                display: 'flex',
+                                alignItems: 'flex-start',
+                                gap: '0.75rem',
+                                padding: '0.75rem',
+                                borderRadius: '8px',
+                                border: isChecked ? '1px solid #c4b5fd' : '1px solid #f1f5f9',
+                                background: isChecked ? '#faf5ff' : '#ffffff',
+                                cursor: 'pointer',
+                                transition: 'all 0.15s ease'
+                              }}
+                            >
                               <input
                                 type="checkbox"
-                                checked={allSelected}
-                                onChange={() => handleToggleModule(group.permissions.map((permission) => permission.code))}
+                                checked={isChecked}
+                                onChange={() => handleTogglePermission(perm.code)}
+                                style={{ marginTop: '0.2rem', accentColor: '#7c3aed', width: '16px', height: '16px' }}
                               />
-                              <span>Todo</span>
+                              <div>
+                                <div style={{ fontWeight: '700', fontSize: '0.85rem', color: isChecked ? '#5b21b6' : '#0f172a' }}>
+                                  {display.title}
+                                </div>
+                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
+                                  {display.subtitle}
+                                </div>
+                              </div>
                             </label>
-                          </div>
-
-                          <div className={`permission-capability-list ${group.permissions.length === 1 ? 'is-single' : ''}`}>
-                            {group.permissions.map((permission) => {
-                              const isSelected = selectedRole.permissionCodes.includes(permission.code);
-                              const display = getPermissionDisplay(permission);
-
-                              return (
-                                <label key={permission.id} className={`permission-capability-item ${isSelected ? 'is-selected' : ''}`}>
-                                  <input
-                                    type="checkbox"
-                                    checked={isSelected}
-                                    onChange={() => handleTogglePermission(permission.code)}
-                                  />
-                                  <div className="permission-capability-copy">
-                                    <strong>{display.title}</strong>
-                                    <span>{display.subtitle}</span>
-                                  </div>
-                                </label>
-                              );
-                            })}
-                          </div>
-                        </section>
-                      );
-                    })}
-                  </div>
-                </div>
+                          );
+                        })}
+                      </div>
+                    </div>
+                  );
+                })}
               </div>
-
-              <button type="submit" className="btn full" disabled={saving}>
-                {saving ? 'Guardando...' : 'Guardar Cambios'}
-              </button>
             </form>
+          ) : (
+            <div style={{ padding: '3rem', textAlign: 'center', color: '#94a3b8' }}>
+              Selecciona un rol a la izquierda para editar su matriz de permisos.
+            </div>
           )}
-        </article>
-      </section>
+        </div>
+      </div>
     </div>
   );
 }

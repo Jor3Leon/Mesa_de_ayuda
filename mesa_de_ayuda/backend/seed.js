@@ -164,6 +164,58 @@ async function main() {
     locations[location.name] = location;
   }
 
+  // 5.1 Seed Organization Structure (Sedes, Dependencias, Oficinas)
+  const sedesData = [
+    { name: 'Palacio Municipal (Sede Central)', code: 'SED-01', address: 'Diagonal 15 No. 13-35', city: 'Yopal', phone: '6351234' },
+    { name: 'Datacenter Principal & Redes', code: 'SED-02', address: 'Calle 10 No. 20-40', city: 'Yopal', phone: '6355678' },
+    { name: 'Sede Campestre / Obras Públicas', code: 'SED-03', address: 'Vía Morichal Km 2', city: 'Yopal', phone: '6359999' },
+  ];
+
+  const seededSedes = {};
+  for (const s of sedesData) {
+    let sede = await prisma.sede.findFirst({ where: { name: s.name, organizationId: org.id } }).catch(() => null);
+    if (!sede) {
+      sede = await prisma.sede.create({
+        data: { ...s, organizationId: org.id, isActive: true }
+      }).catch(() => null);
+    }
+    if (sede) seededSedes[s.name] = sede;
+  }
+
+  const palacioSede = seededSedes['Palacio Municipal (Sede Central)'];
+  if (palacioSede) {
+    const depsData = [
+      { name: 'Dirección de TIC e Innovación', code: 'TIC', managerName: 'Jherson Rivera', email: 'tic@yopal.gov.co' },
+      { name: 'Secretaría General', code: 'SGEN', managerName: 'Secretario General', email: 'general@yopal.gov.co' },
+      { name: 'Secretaría de Hacienda y Tesorería', code: 'SHAC', managerName: 'Secretario de Hacienda', email: 'hacienda@yopal.gov.co' },
+      { name: 'Secretaría de Tránsito y Movilidad', code: 'STRA', managerName: 'Secretario de Tránsito', email: 'transito@yopal.gov.co' },
+    ];
+
+    for (const d of depsData) {
+      let dep = await prisma.dependencia.findFirst({ where: { name: d.name, organizationId: org.id } }).catch(() => null);
+      if (!dep) {
+        dep = await prisma.dependencia.create({
+          data: { ...d, sedeId: palacioSede.id, organizationId: org.id, isActive: true }
+        }).catch(() => null);
+      }
+      if (dep && d.code === 'TIC') {
+        const ofisData = [
+          { name: 'Mesa de Ayuda y Soporte TI (Piso 2)', code: 'OF-TIC-01', floor: 'Piso 2', responsibleUser: 'Jherson Rivera' },
+          { name: 'Infraestructura, Servidores y Redes (Piso 2)', code: 'OF-TIC-02', floor: 'Piso 2', responsibleUser: 'Jherson Rivera' },
+          { name: 'Desarrollo de Software y Gobierno Digital', code: 'OF-TIC-03', floor: 'Piso 2', responsibleUser: 'Ing. Sistemas' },
+        ];
+        for (const o of ofisData) {
+          const ofiExists = await prisma.oficina.findFirst({ where: { name: o.name, organizationId: org.id } }).catch(() => null);
+          if (!ofiExists) {
+            await prisma.oficina.create({
+              data: { ...o, dependenciaId: dep.id, sedeId: palacioSede.id, organizationId: org.id, isActive: true }
+            }).catch(() => null);
+          }
+        }
+      }
+    }
+  }
+
   // 6. Seed Users (Tenant Scoped)
   const users = [
     {

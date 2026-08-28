@@ -300,3 +300,81 @@ test('POST /api/discovery/register creates and updates network device with MAC d
     });
   }
 });
+
+test('GET /api/organization-structure returns hierarchical tree of sedes, dependencias and oficinas', async () => {
+  const authUser = buildUser();
+  const mockSedes = [
+    {
+      id: 1,
+      name: 'Palacio Municipal (Sede Central)',
+      code: 'SED-01',
+      address: 'Diagonal 15 No. 13-35',
+      city: 'Yopal',
+      dependencias: [
+        {
+          id: 10,
+          name: 'Dirección de TIC',
+          code: 'TIC',
+          oficinas: [
+            { id: 101, name: 'Mesa de Ayuda (Piso 2)', code: 'OF-01', floor: 'Piso 2' }
+          ]
+        }
+      ],
+      oficinas: []
+    }
+  ];
+
+  const app = buildApp({
+    user: {
+      findUnique: async () => authUser,
+      findMany: async () => [authUser],
+    },
+    sede: {
+      findMany: async () => mockSedes,
+      create: async ({ data }) => ({ id: 2, ...data })
+    },
+    dependencia: {
+      findMany: async () => [],
+      create: async ({ data }) => ({ id: 20, ...data })
+    },
+    oficina: {
+      findMany: async () => [],
+      create: async ({ data }) => ({ id: 200, ...data })
+    },
+    asset: {
+      findMany: async () => [
+        { id: 1, hostname: 'STIC-PC-01', location: 'Palacio Municipal (Sede Central) - Dirección de TIC - Mesa de Ayuda (Piso 2)' }
+      ]
+    },
+    location: {
+      findMany: async () => [],
+      findFirst: async () => null,
+      create: async ({ data }) => ({ id: 1, ...data })
+    }
+  });
+
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/organization-structure`, {
+      headers: {
+        Authorization: `Bearer ${createToken(authUser)}`,
+      },
+    });
+
+    const data = await res.json();
+    assert.equal(res.status, 200);
+    assert.equal(Array.isArray(data.tree), true);
+    assert.equal(data.tree.length, 1);
+    assert.equal(data.tree[0].name, 'Palacio Municipal (Sede Central)');
+    assert.equal(data.tree[0].dependencias[0].name, 'Dirección de TIC');
+    assert.equal(data.tree[0].dependencias[0].oficinas[0].name, 'Mesa de Ayuda (Piso 2)');
+    assert.equal(data.tree[0].dependencias[0].oficinas[0].assetCount, 1);
+    assert.equal(data.stats.totalSedes, 1);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});

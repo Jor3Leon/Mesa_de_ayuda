@@ -16,6 +16,7 @@ const getAnalyticsRoutes = require('./routes/analytics');
 const getCategoryRoutes = require('./routes/categories');
 const getActivityRoutes = require('./routes/activities');
 const getDiscoveryRoutes = require('./routes/discovery');
+const getOrgStructureRoutes = require('./routes/organization-structure');
 
 function getAllowedOrigins() {
   const configuredOrigins = String(process.env.CORS_ORIGIN || '')
@@ -84,6 +85,7 @@ function buildApp(prisma = new PrismaClient()) {
   app.use('/api/activities', getActivityRoutes(prisma));
   app.use('/api/discovery', getDiscoveryRoutes(prisma));
   app.use('/discovery', getDiscoveryRoutes(prisma));
+  app.use('/api/organization-structure', getOrgStructureRoutes(prisma));
   app.use('/api', getCommonRoutes(prisma));
 
   // 404 handler

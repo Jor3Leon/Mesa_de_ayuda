@@ -20,6 +20,9 @@ model Organization {
   users            User[]
   roles            Role[]
   locations        Location[]
+  sedes            Sede[]
+  dependencias     Dependencia[]
+  oficinas         Oficina[]
   customers        Customer[]
   tickets          Ticket[]
   assets           Asset[]
@@ -27,6 +30,68 @@ model Organization {
   ticketCategories TicketCategory[]
 
   @@index([slug])
+}
+
+model Sede {
+  id             Int           @id @default(autoincrement())
+  name           String
+  code           String?
+  address        String?
+  city           String?       @default("Yopal")
+  phone          String?
+  managerName    String?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  dependencias   Dependencia[]
+  oficinas       Oficina[]
+
+  @@unique([name, organizationId])
+  @@index([organizationId])
+}
+
+model Dependencia {
+  id             Int           @id @default(autoincrement())
+  name           String
+  code           String?
+  managerName    String?
+  email          String?
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  sedeId         Int?
+  sede           Sede?         @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  oficinas       Oficina[]
+
+  @@unique([name, organizationId, sedeId])
+  @@index([organizationId])
+  @@index([sedeId])
+}
+
+model Oficina {
+  id              Int           @id @default(autoincrement())
+  name            String
+  code            String?
+  floor           String?
+  responsibleUser String?
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
+  dependenciaId   Int?
+  dependencia     Dependencia?  @relation(fields: [dependenciaId], references: [id], onDelete: Cascade)
+  sedeId          Int?
+  sede            Sede?         @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([name, organizationId, dependenciaId])
+  @@index([organizationId])
+  @@index([dependenciaId])
+  @@index([sedeId])
 }
 
 model Customer {

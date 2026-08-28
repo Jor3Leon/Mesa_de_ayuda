@@ -7,6 +7,7 @@ import Analytics from './views/Analytics';
 import Assets from './views/Assets';
 import CMDB from './views/CMDB';
 import Customers from './views/Customers';
+import OrganizationStructure from './views/OrganizationStructure';
 import Dashboard from './views/Dashboard';
 import Login from './views/Login';
 import Patches from './views/Patches';
@@ -329,6 +330,17 @@ function Icon({ name, size = 20 }) {
         <path d="M20 8v6M23 11h-6" />
       </svg>
     ),
+    structure: (
+      <svg {...common}>
+        <path d="M3 21h18" />
+        <path d="M5 21V7l8-4v18" />
+        <path d="M19 21V11l-6-4" />
+        <path d="M9 9v.01" />
+        <path d="M9 12v.01" />
+        <path d="M9 15v.01" />
+        <path d="M9 18v.01" />
+      </svg>
+    ),
     support: (
       <svg {...common}>
         <path d="M18 8a6 6 0 1 0-12 0v4a2 2 0 0 0 2 2h1" />
@@ -454,11 +466,11 @@ function buildNavSections(user) {
       requiredAnyPermission: ['USERS_MANAGE', 'ROLES_MANAGE', 'TICKETS_CONFIGURE']
     },
     { 
-      name: 'Clientes', 
-      path: '/customers', 
-      icon: 'customers', 
-      description: 'Entidades y contactos',
-      requiredPermission: 'USERS_MANAGE'
+      name: 'Estructura & Ubicaciones', 
+      path: '/structure', 
+      icon: 'structure', 
+      description: 'Sedes, dependencias y oficinas para activos TI',
+      requiredAnyPermission: ['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']
     },
     { 
       name: 'Service Desk', 
@@ -1314,10 +1326,18 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
               )} 
             />
             <Route 
+              path="/structure" 
+              element={(
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
+                  <OrganizationStructure />
+                </ProtectedRoute>
+              )} 
+            />
+            <Route 
               path="/customers" 
               element={(
-                <ProtectedRoute user={effectiveUser} requiredPermission="USERS_MANAGE">
-                  <Customers />
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
+                  <OrganizationStructure />
                 </ProtectedRoute>
               )} 
             />

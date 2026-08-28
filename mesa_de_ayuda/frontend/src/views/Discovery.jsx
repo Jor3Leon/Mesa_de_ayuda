@@ -223,15 +223,15 @@ export default function Discovery() {
 
       // Populate registration form with discovered technical data (including MAC address)
       setRegForm({
-        hostname: response.hostname || `PRN-${response.ip.replace(/\./g, '-')}`,
+        hostname: response.matchedAsset?.hostname || response.hostname || `PRN-${response.ip.replace(/\./g, '-')}`,
         ipAddress: response.ip,
         mac: response.mac || '',
-        brand: response.brand || 'Generico',
-        model: response.model || 'Dispositivo de Red',
-        serialNumber: response.serialNumber || '',
-        deviceType: getDeviceTypeLabel(response.deviceType),
-        location: selectedLocation || (locations[0]?.name || 'Sede Principal'),
-        customerId: customers[0]?.id ? String(customers[0].id) : '1',
+        brand: response.matchedAsset?.brand || response.brand || 'Generico',
+        model: response.matchedAsset?.model || response.model || 'Dispositivo de Red',
+        serialNumber: response.matchedAsset?.serialNumber || response.serialNumber || '',
+        deviceType: getDeviceTypeLabel(response.matchedAsset?.deviceType || response.deviceType),
+        location: response.matchedAsset?.location || selectedLocation || (locations[0]?.name || 'Sede Principal'),
+        customerId: response.matchedAsset?.customerId ? String(response.matchedAsset.customerId) : (customers[0]?.id ? String(customers[0].id) : '1'),
         firmware: response.firmware || '',
         notes: `Descubierto vía Network Discovery. Protocolos: ${(response.protocols || []).join(', ')}`,
       });
@@ -838,7 +838,7 @@ export default function Discovery() {
                     </div>
 
                     <div className="form-group">
-                      <label style={{ fontSize: '0.8rem' }}><strong>Cliente / Organización</strong></label>
+                      <label style={{ fontSize: '0.8rem' }}><strong>Usuario</strong></label>
                       <select
                         className="search-input"
                         value={regForm.customerId}

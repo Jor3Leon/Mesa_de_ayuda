@@ -42,7 +42,7 @@ function getAssetRoutes(prisma) {
         if (org) orgId = org.id;
       }
 
-      // Upsert logic: find by serialNumber or hostname scoped to organization
+      // Upsert logic: find by serialNumber, MAC in networkSummary, or hostname scoped to organization
       let asset = null;
       
       if (serialNumber) {
@@ -54,6 +54,20 @@ function getAssetRoutes(prisma) {
         });
       }
       
+      // Match by MAC address in networkSummary if serialNumber not found or not provided
+      if (!asset && networkSummary) {
+        const macMatch = String(networkSummary).match(/([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/i);
+        if (macMatch) {
+          const cleanMac = macMatch[1].toUpperCase();
+          asset = await prisma.asset.findFirst({
+            where: {
+              networkSummary: { contains: cleanMac },
+              ...(orgId ? { organizationId: orgId } : {})
+            }
+          });
+        }
+      }
+
       if (!asset) {
         asset = await prisma.asset.findFirst({ 
           where: { 
@@ -88,28 +102,31 @@ function getAssetRoutes(prisma) {
         : installedSoftware;
 
       const data = {
-        hostname,
-        serialNumber: serialNumber || undefined,
-        ipAddress: ipAddress || '0.0.0.0',
-        osType: osType || 'Windows',
-        osVersion: osVersion || 'Unknown',
+        // Regla general: Si el activo ya existe y tiene un hostname configurado (modificado por Administrador o Técnico Nivel 3),
+        // mantener el cambio realizado sin que la sincronización automática del sistema lo deshaga.
+        hostname: asset ? (asset.hostname || hostname) : hostname,
+        serialNumber: serialNumber || asset?.serialNumber || undefined,
+        ipAddress: ipAddress || asset?.ipAddress || '0.0.0.0',
+        osType: osType || asset?.osType || 'Windows',
+        osVersion: osVersion || asset?.osVersion || 'Unknown',
         status: 'ONLINE',
-        brand: brand || undefined,
-        model: model || undefined,
-        deviceType: deviceType || 'Unknown',
-        cpuModel: cpuModel || undefined,
-        ramSummary: ramSummary || undefined,
-        storageSummary: storageSummary || undefined,
-        networkSummary: networkSummary || undefined,
-        motherboard: motherboard || undefined,
-        graphicsInfo: graphicsInfo || undefined,
-        displayInfo: displayInfo || undefined,
-        assignedUser: assignedUser 
+        brand: asset?.brand || brand || undefined,
+        model: asset?.model || model || undefined,
+        deviceType: asset?.deviceType || deviceType || 'Unknown',
+        cpuModel: cpuModel || asset?.cpuModel || undefined,
+        ramSummary: ramSummary || asset?.ramSummary || undefined,
+        storageSummary: storageSummary || asset?.storageSummary || undefined,
+        networkSummary: networkSummary || asset?.networkSummary || undefined,
+        motherboard: motherboard || asset?.motherboard || undefined,
+        graphicsInfo: graphicsInfo || asset?.graphicsInfo || undefined,
+        displayInfo: displayInfo || asset?.displayInfo || undefined,
+        assignedUser: asset?.assignedUser || (assignedUser 
           ? String(assignedUser).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim() 
-          : undefined,
-        installedSoftware: serializedSoftware || undefined,
+          : undefined),
+        location: asset?.location || undefined,
+        installedSoftware: serializedSoftware || asset?.installedSoftware || undefined,
         lastSeenAt: new Date(),
-        agentVersion: req.body.agentVersion || '1.0.0',
+        agentVersion: req.body.agentVersion || asset?.agentVersion || '1.0.0',
         organizationId: orgId || asset?.organizationId || null,
         customerId: customerId,
       };

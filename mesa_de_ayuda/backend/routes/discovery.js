@@ -381,6 +381,16 @@ function getDiscoveryRoutes(prisma) {
         }
       }
 
+      // Regla general: Si el dispositivo ya está registrado y su hostname fue asignado/modificado por un técnico/administrador,
+      // respetar y mantener dicho Hostname en lugar de regenerar nombres por defecto.
+      if (matchedExistingAsset) {
+        if (matchedExistingAsset.hostname) hostname = matchedExistingAsset.hostname;
+        if (matchedExistingAsset.brand) brand = matchedExistingAsset.brand;
+        if (matchedExistingAsset.model) model = matchedExistingAsset.model;
+        if (matchedExistingAsset.serialNumber) serialNumber = matchedExistingAsset.serialNumber;
+        if (matchedExistingAsset.deviceType) deviceType = matchedExistingAsset.deviceType;
+      }
+
       const durationSec = Math.max(0.4, Number(((Date.now() - startTime) / 1000).toFixed(2)));
 
       // Capabilities

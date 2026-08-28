@@ -13,6 +13,7 @@ export default function OrganizationStructure() {
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
   const [expandedNodes, setExpandedNodes] = useState({});
+  const [expandedAssets, setExpandedAssets] = useState({});
 
   // Filter states for CRUD tables
   const [filterSedeId, setFilterSedeId] = useState('ALL');
@@ -30,6 +31,7 @@ export default function OrganizationStructure() {
 
   const loadData = async () => {
     setLoading(true);
+    setError('');
     try {
       const [treeRes, sedesRes, depsRes, ofisRes] = await Promise.all([
         apiRequest('/organization-structure').catch(() => ({ tree: [], stats: {} })),
@@ -38,12 +40,21 @@ export default function OrganizationStructure() {
         apiRequest('/organization-structure/oficinas').catch(() => []),
       ]);
 
-      const tree = treeRes.tree || [];
+      const tree = treeRes?.tree || [];
+      const sedesList = Array.isArray(sedesRes) ? sedesRes : [];
+      const depsList = Array.isArray(depsRes) ? depsRes : [];
+      const ofisList = Array.isArray(ofisRes) ? ofisRes : [];
+
       setTreeData(tree);
-      setStats(treeRes.stats || { totalSedes: sedesRes.length, totalDependencias: depsRes.length, totalOficinas: ofisRes.length, totalAssets: 0 });
-      setSedes(sedesRes);
-      setDependencias(depsRes);
-      setOficinas(ofisRes);
+      setStats(treeRes?.stats || { 
+        totalSedes: sedesList.length, 
+        totalDependencias: depsList.length, 
+        totalOficinas: ofisList.length, 
+        totalAssets: 0 
+      });
+      setSedes(sedesList);
+      setDependencias(depsList);
+      setOficinas(ofisList);
 
       // Auto-expand all sedes in tree on first load
       const initialExpanded = {};
@@ -55,7 +66,7 @@ export default function OrganizationStructure() {
       });
       setExpandedNodes((prev) => (Object.keys(prev).length === 0 ? initialExpanded : prev));
     } catch (err) {
-      setError(err.message || 'Error al cargar la estructura organizacional.');
+      setError(err.message || 'Error al sincronizar estructura organizacional.');
     } finally {
       setLoading(false);
     }
@@ -67,6 +78,10 @@ export default function OrganizationStructure() {
 
   const toggleNode = (nodeKey) => {
     setExpandedNodes((prev) => ({ ...prev, [nodeKey]: !prev[nodeKey] }));
+  };
+
+  const toggleAssetList = (nodeKey) => {
+    setExpandedAssets((prev) => ({ ...prev, [nodeKey]: !prev[nodeKey] }));
   };
 
   const expandAll = () => {
@@ -248,7 +263,7 @@ export default function OrganizationStructure() {
   };
 
   const handleDelete = async (type, id, name) => {
-    if (!window.confirm(`¿Estás seguro de eliminar "${name}"?`)) return;
+    if (!window.confirm(`¿Estás seguro de eliminar "${name}"? Esta acción no se puede deshacer.`)) return;
     setError('');
     setFeedback('');
 
@@ -261,428 +276,919 @@ export default function OrganizationStructure() {
     }
   };
 
-  // Filtered Tree Search
+  // Filtered tree logic
   const filteredTree = useMemo(() => {
     if (!search.trim()) return treeData;
-    const term = search.toLowerCase().trim();
+    const q = search.toLowerCase();
 
-    return treeData.filter((sede) => {
-      const matchSede = sede.name.toLowerCase().includes(term) || (sede.code && sede.code.toLowerCase().includes(term));
-      const matchingDeps = (sede.dependencias || []).filter((dep) => {
-        const matchDep = dep.name.toLowerCase().includes(term) || (dep.code && dep.code.toLowerCase().includes(term));
-        const matchOfis = (dep.oficinas || []).some((ofi) => ofi.name.toLowerCase().includes(term) || (ofi.code && ofi.code.toLowerCase().includes(term)));
-        return matchDep || matchOfis;
-      });
-      const matchingOfis = (sede.oficinasDirectas || []).filter((ofi) => ofi.name.toLowerCase().includes(term));
+    return treeData
+      .map((sede) => {
+        const sedeMatch = sede.name?.toLowerCase().includes(q) || sede.code?.toLowerCase().includes(q) || sede.address?.toLowerCase().includes(q);
 
-      return matchSede || matchingDeps.length > 0 || matchingOfis.length > 0;
-    });
+        const filteredDeps = (sede.dependencias || [])
+          .map((dep) => {
+            const depMatch = dep.name?.toLowerCase().includes(q) || dep.code?.toLowerCase().includes(q);
+            const filteredOfis = (dep.oficinas || []).filter(
+              (ofi) =>
+                ofi.name?.toLowerCase().includes(q) ||
+                ofi.code?.toLowerCase().includes(q) ||
+                ofi.floor?.toLowerCase().includes(q) ||
+                ofi.responsibleUser?.toLowerCase().includes(q)
+            );
+
+            if (depMatch || filteredOfis.length > 0) {
+              return { ...dep, oficinas: filteredOfis.length > 0 ? filteredOfis : dep.oficinas };
+            }
+            return null;
+          })
+          .filter(Boolean);
+
+        if (sedeMatch || filteredDeps.length > 0) {
+          return { ...sede, dependencias: filteredDeps.length > 0 ? filteredDeps : sede.dependencias };
+        }
+        return null;
+      })
+      .filter(Boolean);
   }, [treeData, search]);
 
   return (
-    <div className="view-container">
-      {/* Header & Title */}
-      <section className="section-heading" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem' }}>
+    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+      
+      {/* 🌟 HERO & CONTROL BAR */}
+      <div style={{
+        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        borderRadius: '16px',
+        padding: '1.75rem 2rem',
+        marginBottom: '1.75rem',
+        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3), 0 8px 10px -6px rgba(15, 23, 42, 0.3)',
+        border: '1px solid rgba(255, 255, 255, 0.1)',
+        color: '#ffffff',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '1.25rem'
+      }}>
         <div>
-          <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', margin: 0 }}>
-            <span style={{ fontSize: '1.4rem' }}>🏛️</span> Estructura Organizacional & Ubicaciones
-          </h2>
-          <p style={{ margin: '0.3rem 0 0 0', color: '#64748b' }}>
-            Jerarquía institucional: Sedes, Dependencias/Áreas y Oficinas físicas para la asignación y trazabilidad de Activos TI.
-          </p>
-        </div>
-
-        <div style={{ display: 'flex', gap: '0.6rem', flexWrap: 'wrap' }}>
-          <button type="button" className="btn-ghost" onClick={() => handleOpenSedeModal()} style={{ background: '#fff', border: '1px solid #cbd5e1' }}>
-            + Nueva Sede
-          </button>
-          <button type="button" className="btn-ghost" onClick={() => handleOpenDepModal()} style={{ background: '#fff', border: '1px solid #cbd5e1' }}>
-            + Nueva Dependencia
-          </button>
-          <button type="button" className="btn" onClick={() => handleOpenOfiModal()} style={{ background: '#0284c7' }}>
-            + Nueva Oficina
-          </button>
-        </div>
-      </section>
-
-      {/* Metric Cards Banner */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '1rem', marginTop: '1.2rem' }}>
-        <div className="card" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #0284c7' }}>
-          <div style={{ background: '#e0f2fe', color: '#0284c7', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-            🏛️
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Sedes / Campus</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>{stats.totalSedes || sedes.length}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #8b5cf6' }}>
-          <div style={{ background: '#ede9fe', color: '#8b5cf6', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-            📁
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Dependencias / Áreas</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>{stats.totalDependencias || dependencias.length}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #10b981' }}>
-          <div style={{ background: '#d1fae5', color: '#10b981', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-            🚪
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Oficinas & Espacios</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>{stats.totalOficinas || oficinas.length}</div>
-          </div>
-        </div>
-
-        <div className="card" style={{ padding: '1.2rem', display: 'flex', alignItems: 'center', gap: '1rem', borderLeft: '4px solid #f59e0b' }}>
-          <div style={{ background: '#fef3c7', color: '#d97706', width: '48px', height: '48px', borderRadius: '12px', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.4rem' }}>
-            💻
-          </div>
-          <div>
-            <div style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>Activos TI Monitoreados</div>
-            <div style={{ fontSize: '1.5rem', fontWeight: 700, color: '#0f172a' }}>{stats.totalAssets || 0}</div>
-          </div>
-        </div>
-      </div>
-
-      {error && <div className="feedback error" style={{ marginTop: '1rem' }}>{error}</div>}
-      {feedback && <div className="feedback" style={{ marginTop: '1rem' }}>{feedback}</div>}
-
-      {/* Navigation Tabs */}
-      <div style={{ display: 'flex', gap: '0.5rem', borderBottom: '1px solid #e2e8f0', marginTop: '1.5rem', paddingBottom: '0.2rem' }}>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setActiveTab('tree')}
-          style={{
-            fontWeight: 600,
-            borderBottom: activeTab === 'tree' ? '3px solid #0284c7' : '3px solid transparent',
-            color: activeTab === 'tree' ? '#0284c7' : '#64748b',
-            borderRadius: '0',
-            padding: '0.6rem 1.2rem',
-          }}
-        >
-          🌳 Árbol Organizacional
-        </button>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setActiveTab('sedes')}
-          style={{
-            fontWeight: 600,
-            borderBottom: activeTab === 'sedes' ? '3px solid #0284c7' : '3px solid transparent',
-            color: activeTab === 'sedes' ? '#0284c7' : '#64748b',
-            borderRadius: '0',
-            padding: '0.6rem 1.2rem',
-          }}
-        >
-          🏛️ Sedes ({sedes.length})
-        </button>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setActiveTab('dependencias')}
-          style={{
-            fontWeight: 600,
-            borderBottom: activeTab === 'dependencias' ? '3px solid #0284c7' : '3px solid transparent',
-            color: activeTab === 'dependencias' ? '#0284c7' : '#64748b',
-            borderRadius: '0',
-            padding: '0.6rem 1.2rem',
-          }}
-        >
-          📁 Dependencias ({dependencias.length})
-        </button>
-        <button
-          type="button"
-          className="btn-ghost"
-          onClick={() => setActiveTab('oficinas')}
-          style={{
-            fontWeight: 600,
-            borderBottom: activeTab === 'oficinas' ? '3px solid #0284c7' : '3px solid transparent',
-            color: activeTab === 'oficinas' ? '#0284c7' : '#64748b',
-            borderRadius: '0',
-            padding: '0.6rem 1.2rem',
-          }}
-        >
-          🚪 Oficinas ({oficinas.length})
-        </button>
-      </div>
-
-      {/* ---------------------------------------------------- */}
-      {/* TAB 1: ÁRBOL ORGANIZACIONAL VISUAL                   */}
-      {/* ---------------------------------------------------- */}
-      {activeTab === 'tree' && (
-        <section className="card" style={{ marginTop: '1.2rem', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '1rem', marginBottom: '1.2rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: 1, maxWidth: '400px' }}>
-              <input
-                className="search-input"
-                value={search}
-                onChange={(e) => setSearch(e.target.value)}
-                placeholder="🔍 Filtrar por sede, área u oficina..."
-                style={{ width: '100%' }}
-              />
-              {search && (
-                <button type="button" className="btn-ghost" onClick={() => setSearch('')} style={{ padding: '0.4rem 0.6rem' }}>
-                  ✕
-                </button>
-              )}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
+            <div style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+            }}>
+              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M3 21h18" />
+                <path d="M5 21V7l8-4v18" />
+                <path d="M19 21V11l-6-4" />
+                <path d="M9 9v.01" />
+                <path d="M9 12v.01" />
+                <path d="M9 15v.01" />
+                <path d="M9 18v.01" />
+              </svg>
             </div>
+            <div>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                Estructura Organizacional & Ubicaciones
+                <span style={{ 
+                  fontSize: '0.75rem', 
+                  fontWeight: '600', 
+                  padding: '0.2rem 0.6rem', 
+                  borderRadius: '9999px', 
+                  background: 'rgba(59, 130, 246, 0.2)', 
+                  border: '1px solid rgba(59, 130, 246, 0.4)',
+                  color: '#93c5fd'
+                }}>
+                  ITAM v2.2
+                </span>
+              </h1>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+                Jerarquía corporativa de 3 niveles: Sedes, Dependencias y Oficinas físicas para localización exacta de Activos TI.
+              </p>
+            </div>
+          </div>
+        </div>
 
+        {/* Action Buttons Responsive Group */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+          <button
+            onClick={() => handleOpenSedeModal()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: '#ffffff',
+              color: '#0f172a',
+              padding: '0.65rem 1.15rem',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nueva Sede
+          </button>
+
+          <button
+            onClick={() => handleOpenDepModal()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'rgba(255, 255, 255, 0.1)',
+              color: '#ffffff',
+              padding: '0.65rem 1.15rem',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+              border: '1px solid rgba(255, 255, 255, 0.2)',
+              cursor: 'pointer',
+              backdropFilter: 'blur(4px)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nueva Dependencia
+          </button>
+
+          <button
+            onClick={() => handleOpenOfiModal()}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+              color: '#ffffff',
+              padding: '0.65rem 1.25rem',
+              borderRadius: '10px',
+              fontWeight: '600',
+              fontSize: '0.875rem',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Nueva Oficina
+          </button>
+        </div>
+      </div>
+
+      {/* 📊 ENTERPRISE KPI METRICS GRID */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* KPI 1: Sedes */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem',
+          transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+        }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
+            border: '1px solid #bfdbfe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#2563eb'
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="4" y="2" width="16" height="20" rx="2" ry="2" />
+              <path d="M9 22v-4h6v4" />
+              <path d="M8 6h.01M16 6h.01M8 10h.01M16 10h.01M8 14h.01M16 14h.01" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Sedes / Campus
+            </div>
+            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+              {stats.totalSedes}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#3b82f6', fontWeight: '600', marginTop: '0.2rem' }}>
+              Edificios e instalaciones
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 2: Dependencias */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem'
+        }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #f5f3ff 0%, #ede9fe 100%)',
+            border: '1px solid #ddd6fe',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#7c3aed'
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Dependencias / Áreas
+            </div>
+            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+              {stats.totalDependencias}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
+              Secretarías y direcciones
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 3: Oficinas */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem'
+        }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #ecfdf5 0%, #d1fae5 100%)',
+            border: '1px solid #a7f3d0',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#059669'
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
+              <path d="M2 20h20" />
+              <path d="M14 12v.01" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Oficinas & Espacios
+            </div>
+            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+              {stats.totalOficinas}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
+              Puntos físicos de activos
+            </div>
+          </div>
+        </div>
+
+        {/* KPI 4: Activos TI */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '14px',
+          padding: '1.25rem 1.5rem',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+          border: '1px solid #e2e8f0',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '1.25rem'
+        }}>
+          <div style={{
+            width: '52px',
+            height: '52px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #fffbeb 0%, #fef3c7 100%)',
+            border: '1px solid #fde68a',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#d97706'
+          }}>
+            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
+          </div>
+          <div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Activos TI Vinculados
+            </div>
+            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+              {stats.totalAssets}
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
+              Hardware inventariado
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* FEEDBACK & ALERTS */}
+      {feedback && (
+        <div style={{
+          background: '#ecfdf5',
+          border: '1px solid #a7f3d0',
+          color: '#065f46',
+          borderRadius: '10px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
+            </svg>
+            {feedback}
+          </div>
+          <button onClick={() => setFeedback('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#065f46', fontWeight: '700' }}>✕</button>
+        </div>
+      )}
+
+      {error && (
+        <div style={{
+          background: '#fef2f2',
+          border: '1px solid #fecaca',
+          color: '#991b1b',
+          borderRadius: '10px',
+          padding: '0.85rem 1.25rem',
+          marginBottom: '1.25rem',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '0.875rem',
+          fontWeight: '500'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5">
+              <circle cx="12" cy="12" r="10" />
+              <line x1="12" y1="8" x2="12" y2="12" />
+              <line x1="12" y1="16" x2="12.01" y2="16" />
+            </svg>
+            {error}
+          </div>
+          <button onClick={() => setError('')} style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#991b1b', fontWeight: '700' }}>✕</button>
+        </div>
+      )}
+
+      {/* 🧭 NAVIGATION TABS & FILTER BAR */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '14px',
+        border: '1px solid #e2e8f0',
+        padding: '0.5rem',
+        marginBottom: '1.5rem',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '0.75rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
+      }}>
+        {/* Modern Tabs */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
+          <button
+            onClick={() => setActiveTab('tree')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === 'tree' ? '700' : '500',
+              color: activeTab === 'tree' ? '#ffffff' : '#64748b',
+              background: activeTab === 'tree' ? 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'tree' ? '0 4px 10px rgba(37, 99, 235, 0.3)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <line x1="6" y1="3" x2="6" y2="15" />
+              <circle cx="18" cy="6" r="3" />
+              <circle cx="6" cy="18" r="3" />
+              <path d="M18 9a9 9 0 0 1-9 9" />
+            </svg>
+            Árbol Jerárquico Visual
+          </button>
+
+          <button
+            onClick={() => setActiveTab('sedes')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === 'sedes' ? '700' : '500',
+              color: activeTab === 'sedes' ? '#ffffff' : '#64748b',
+              background: activeTab === 'sedes' ? 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'sedes' ? '0 4px 10px rgba(37, 99, 235, 0.3)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <rect x="4" y="2" width="16" height="20" rx="2" />
+            </svg>
+            Sedes ({sedes.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('dependencias')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === 'dependencias' ? '700' : '500',
+              color: activeTab === 'dependencias' ? '#ffffff' : '#64748b',
+              background: activeTab === 'dependencias' ? 'linear-gradient(135deg, #0f172a 0%, #7c3aed 100%)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'dependencias' ? '0 4px 10px rgba(124, 58, 237, 0.3)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
+            </svg>
+            Dependencias ({dependencias.length})
+          </button>
+
+          <button
+            onClick={() => setActiveTab('oficinas')}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.5rem',
+              padding: '0.6rem 1.15rem',
+              borderRadius: '10px',
+              fontSize: '0.875rem',
+              fontWeight: activeTab === 'oficinas' ? '700' : '500',
+              color: activeTab === 'oficinas' ? '#ffffff' : '#64748b',
+              background: activeTab === 'oficinas' ? 'linear-gradient(135deg, #0f172a 0%, #059669 100%)' : 'transparent',
+              border: 'none',
+              cursor: 'pointer',
+              boxShadow: activeTab === 'oficinas' ? '0 4px 10px rgba(5, 150, 105, 0.3)' : 'none',
+              transition: 'all 0.2s ease'
+            }}
+          >
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+              <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
+            </svg>
+            Oficinas ({oficinas.length})
+          </button>
+        </div>
+
+        {/* Quick Search */}
+        <div style={{ position: 'relative', minWidth: '260px', flex: '1', maxWidth: '400px' }}>
+          <svg
+            width="16"
+            height="16"
+            viewBox="0 0 24 24"
+            fill="none"
+            stroke="#94a3b8"
+            strokeWidth="2"
+            strokeLinecap="round"
+            strokeLinejoin="round"
+            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+          >
+            <circle cx="11" cy="11" r="8" />
+            <line x1="21" y1="21" x2="16.65" y2="16.65" />
+          </svg>
+          <input
+            type="text"
+            placeholder="Buscar por sede, área, oficina o responsable..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            style={{
+              width: '100%',
+              padding: '0.55rem 1rem 0.55rem 2.25rem',
+              borderRadius: '8px',
+              border: '1px solid #cbd5e1',
+              fontSize: '0.875rem',
+              outline: 'none',
+              background: '#f8fafc',
+              boxSizing: 'border-box'
+            }}
+          />
+        </div>
+      </div>
+
+      {/* 📦 TAB CONTENT */}
+
+      {/* TAB 1: ÁRBOL VISUAL */}
+      {activeTab === 'tree' && (
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          border: '1px solid #e2e8f0',
+          padding: '1.5rem',
+          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+        }}>
+          {/* Tree Toolbar */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+            <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>
+              Mostrando <strong style={{ color: '#0f172a' }}>{filteredTree.length}</strong> Sedes estructuradas
+            </div>
             <div style={{ display: 'flex', gap: '0.5rem' }}>
-              <button type="button" className="btn-ghost" onClick={expandAll} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+              <button
+                onClick={expandAll}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
                 📂 Expandir Todo
               </button>
-              <button type="button" className="btn-ghost" onClick={collapseAll} style={{ fontSize: '0.8rem', padding: '0.4rem 0.8rem' }}>
+              <button
+                onClick={collapseAll}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  color: '#334155',
+                  padding: '0.4rem 0.85rem',
+                  borderRadius: '6px',
+                  fontSize: '0.8rem',
+                  fontWeight: '600',
+                  cursor: 'pointer'
+                }}
+              >
                 📁 Colapsar Todo
               </button>
             </div>
           </div>
 
-          {loading ? (
-            <div className="empty-state" style={{ padding: '3rem 0' }}>Cargando estructura organizacional...</div>
-          ) : filteredTree.length === 0 ? (
-            <div className="empty-state" style={{ padding: '3rem 0' }}>
-              <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏛️</div>
-              <p>No se encontraron sedes o dependencias registradas.</p>
-              <button type="button" className="btn" onClick={() => handleOpenSedeModal()} style={{ marginTop: '1rem' }}>
+          {/* EMPTY STATE */}
+          {filteredTree.length === 0 && !loading && (
+            <div style={{
+              textAlign: 'center',
+              padding: '4rem 1.5rem',
+              background: '#f8fafc',
+              borderRadius: '14px',
+              border: '2px dashed #cbd5e1'
+            }}>
+              <div style={{
+                width: '64px',
+                height: '64px',
+                borderRadius: '50%',
+                background: '#eff6ff',
+                color: '#2563eb',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                margin: '0 auto 1.25rem auto'
+              }}>
+                <svg width="32" height="32" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                  <path d="M3 21h18" />
+                  <path d="M5 21V7l8-4v18" />
+                  <path d="M19 21V11l-6-4" />
+                </svg>
+              </div>
+              <h3 style={{ fontSize: '1.25rem', fontWeight: '700', color: '#0f172a', margin: '0 0 0.5rem 0' }}>
+                {search ? 'No se encontraron resultados para la búsqueda' : 'No hay Sedes ni Estructura Registrada'}
+              </h3>
+              <p style={{ fontSize: '0.875rem', color: '#64748b', maxWidth: '460px', margin: '0 auto 1.5rem auto' }}>
+                Comienza registrando tu primera sede institucional (ej: Palacio Municipal, Datacenter o Sede Central) para estructurar áreas y oficinas de activos TI.
+              </p>
+              <button
+                onClick={() => handleOpenSedeModal()}
+                style={{
+                  background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                  color: '#ffffff',
+                  padding: '0.75rem 1.75rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  fontSize: '0.95rem',
+                  border: 'none',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 12px rgba(37, 99, 235, 0.35)'
+                }}
+              >
                 + Registrar Primera Sede
               </button>
             </div>
-          ) : (
-            <div className="tree-container" style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
-              {filteredTree.map((sede) => {
-                const isSedeExpanded = Boolean(expandedNodes[`sede-${sede.id}`]);
+          )}
 
-                return (
-                  <div
-                    key={sede.id}
-                    style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '12px',
-                      background: '#f8fafc',
-                      overflow: 'hidden',
-                      boxShadow: '0 2px 4px rgba(0,0,0,0.02)',
-                    }}
-                  >
-                    {/* Sede Header */}
+          {/* TREE ITEMS LIST */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
+            {filteredTree.map((sede) => {
+              const isSedeExpanded = expandedNodes[`sede-${sede.id}`];
+              return (
+                <div
+                  key={sede.id}
+                  style={{
+                    border: '1px solid #e2e8f0',
+                    borderRadius: '14px',
+                    overflow: 'hidden',
+                    background: '#ffffff',
+                    boxShadow: '0 2px 6px rgba(0,0,0,0.03)'
+                  }}
+                >
+                  {/* SEDE HEADER BAR */}
+                  <div style={{
+                    background: 'linear-gradient(90deg, #f8fafc 0%, #ffffff 100%)',
+                    padding: '1rem 1.25rem',
+                    display: 'flex',
+                    flexWrap: 'wrap',
+                    alignItems: 'center',
+                    justifyContent: 'space-between',
+                    gap: '0.75rem',
+                    borderBottom: isSedeExpanded ? '1px solid #e2e8f0' : 'none'
+                  }}>
                     <div
-                      style={{
-                        padding: '0.9rem 1.2rem',
-                        background: '#fff',
-                        borderBottom: isSedeExpanded ? '1px solid #e2e8f0' : 'none',
+                      onClick={() => toggleNode(`sede-${sede.id}`)}
+                      style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', cursor: 'pointer', flex: '1', minWidth: '240px' }}
+                    >
+                      <span style={{ fontSize: '1rem', color: '#64748b', transition: 'transform 0.2s', transform: isSedeExpanded ? 'rotate(90deg)' : 'none' }}>
+                        ▶
+                      </span>
+                      <div style={{
+                        width: '38px',
+                        height: '38px',
+                        borderRadius: '8px',
+                        background: '#eff6ff',
+                        color: '#2563eb',
                         display: 'flex',
                         alignItems: 'center',
-                        justifyContent: 'space-between',
-                        cursor: 'pointer',
-                      }}
-                      onClick={() => toggleNode(`sede-${sede.id}`)}
-                    >
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                        <span style={{ fontSize: '1rem', color: '#64748b' }}>{isSedeExpanded ? '▼' : '►'}</span>
-                        <div style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.4rem', borderRadius: '8px', fontSize: '1.2rem' }}>
-                          🏛️
-                        </div>
-                        <div>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                            <strong style={{ fontSize: '1.05rem', color: '#0f172a' }}>{sede.name}</strong>
-                            {sede.code && (
-                              <span style={{ background: '#f1f5f9', color: '#475569', fontSize: '0.72rem', padding: '0.15rem 0.4rem', borderRadius: '4px', fontWeight: 600 }}>
-                                {sede.code}
-                              </span>
-                            )}
-                          </div>
-                          <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
-                            📍 {sede.address || 'Sin dirección'} {sede.city ? `• ${sede.city}` : ''} {sede.managerName ? `• Resp: ${sede.managerName}` : ''}
-                          </div>
-                        </div>
+                        justifyContent: 'center',
+                        fontWeight: '700'
+                      }}>
+                        🏛️
                       </div>
-
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }} onClick={(e) => e.stopPropagation()}>
-                        <span style={{ background: '#e0f2fe', color: '#0369a1', padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 600 }}>
-                          💻 {sede.assetCount || 0} Activos
-                        </span>
-                        <span style={{ background: '#f1f5f9', color: '#475569', padding: '0.25rem 0.65rem', borderRadius: '999px', fontSize: '0.78rem', fontWeight: 600 }}>
-                          📁 {(sede.dependencias || []).length} Dependencias
-                        </span>
-                        <button
-                          type="button"
-                          className="btn-ghost"
-                          title="Añadir Dependencia a esta Sede"
-                          onClick={() => handleOpenDepModal(null, sede.id)}
-                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}
-                        >
-                          + Área
-                        </button>
-                        <button
-                          type="button"
-                          className="btn-ghost"
-                          title="Editar Sede"
-                          onClick={() => handleOpenSedeModal(sede)}
-                          style={{ padding: '0.35rem 0.6rem', fontSize: '0.8rem' }}
-                        >
-                          ✏️
-                        </button>
+                      <div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                          <span style={{ fontWeight: '800', fontSize: '1.05rem', color: '#0f172a' }}>{sede.name}</span>
+                          {sede.code && (
+                            <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.5rem', borderRadius: '4px', background: '#e2e8f0', color: '#334155' }}>
+                              {sede.code}
+                            </span>
+                          )}
+                          <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: '#ecfdf5', color: '#047857', fontWeight: '600' }}>
+                            {sede.city || 'Yopal'}
+                          </span>
+                        </div>
+                        <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.15rem' }}>
+                          📍 {sede.address || 'Sin dirección registrada'} {sede.managerName && `• Responsable: ${sede.managerName}`}
+                        </div>
                       </div>
                     </div>
 
-                    {/* Sede Children (Dependencias & Oficinas) */}
-                    {isSedeExpanded && (
-                      <div style={{ padding: '0.8rem 1rem 0.8rem 2.5rem', display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-                        {(sede.dependencias || []).length === 0 && (sede.oficinasDirectas || []).length === 0 ? (
-                          <div style={{ fontSize: '0.82rem', color: '#94a3b8', padding: '0.5rem 0' }}>
-                            No hay dependencias registradas en esta sede.{' '}
+                    {/* Sede Actions */}
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                      <span style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '700',
+                        padding: '0.3rem 0.75rem',
+                        borderRadius: '9999px',
+                        background: '#fffbeb',
+                        border: '1px solid #fef3c7',
+                        color: '#b45309',
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '0.35rem'
+                      }}>
+                        💻 {sede.assetCount || 0} Activos TI
+                      </span>
+
+                      <button
+                        onClick={() => handleOpenDepModal(null, sede.id)}
+                        style={{
+                          background: '#f1f5f9',
+                          border: '1px solid #cbd5e1',
+                          color: '#475569',
+                          padding: '0.4rem 0.75rem',
+                          borderRadius: '6px',
+                          fontSize: '0.8rem',
+                          fontWeight: '600',
+                          cursor: 'pointer'
+                        }}
+                      >
+                        + Dependencia
+                      </button>
+
+                      <button
+                        onClick={() => handleOpenSedeModal(sede)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0.3rem' }}
+                        title="Editar Sede"
+                      >
+                        ✏️
+                      </button>
+
+                      <button
+                        onClick={() => handleDelete('sedes', sede.id, sede.name)}
+                        style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '1rem', padding: '0.3rem' }}
+                        title="Eliminar Sede"
+                      >
+                        🗑️
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* DEPENDENCIAS & OFICINAS TREE BODY */}
+                  {isSedeExpanded && (
+                    <div style={{ padding: '1rem 1.25rem 1.25rem 2.25rem', background: '#fafafa' }}>
+                      {(sede.dependencias || []).length === 0 && (sede.oficinasDirectas || []).length === 0 && (
+                        <div style={{ padding: '1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
+                          <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Esta sede no tiene dependencias registradas.</span>
+                          <div style={{ marginTop: '0.5rem' }}>
                             <button
-                              type="button"
-                              className="btn-ghost"
                               onClick={() => handleOpenDepModal(null, sede.id)}
-                              style={{ color: '#0284c7', textDecoration: 'underline', padding: '0 0.2rem' }}
+                              style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.4rem 0.85rem', borderRadius: '6px', fontSize: '0.8rem', cursor: 'pointer' }}
                             >
-                              Añadir una dependencia
+                              + Crear Primera Dependencia
                             </button>
                           </div>
-                        ) : null}
+                        </div>
+                      )}
 
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
                         {(sede.dependencias || []).map((dep) => {
-                          const isDepExpanded = Boolean(expandedNodes[`dep-${dep.id}`]);
-
+                          const isDepExpanded = expandedNodes[`dep-${dep.id}`];
                           return (
                             <div
                               key={dep.id}
                               style={{
-                                border: '1px solid #cbd5e1',
+                                background: '#ffffff',
+                                border: '1px solid #e2e8f0',
                                 borderRadius: '10px',
-                                background: '#fff',
-                                overflow: 'hidden',
+                                overflow: 'hidden'
                               }}
                             >
-                              {/* Dependencia Header */}
-                              <div
-                                style={{
-                                  padding: '0.7rem 1rem',
-                                  background: '#fafafa',
-                                  borderBottom: isDepExpanded ? '1px solid #f1f5f9' : 'none',
-                                  display: 'flex',
-                                  alignItems: 'center',
-                                  justifyContent: 'space-between',
-                                  cursor: 'pointer',
-                                }}
-                                onClick={() => toggleNode(`dep-${dep.id}`)}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.7rem' }}>
-                                  <span style={{ fontSize: '0.85rem', color: '#94a3b8' }}>{isDepExpanded ? '▼' : '►'}</span>
-                                  <div style={{ background: '#ede9fe', color: '#6d28d9', padding: '0.3rem', borderRadius: '6px', fontSize: '1rem' }}>
+                              {/* DEP HEADER */}
+                              <div style={{
+                                padding: '0.75rem 1rem',
+                                display: 'flex',
+                                flexWrap: 'wrap',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                                gap: '0.5rem',
+                                background: '#ffffff',
+                                borderBottom: isDepExpanded ? '1px solid #f1f5f9' : 'none'
+                              }}>
+                                <div
+                                  onClick={() => toggleNode(`dep-${dep.id}`)}
+                                  style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', cursor: 'pointer', flex: '1' }}
+                                >
+                                  <span style={{ fontSize: '0.85rem', color: '#94a3b8', transform: isDepExpanded ? 'rotate(90deg)' : 'none', transition: 'transform 0.2s' }}>
+                                    ▶
+                                  </span>
+                                  <div style={{ width: '30px', height: '30px', borderRadius: '6px', background: '#f5f3ff', color: '#7c3aed', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
                                     📁
                                   </div>
                                   <div>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                                      <strong style={{ fontSize: '0.95rem', color: '#1e293b' }}>{dep.name}</strong>
-                                      {dep.code && (
-                                        <span style={{ background: '#ede9fe', color: '#6d28d9', fontSize: '0.7rem', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: 600 }}>
-                                          {dep.code}
-                                        </span>
-                                      )}
+                                    <div style={{ fontWeight: '700', fontSize: '0.95rem', color: '#1e293b' }}>
+                                      {dep.name} {dep.code && <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '500' }}>({dep.code})</span>}
                                     </div>
                                     <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                                      {dep.managerName ? `Jefe: ${dep.managerName}` : 'Sin jefe asignado'} {dep.email ? `• ${dep.email}` : ''}
+                                      👤 {dep.managerName || 'Sin jefe asignado'} {dep.email && `• ✉️ ${dep.email}`}
                                     </div>
                                   </div>
                                 </div>
 
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }} onClick={(e) => e.stopPropagation()}>
-                                  <span style={{ background: '#f8fafc', border: '1px solid #e2e8f0', color: '#334155', padding: '0.2rem 0.5rem', borderRadius: '6px', fontSize: '0.72rem', fontWeight: 600 }}>
-                                    💻 {dep.assetCount || 0} activos
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                  <span style={{ fontSize: '0.75rem', fontWeight: '600', padding: '0.2rem 0.5rem', borderRadius: '6px', background: '#f1f5f9', color: '#475569' }}>
+                                    🚪 {(dep.oficinas || []).length} Oficinas
                                   </span>
                                   <button
-                                    type="button"
-                                    className="btn-ghost"
-                                    title="Añadir Oficina a esta Dependencia"
                                     onClick={() => handleOpenOfiModal(null, sede.id, dep.id)}
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem', background: '#f0fdf4', color: '#166534', border: '1px solid #bbf7d0' }}
+                                    style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#334155', padding: '0.3rem 0.65rem', borderRadius: '6px', fontSize: '0.75rem', fontWeight: '600', cursor: 'pointer' }}
                                   >
                                     + Oficina
                                   </button>
-                                  <button
-                                    type="button"
-                                    className="btn-ghost"
-                                    title="Editar Dependencia"
-                                    onClick={() => handleOpenDepModal(dep, sede.id)}
-                                    style={{ padding: '0.25rem 0.5rem', fontSize: '0.75rem' }}
-                                  >
-                                    ✏️
-                                  </button>
+                                  <button onClick={() => handleOpenDepModal(dep, sede.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>✏️</button>
+                                  <button onClick={() => handleDelete('dependencias', dep.id, dep.name)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.9rem' }}>🗑️</button>
                                 </div>
                               </div>
 
-                              {/* Oficinas list */}
+                              {/* OFICINAS GRID */}
                               {isDepExpanded && (
-                                <div style={{ padding: '0.6rem 0.8rem 0.6rem 2.2rem', display: 'flex', flexDirection: 'column', gap: '0.4rem', background: '#fff' }}>
+                                <div style={{ padding: '0.85rem 1rem 0.85rem 2rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
                                   {(dep.oficinas || []).length === 0 ? (
-                                    <div style={{ fontSize: '0.78rem', color: '#94a3b8', padding: '0.3rem 0' }}>
-                                      No hay oficinas registradas.{' '}
+                                    <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
+                                      No hay oficinas creadas en esta dependencia.{' '}
                                       <button
-                                        type="button"
-                                        className="btn-ghost"
                                         onClick={() => handleOpenOfiModal(null, sede.id, dep.id)}
-                                        style={{ color: '#0284c7', textDecoration: 'underline', padding: '0 0.2rem' }}
+                                        style={{ background: 'none', border: 'none', color: '#2563eb', fontWeight: '600', cursor: 'pointer' }}
                                       >
-                                        Crear oficina
+                                        + Agregar Oficina
                                       </button>
                                     </div>
                                   ) : (
-                                    dep.oficinas.map((ofi) => (
-                                      <div
-                                        key={ofi.id}
-                                        style={{
-                                          padding: '0.5rem 0.8rem',
-                                          borderRadius: '8px',
-                                          background: '#f8fafc',
-                                          border: '1px solid #f1f5f9',
-                                          display: 'flex',
-                                          alignItems: 'center',
-                                          justifyContent: 'space-between',
-                                        }}
-                                      >
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                          <span style={{ fontSize: '0.9rem' }}>🚪</span>
-                                          <div>
-                                            <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                              <strong style={{ fontSize: '0.88rem', color: '#1e293b' }}>{ofi.name}</strong>
-                                              {ofi.floor && (
-                                                <span style={{ background: '#e2e8f0', color: '#475569', fontSize: '0.68rem', padding: '0.1rem 0.35rem', borderRadius: '4px' }}>
-                                                  {ofi.floor}
-                                                </span>
-                                              )}
-                                              {ofi.code && (
-                                                <span style={{ background: '#dcfce7', color: '#15803d', fontSize: '0.68rem', padding: '0.1rem 0.35rem', borderRadius: '4px', fontWeight: 600 }}>
-                                                  {ofi.code}
-                                                </span>
+                                    <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))', gap: '0.75rem' }}>
+                                      {dep.oficinas.map((ofi) => {
+                                        const isAssetDrawerOpen = expandedAssets[`ofi-${ofi.id}`];
+                                        return (
+                                          <div
+                                            key={ofi.id}
+                                            style={{
+                                              background: '#ffffff',
+                                              border: '1px solid #e2e8f0',
+                                              borderRadius: '8px',
+                                              padding: '0.75rem 0.85rem',
+                                              boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                                            }}
+                                          >
+                                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: '0.5rem' }}>
+                                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                                                <span style={{ fontSize: '1rem' }}>🚪</span>
+                                                <div>
+                                                  <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a' }}>{ofi.name}</div>
+                                                  <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
+                                                    {ofi.floor ? `🏢 ${ofi.floor}` : '🏢 Sin piso'} {ofi.responsibleUser && `• 👤 ${ofi.responsibleUser}`}
+                                                  </div>
+                                                </div>
+                                              </div>
+                                              <div style={{ display: 'flex', gap: '0.25rem' }}>
+                                                <button onClick={() => handleOpenOfiModal(ofi, sede.id, dep.id)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>✏️</button>
+                                                <button onClick={() => handleDelete('oficinas', ofi.id, ofi.name)} style={{ background: 'none', border: 'none', cursor: 'pointer', fontSize: '0.8rem' }}>🗑️</button>
+                                              </div>
+                                            </div>
+
+                                            {/* IT Asset Badge Drawer Button */}
+                                            <div style={{ marginTop: '0.5rem', paddingTop: '0.5rem', borderTop: '1px dashed #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                              <span style={{ fontSize: '0.75rem', fontWeight: '700', color: ofi.assetCount > 0 ? '#059669' : '#94a3b8' }}>
+                                                💻 {ofi.assetCount || 0} Activos en sala
+                                              </span>
+                                              {ofi.assetCount > 0 && (
+                                                <button
+                                                  onClick={() => toggleAssetList(`ofi-${ofi.id}`)}
+                                                  style={{ background: '#ecfdf5', border: '1px solid #a7f3d0', color: '#047857', padding: '0.2rem 0.5rem', borderRadius: '4px', fontSize: '0.7rem', fontWeight: '600', cursor: 'pointer' }}
+                                                >
+                                                  {isAssetDrawerOpen ? 'Ocultar' : 'Ver Activos'}
+                                                </button>
                                               )}
                                             </div>
-                                            {ofi.responsibleUser && (
-                                              <div style={{ fontSize: '0.72rem', color: '#64748b' }}>👤 Resp: {ofi.responsibleUser}</div>
+
+                                            {/* Expandable Asset List */}
+                                            {isAssetDrawerOpen && ofi.assets && ofi.assets.length > 0 && (
+                                              <div style={{ marginTop: '0.5rem', background: '#f8fafc', borderRadius: '6px', padding: '0.5rem', fontSize: '0.75rem' }}>
+                                                {ofi.assets.map((asset) => (
+                                                  <div key={asset.id} style={{ display: 'flex', justifyContent: 'space-between', padding: '0.25rem 0', borderBottom: '1px solid #e2e8f0' }}>
+                                                    <span style={{ fontWeight: '600', color: '#1e293b' }}>{asset.hostname}</span>
+                                                    <span style={{ color: '#64748b' }}>{asset.deviceType || 'Equipo'}</span>
+                                                  </div>
+                                                ))}
+                                              </div>
                                             )}
                                           </div>
-                                        </div>
-
-                                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                          <span style={{ background: '#e0f2fe', color: '#0369a1', fontSize: '0.72rem', padding: '0.15rem 0.45rem', borderRadius: '4px', fontWeight: 600 }}>
-                                            💻 {ofi.assetCount || 0} TI
-                                          </span>
-                                          <button
-                                            type="button"
-                                            className="btn-ghost"
-                                            onClick={() => handleOpenOfiModal(ofi, sede.id, dep.id)}
-                                            style={{ padding: '0.2rem 0.4rem', fontSize: '0.72rem' }}
-                                          >
-                                            ✏️
-                                          </button>
-                                        </div>
-                                      </div>
-                                    ))
+                                        );
+                                      })}
+                                    </div>
                                   )}
                                 </div>
                               )}
@@ -690,460 +1196,530 @@ export default function OrganizationStructure() {
                           );
                         })}
                       </div>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
-          )}
-        </section>
+                    </div>
+                  )}
+                </div>
+              );
+            })}
+          </div>
+        </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* TAB 2: SEDES / CAMPUS CRUD                           */}
-      {/* ---------------------------------------------------- */}
+      {/* TAB 2: SEDES TABLE */}
       {activeTab === 'sedes' && (
-        <section className="card" style={{ marginTop: '1.2rem', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-            <h3 style={{ margin: 0 }}>Directorio de Sedes y Campus ({sedes.length})</h3>
-            <button type="button" className="btn" onClick={() => handleOpenSedeModal()}>
-              + Registrar Nueva Sede
+        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Directorio de Sedes e Instalaciones</h3>
+            <button
+              onClick={() => handleOpenSedeModal()}
+              style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
+            >
+              + Nueva Sede
             </button>
           </div>
 
-          <div className="table-shell">
-            {sedes.length === 0 ? (
-              <div className="empty-state">No hay sedes registradas.</div>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Nombre de la Sede</th>
-                    <th>Dirección</th>
-                    <th>Ciudad</th>
-                    <th>Teléfono</th>
-                    <th>Administrador / Responsable</th>
-                    <th style={{ textAlign: 'right' }}>Acciones</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
+                  <th style={{ padding: '0.75rem 1rem' }}>Sede</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Código</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Dirección & Ciudad</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Contacto / Teléfono</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Administrador de Sede</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {sedes.map((sede) => (
+                  <tr key={sede.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
+                      🏛️ {sede.name}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem' }}>
+                      <span style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
+                        {sede.code || 'S/C'}
+                      </span>
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                      {sede.address || 'Sin dirección'} ({sede.city || 'Yopal'})
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                      {sede.phone || 'N/A'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                      {sede.managerName || 'Sin asignar'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                      <button onClick={() => handleOpenSedeModal(sede)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
+                      <button onClick={() => handleDelete('sedes', sede.id, sede.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {sedes.map((s) => (
-                    <tr key={s.id}>
-                      <td><span style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>{s.code || '---'}</span></td>
-                      <td><strong>{s.name}</strong></td>
-                      <td>{s.address || '---'}</td>
-                      <td>{s.city || 'Yopal'}</td>
-                      <td>{s.phone || '---'}</td>
-                      <td>{s.managerName || '---'}</td>
-                      <td style={{ textAlign: 'right' }}>
-                        <button type="button" className="btn-ghost" onClick={() => handleOpenSedeModal(s)} style={{ padding: '0.3rem 0.6rem', marginRight: '0.3rem' }}>
-                          ✏️ Editar
-                        </button>
-                        <button type="button" className="btn-ghost" onClick={() => handleDelete('sedes', s.id, s.name)} style={{ padding: '0.3rem 0.6rem', color: '#ef4444' }}>
-                          🗑️
-                        </button>
-                      </td>
-                    </tr>
-                  ))}
-                </tbody>
-              </table>
-            )}
+                ))}
+              </tbody>
+            </table>
           </div>
-        </section>
+        </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* TAB 3: DEPENDENCIAS / ÁREAS CRUD                     */}
-      {/* ---------------------------------------------------- */}
+      {/* TAB 3: DEPENDENCIAS TABLE */}
       {activeTab === 'dependencias' && (
-        <section className="card" style={{ marginTop: '1.2rem', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.8rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-              <h3 style={{ margin: 0 }}>Dependencias y Secretarías ({dependencias.length})</h3>
+        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Secretarías, Direcciones y Áreas</h3>
+            <div style={{ display: 'flex', gap: '0.75rem' }}>
               <select
-                className="search-input"
                 value={filterSedeId}
                 onChange={(e) => setFilterSedeId(e.target.value)}
-                style={{ fontSize: '0.85rem', padding: '0.35rem 0.6rem' }}
+                style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
               >
-                <option value="ALL">🏢 Todas las Sedes</option>
+                <option value="ALL">Todas las Sedes</option>
                 {sedes.map((s) => (
                   <option key={s.id} value={s.id}>{s.name}</option>
                 ))}
               </select>
-            </div>
-
-            <button type="button" className="btn" onClick={() => handleOpenDepModal()}>
-              + Nueva Dependencia
-            </button>
-          </div>
-
-          <div className="table-shell">
-            {dependencias.length === 0 ? (
-              <div className="empty-state">No hay dependencias registradas.</div>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Dependencia / Área</th>
-                    <th>Sede Asignada</th>
-                    <th>Líder / Jefe de Área</th>
-                    <th>Correo de Contacto</th>
-                    <th>Oficinas</th>
-                    <th style={{ textAlign: 'right' }}>Acciones</th>
-                  </tr>
-                </thead>
-                <tbody>
-                  {dependencias
-                    .filter((d) => filterSedeId === 'ALL' || String(d.sedeId) === String(filterSedeId))
-                    .map((d) => (
-                      <tr key={d.id}>
-                        <td><span style={{ background: '#ede9fe', color: '#6d28d9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>{d.code || '---'}</span></td>
-                        <td><strong>{d.name}</strong></td>
-                        <td>{d.sede?.name || 'Sede Principal'}</td>
-                        <td>{d.managerName || '---'}</td>
-                        <td>{d.email || '---'}</td>
-                        <td>{(d.oficinas || []).length}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button type="button" className="btn-ghost" onClick={() => handleOpenDepModal(d, d.sedeId)} style={{ padding: '0.3rem 0.6rem', marginRight: '0.3rem' }}>
-                            ✏️ Editar
-                          </button>
-                          <button type="button" className="btn-ghost" onClick={() => handleDelete('dependencias', d.id, d.name)} style={{ padding: '0.3rem 0.6rem', color: '#ef4444' }}>
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ---------------------------------------------------- */}
-      {/* TAB 4: OFICINAS & ESPACIOS FÍSICOS CRUD              */}
-      {/* ---------------------------------------------------- */}
-      {activeTab === 'oficinas' && (
-        <section className="card" style={{ marginTop: '1.2rem', padding: '1.5rem' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.8rem' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.8rem', flexWrap: 'wrap' }}>
-              <h3 style={{ margin: 0 }}>Oficinas y Espacios de Trabajo ({oficinas.length})</h3>
-              <select
-                className="search-input"
-                value={filterDepId}
-                onChange={(e) => setFilterDepId(e.target.value)}
-                style={{ fontSize: '0.85rem', padding: '0.35rem 0.6rem' }}
+              <button
+                onClick={() => handleOpenDepModal()}
+                style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
               >
-                <option value="ALL">📁 Todas las Dependencias</option>
-                {dependencias.map((d) => (
-                  <option key={d.id} value={d.id}>{d.name} ({d.sede?.name || 'Sede'})</option>
-                ))}
-              </select>
+                + Nueva Dependencia
+              </button>
             </div>
+          </div>
 
-            <button type="button" className="btn" onClick={() => handleOpenOfiModal()}>
-              + Registrar Nueva Oficina
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
+                  <th style={{ padding: '0.75rem 1rem' }}>Dependencia / Área</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Sede Vinculada</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Código / Sigla</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Jefe de Área</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Correo Electrónico</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {dependencias
+                  .filter((d) => filterSedeId === 'ALL' || String(d.sedeId) === String(filterSedeId))
+                  .map((dep) => (
+                    <tr key={dep.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                      <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
+                        📁 {dep.name}
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '600' }}>
+                        {dep.sede?.name || 'Sin sede'}
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem' }}>
+                        <span style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
+                          {dep.code || 'S/C'}
+                        </span>
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                        {dep.managerName || 'Sin jefe'}
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                        {dep.email || 'N/A'}
+                      </td>
+                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                        <button onClick={() => handleOpenDepModal(dep)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
+                        <button onClick={() => handleDelete('dependencias', dep.id, dep.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                      </td>
+                    </tr>
+                  ))}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      )}
+
+      {/* TAB 4: OFICINAS TABLE */}
+      {activeTab === 'oficinas' && (
+        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
+          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Oficinas & Espacios Físicos</h3>
+            <button
+              onClick={() => handleOpenOfiModal()}
+              style={{ background: '#059669', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
+            >
+              + Nueva Oficina
             </button>
           </div>
 
-          <div className="table-shell">
-            {oficinas.length === 0 ? (
-              <div className="empty-state">No hay oficinas registradas.</div>
-            ) : (
-              <table>
-                <thead>
-                  <tr>
-                    <th>Código</th>
-                    <th>Oficina / Espacio</th>
-                    <th>Piso / Nivel</th>
-                    <th>Dependencia</th>
-                    <th>Sede</th>
-                    <th>Responsable Local</th>
-                    <th style={{ textAlign: 'right' }}>Acciones</th>
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
+                  <th style={{ padding: '0.75rem 1rem' }}>Oficina / Espacio</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Piso / Nivel</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Dependencia</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Sede</th>
+                  <th style={{ padding: '0.75rem 1rem' }}>Responsable de Oficina</th>
+                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
+                </tr>
+              </thead>
+              <tbody>
+                {oficinas.map((ofi) => (
+                  <tr key={ofi.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
+                    <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
+                      🚪 {ofi.name}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                      {ofi.floor || 'Planta Principal'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#7c3aed', fontWeight: '600' }}>
+                      {ofi.dependencia?.name || 'Directa'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '600' }}>
+                      {ofi.sede?.name || ofi.dependencia?.sede?.name || 'Sede Principal'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
+                      {ofi.responsibleUser || 'Sin asignar'}
+                    </td>
+                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
+                      <button onClick={() => handleOpenOfiModal(ofi)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
+                      <button onClick={() => handleDelete('oficinas', ofi.id, ofi.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
+                    </td>
                   </tr>
-                </thead>
-                <tbody>
-                  {oficinas
-                    .filter((o) => filterDepId === 'ALL' || String(o.dependenciaId) === String(filterDepId))
-                    .map((o) => (
-                      <tr key={o.id}>
-                        <td><span style={{ background: '#dcfce7', color: '#15803d', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: 600 }}>{o.code || '---'}</span></td>
-                        <td><strong>{o.name}</strong></td>
-                        <td>{o.floor || '---'}</td>
-                        <td>{o.dependencia?.name || '---'}</td>
-                        <td>{o.sede?.name || o.dependencia?.sede?.name || 'Sede Principal'}</td>
-                        <td>{o.responsibleUser || '---'}</td>
-                        <td style={{ textAlign: 'right' }}>
-                          <button type="button" className="btn-ghost" onClick={() => handleOpenOfiModal(o, o.sedeId, o.dependenciaId)} style={{ padding: '0.3rem 0.6rem', marginRight: '0.3rem' }}>
-                            ✏️ Editar
-                          </button>
-                          <button type="button" className="btn-ghost" onClick={() => handleDelete('oficinas', o.id, o.name)} style={{ padding: '0.3rem 0.6rem', color: '#ef4444' }}>
-                            🗑️
-                          </button>
-                        </td>
-                      </tr>
-                    ))}
-                </tbody>
-              </table>
-            )}
-          </div>
-        </section>
-      )}
-
-      {/* ---------------------------------------------------- */}
-      {/* MODAL: SEDE                                          */}
-      {/* ---------------------------------------------------- */}
-      {modalType === 'sede' && (
-        <div className="modal-overlay" role="presentation" onClick={() => setModalType(null)}>
-          <div className="modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="section-heading">
-              <div>
-                <h3>{editingItem ? 'Editar Sede / Campus' : 'Registrar Nueva Sede'}</h3>
-                <p>Edificios o instalaciones físicas principales de la entidad.</p>
-              </div>
-            </div>
-
-            <form className="form-grid" onSubmit={handleSaveSede} style={{ marginTop: '1rem' }}>
-              <div className="field full">
-                <label>Nombre de la Sede *</label>
-                <input
-                  required
-                  value={sedeForm.name}
-                  onChange={(e) => setSedeForm({ ...sedeForm, name: e.target.value })}
-                  placeholder="Ej: Palacio Municipal (Sede Central)"
-                />
-              </div>
-
-              <div className="field">
-                <label>Código Identificador</label>
-                <input
-                  value={sedeForm.code}
-                  onChange={(e) => setSedeForm({ ...sedeForm, code: e.target.value })}
-                  placeholder="Ej: SED-01"
-                />
-              </div>
-
-              <div className="field">
-                <label>Ciudad</label>
-                <input
-                  value={sedeForm.city}
-                  onChange={(e) => setSedeForm({ ...sedeForm, city: e.target.value })}
-                  placeholder="Ej: Yopal"
-                />
-              </div>
-
-              <div className="field full">
-                <label>Dirección Física</label>
-                <input
-                  value={sedeForm.address}
-                  onChange={(e) => setSedeForm({ ...sedeForm, address: e.target.value })}
-                  placeholder="Ej: Diagonal 15 No. 13-35"
-                />
-              </div>
-
-              <div className="field">
-                <label>Teléfono de Contacto</label>
-                <input
-                  value={sedeForm.phone}
-                  onChange={(e) => setSedeForm({ ...sedeForm, phone: e.target.value })}
-                  placeholder="Ej: 6351234"
-                />
-              </div>
-
-              <div className="field">
-                <label>Administrador de Sede</label>
-                <input
-                  value={sedeForm.managerName}
-                  onChange={(e) => setSedeForm({ ...sedeForm, managerName: e.target.value })}
-                  placeholder="Ej: Ing. Administrador"
-                />
-              </div>
-
-              <div className="toolbar full" style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                <button type="submit" className="btn" disabled={saving}>
-                  {saving ? 'Guardando...' : editingItem ? 'Guardar Cambios' : 'Crear Sede'}
-                </button>
-                <button type="button" className="btn-ghost" onClick={() => setModalType(null)}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
+                ))}
+              </tbody>
+            </table>
           </div>
         </div>
       )}
 
-      {/* ---------------------------------------------------- */}
-      {/* MODAL: DEPENDENCIA / ÁREA                           */}
-      {/* ---------------------------------------------------- */}
-      {modalType === 'dependencia' && (
-        <div className="modal-overlay" role="presentation" onClick={() => setModalType(null)}>
-          <div className="modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="section-heading">
-              <div>
-                <h3>{editingItem ? 'Editar Dependencia / Área' : 'Nueva Dependencia o Secretaría'}</h3>
-                <p>Divisiones operativas y secretarías de la organización.</p>
+      {/* 🛠️ MODALS (SEDE, DEPENDENCIA, OFICINA) */}
+      {modalType && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          background: 'rgba(15, 23, 42, 0.65)',
+          backdropFilter: 'blur(6px)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '1.25rem',
+          zIndex: 9999
+        }}>
+          <div style={{
+            background: '#ffffff',
+            borderRadius: '16px',
+            width: '100%',
+            maxWidth: '560px',
+            boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.2), 0 10px 10px -5px rgba(0, 0, 0, 0.1)',
+            overflow: 'hidden',
+            border: '1px solid #e2e8f0'
+          }}>
+            {/* Modal Header */}
+            <div style={{
+              padding: '1.25rem 1.5rem',
+              background: '#0f172a',
+              color: '#ffffff',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between'
+            }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                <span style={{ fontSize: '1.25rem' }}>
+                  {modalType === 'sede' ? '🏛️' : modalType === 'dependencia' ? '📁' : '🚪'}
+                </span>
+                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700' }}>
+                  {editingItem ? 'Editar' : 'Registrar'} {modalType === 'sede' ? 'Sede / Campus' : modalType === 'dependencia' ? 'Dependencia / Área' : 'Oficina & Espacio'}
+                </h3>
               </div>
+              <button
+                onClick={() => setModalType(null)}
+                style={{ background: 'none', border: 'none', color: '#94a3b8', fontSize: '1.25rem', cursor: 'pointer' }}
+              >
+                ✕
+              </button>
             </div>
 
-            <form className="form-grid" onSubmit={handleSaveDep} style={{ marginTop: '1rem' }}>
-              <div className="field full">
-                <label>Nombre del Área o Dependencia *</label>
-                <input
-                  required
-                  value={depForm.name}
-                  onChange={(e) => setDepForm({ ...depForm, name: e.target.value })}
-                  placeholder="Ej: Dirección de TIC e Innovación"
-                />
-              </div>
+            {/* Modal Form */}
+            <form onSubmit={modalType === 'sede' ? handleSaveSede : modalType === 'dependencia' ? handleSaveDep : handleSaveOfi} style={{ padding: '1.5rem' }}>
+              
+              {/* SEDE FORM FIELDS */}
+              {modalType === 'sede' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Nombre de la Sede *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: Palacio Municipal (Sede Central)"
+                      value={sedeForm.name}
+                      onChange={(e) => setSedeForm({ ...sedeForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
 
-              <div className="field">
-                <label>Código / Sigla</label>
-                <input
-                  value={depForm.code}
-                  onChange={(e) => setDepForm({ ...depForm, code: e.target.value })}
-                  placeholder="Ej: TIC"
-                />
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Código / Sigla
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: SED-01"
+                        value={sedeForm.code}
+                        onChange={(e) => setSedeForm({ ...sedeForm, code: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Ciudad
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Yopal"
+                        value={sedeForm.city}
+                        onChange={(e) => setSedeForm({ ...sedeForm, city: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
 
-              <div className="field">
-                <label>Sede Perteneciente *</label>
-                <select
-                  value={depForm.sedeId}
-                  onChange={(e) => setDepForm({ ...depForm, sedeId: e.target.value })}
-                >
-                  <option value="">Seleccionar Sede...</option>
-                  {sedes.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Dirección Física
+                    </label>
+                    <input
+                      type="text"
+                      placeholder="Ej: Diagonal 15 No. 13-35"
+                      value={sedeForm.address}
+                      onChange={(e) => setSedeForm({ ...sedeForm, address: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
 
-              <div className="field">
-                <label>Líder o Secretario</label>
-                <input
-                  value={depForm.managerName}
-                  onChange={(e) => setDepForm({ ...depForm, managerName: e.target.value })}
-                  placeholder="Ej: Director TIC"
-                />
-              </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Teléfono / Extensión
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: 6358000 Ext 101"
+                        value={sedeForm.phone}
+                        onChange={(e) => setSedeForm({ ...sedeForm, phone: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Administrador de Sede
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Ing. Mario Gómez"
+                        value={sedeForm.managerName}
+                        onChange={(e) => setSedeForm({ ...sedeForm, managerName: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
 
-              <div className="field">
-                <label>Correo Electrónico</label>
-                <input
-                  type="email"
-                  value={depForm.email}
-                  onChange={(e) => setDepForm({ ...depForm, email: e.target.value })}
-                  placeholder="tic@yopal.gov.co"
-                />
-              </div>
+              {/* DEPENDENCIA FORM FIELDS */}
+              {modalType === 'dependencia' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Sede Perteneciente *
+                    </label>
+                    <select
+                      required
+                      value={depForm.sedeId}
+                      onChange={(e) => setDepForm({ ...depForm, sedeId: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    >
+                      <option value="">Seleccionar Sede</option>
+                      {sedes.map((s) => (
+                        <option key={s.id} value={s.id}>{s.name}</option>
+                      ))}
+                    </select>
+                  </div>
 
-              <div className="toolbar full" style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                <button type="submit" className="btn" disabled={saving}>
-                  {saving ? 'Guardando...' : editingItem ? 'Guardar Cambios' : 'Crear Dependencia'}
-                </button>
-                <button type="button" className="btn-ghost" onClick={() => setModalType(null)}>
-                  Cancelar
-                </button>
-              </div>
-            </form>
-          </div>
-        </div>
-      )}
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Nombre de la Dependencia / Secretaría *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: Dirección de TIC / Secretaría de Hacienda"
+                      value={depForm.name}
+                      onChange={(e) => setDepForm({ ...depForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
 
-      {/* ---------------------------------------------------- */}
-      {/* MODAL: OFICINA / ESPACIO                            */}
-      {/* ---------------------------------------------------- */}
-      {modalType === 'oficina' && (
-        <div className="modal-overlay" role="presentation" onClick={() => setModalType(null)}>
-          <div className="modal-card" role="dialog" aria-modal="true" onClick={(e) => e.stopPropagation()} style={{ maxWidth: '520px' }}>
-            <div className="section-heading">
-              <div>
-                <h3>{editingItem ? 'Editar Oficina / Espacio' : 'Registrar Nueva Oficina'}</h3>
-                <p>Espacio físico exacto donde se ubican los computadores y equipos.</p>
-              </div>
-            </div>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Código / Sigla
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: TIC-01"
+                        value={depForm.code}
+                        onChange={(e) => setDepForm({ ...depForm, code: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Jefe / Director de Área
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Lic. Carlos Pérez"
+                        value={depForm.managerName}
+                        onChange={(e) => setDepForm({ ...depForm, managerName: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
 
-            <form className="form-grid" onSubmit={handleSaveOfi} style={{ marginTop: '1rem' }}>
-              <div className="field full">
-                <label>Nombre de la Oficina o Espacio *</label>
-                <input
-                  required
-                  value={ofiForm.name}
-                  onChange={(e) => setOfiForm({ ...ofiForm, name: e.target.value })}
-                  placeholder="Ej: Mesa de Ayuda (Piso 2)"
-                />
-              </div>
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Correo Institucional de Contacto
+                    </label>
+                    <input
+                      type="email"
+                      placeholder="Ej: tic@yopal.gov.co"
+                      value={depForm.email}
+                      onChange={(e) => setDepForm({ ...depForm, email: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
+                </div>
+              )}
 
-              <div className="field">
-                <label>Dependencia / Área *</label>
-                <select
-                  value={ofiForm.dependenciaId}
-                  onChange={(e) => {
-                    const depId = e.target.value;
-                    const matchedDep = dependencias.find((d) => String(d.id) === String(depId));
-                    setOfiForm({
-                      ...ofiForm,
-                      dependenciaId: depId,
-                      sedeId: matchedDep?.sedeId ? String(matchedDep.sedeId) : ofiForm.sedeId,
-                    });
+              {/* OFICINA FORM FIELDS */}
+              {modalType === 'oficina' && (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Sede *
+                      </label>
+                      <select
+                        required
+                        value={ofiForm.sedeId}
+                        onChange={(e) => setOfiForm({ ...ofiForm, sedeId: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      >
+                        <option value="">Seleccionar Sede</option>
+                        {sedes.map((s) => (
+                          <option key={s.id} value={s.id}>{s.name}</option>
+                        ))}
+                      </select>
+                    </div>
+
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Dependencia
+                      </label>
+                      <select
+                        value={ofiForm.dependenciaId}
+                        onChange={(e) => setOfiForm({ ...ofiForm, dependenciaId: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      >
+                        <option value="">Oficina Directa de Sede</option>
+                        {dependencias
+                          .filter((d) => !ofiForm.sedeId || String(d.sedeId) === String(ofiForm.sedeId))
+                          .map((d) => (
+                            <option key={d.id} value={d.id}>{d.name}</option>
+                          ))}
+                      </select>
+                    </div>
+                  </div>
+
+                  <div>
+                    <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                      Nombre de la Oficina o Espacio Físico *
+                    </label>
+                    <input
+                      required
+                      type="text"
+                      placeholder="Ej: Mesa de Ayuda / Sala de Servidores / Ventanilla Única"
+                      value={ofiForm.name}
+                      onChange={(e) => setOfiForm({ ...ofiForm, name: e.target.value })}
+                      style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                    />
+                  </div>
+
+                  <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Piso / Nivel
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Piso 2 / Sótano / Bloque B"
+                        value={ofiForm.floor}
+                        onChange={(e) => setOfiForm({ ...ofiForm, floor: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                    <div>
+                      <label style={{ display: 'block', fontSize: '0.8rem', fontWeight: '700', color: '#334155', marginBottom: '0.35rem' }}>
+                        Responsable Local
+                      </label>
+                      <input
+                        type="text"
+                        placeholder="Ej: Ing. Jherson Rivera"
+                        value={ofiForm.responsibleUser}
+                        onChange={(e) => setOfiForm({ ...ofiForm, responsibleUser: e.target.value })}
+                        style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
+                      />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Form Buttons */}
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '1.75rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9' }}>
+                <button
+                  type="button"
+                  onClick={() => setModalType(null)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #cbd5e1',
+                    color: '#475569',
+                    padding: '0.6rem 1.25rem',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer'
                   }}
                 >
-                  <option value="">Seleccionar Dependencia...</option>
-                  {dependencias.map((d) => (
-                    <option key={d.id} value={d.id}>{d.name} ({d.sede?.name || 'Sede'})</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <label>Sede</label>
-                <select
-                  value={ofiForm.sedeId}
-                  onChange={(e) => setOfiForm({ ...ofiForm, sedeId: e.target.value })}
-                >
-                  <option value="">Seleccionar Sede...</option>
-                  {sedes.map((s) => (
-                    <option key={s.id} value={s.id}>{s.name}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="field">
-                <label>Piso o Nivel</label>
-                <input
-                  value={ofiForm.floor}
-                  onChange={(e) => setOfiForm({ ...ofiForm, floor: e.target.value })}
-                  placeholder="Ej: Piso 2, Ala Norte"
-                />
-              </div>
-
-              <div className="field">
-                <label>Código de Oficina</label>
-                <input
-                  value={ofiForm.code}
-                  onChange={(e) => setOfiForm({ ...ofiForm, code: e.target.value })}
-                  placeholder="Ej: OF-201"
-                />
-              </div>
-
-              <div className="field full">
-                <label>Responsable Local del Espacio</label>
-                <input
-                  value={ofiForm.responsibleUser}
-                  onChange={(e) => setOfiForm({ ...ofiForm, responsibleUser: e.target.value })}
-                  placeholder="Ej: Jherson Rivera"
-                />
-              </div>
-
-              <div className="toolbar full" style={{ display: 'flex', gap: '0.6rem', marginTop: '1rem', borderTop: '1px solid #eee', paddingTop: '1rem' }}>
-                <button type="submit" className="btn" disabled={saving}>
-                  {saving ? 'Guardando...' : editingItem ? 'Guardar Cambios' : 'Crear Oficina'}
-                </button>
-                <button type="button" className="btn-ghost" onClick={() => setModalType(null)}>
                   Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                    color: '#ffffff',
+                    padding: '0.6rem 1.5rem',
+                    borderRadius: '8px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    border: 'none',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)'
+                  }}
+                >
+                  {saving ? 'Guardando...' : 'Guardar Registro'}
                 </button>
               </div>
             </form>

@@ -22,11 +22,99 @@ function getCommonRoutes(prisma) {
   router.get('/locations', async (req, res, next) => {
     try {
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
-      const locations = await prisma.location.findMany({ 
-        where: orgFilter,
-        orderBy: { name: 'asc' } 
-      });
-      res.json(locations);
+      
+      const [rawLocations, sedes] = await Promise.all([
+        prisma.location.findMany({ 
+          where: orgFilter,
+          orderBy: { name: 'asc' } 
+        }).catch(() => []),
+        prisma.sede.findMany({
+          where: orgFilter,
+          include: {
+            dependencias: {
+              include: { oficinas: true },
+              orderBy: { name: 'asc' }
+            },
+            oficinas: {
+              orderBy: { name: 'asc' }
+            }
+          },
+          orderBy: { name: 'asc' }
+        }).catch(() => [])
+      ]);
+
+      const seenNames = new Set();
+      const combined = [];
+
+      // Add structured locations from hierarchy
+      for (const sede of sedes) {
+        if (!seenNames.has(sede.name)) {
+          seenNames.add(sede.name);
+          combined.push({
+            id: `sede-${sede.id}`,
+            name: sede.name,
+            description: `Sede: ${sede.address || ''} (${sede.city || 'Yopal'})`,
+            level: 'SEDE',
+            sedeName: sede.name
+          });
+        }
+
+        for (const dep of (sede.dependencias || [])) {
+          const depFullName = `${sede.name} - ${dep.name}`;
+          if (!seenNames.has(depFullName)) {
+            seenNames.add(depFullName);
+            combined.push({
+              id: `dep-${dep.id}`,
+              name: depFullName,
+              description: `Dependencia: ${dep.name} (${sede.name})`,
+              level: 'DEPENDENCIA',
+              sedeName: sede.name,
+              depName: dep.name
+            });
+          }
+
+          for (const ofi of (dep.oficinas || [])) {
+            const ofiFullName = `${sede.name} - ${dep.name} - ${ofi.name}`;
+            if (!seenNames.has(ofiFullName)) {
+              seenNames.add(ofiFullName);
+              combined.push({
+                id: `ofi-${ofi.id}`,
+                name: ofiFullName,
+                description: `Oficina: ${ofi.name} (${ofi.floor || 'Sin piso'})`,
+                level: 'OFICINA',
+                sedeName: sede.name,
+                depName: dep.name,
+                ofiName: ofi.name
+              });
+            }
+          }
+        }
+
+        for (const ofi of (sede.oficinas || [])) {
+          const ofiDirectName = `${sede.name} - ${ofi.name}`;
+          if (!seenNames.has(ofiDirectName)) {
+            seenNames.add(ofiDirectName);
+            combined.push({
+              id: `ofi-${ofi.id}`,
+              name: ofiDirectName,
+              description: `Oficina: ${ofi.name} (${sede.name})`,
+              level: 'OFICINA',
+              sedeName: sede.name,
+              ofiName: ofi.name
+            });
+          }
+        }
+      }
+
+      // Add any standalone legacy locations that aren't already included
+      for (const loc of rawLocations) {
+        if (!seenNames.has(loc.name)) {
+          seenNames.add(loc.name);
+          combined.push(loc);
+        }
+      }
+
+      res.json(combined.length > 0 ? combined : rawLocations);
     } catch (error) {
       next(error);
     }

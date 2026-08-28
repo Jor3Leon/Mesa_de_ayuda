@@ -86,6 +86,7 @@ function buildApp(prisma = new PrismaClient()) {
   app.use('/api/discovery', getDiscoveryRoutes(prisma));
   app.use('/discovery', getDiscoveryRoutes(prisma));
   app.use('/api/organization-structure', getOrgStructureRoutes(prisma));
+  app.use('/organization-structure', getOrgStructureRoutes(prisma));
   app.use('/api', getCommonRoutes(prisma));
 
   // 404 handler

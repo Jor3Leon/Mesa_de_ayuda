@@ -11,9 +11,7 @@ const { requireAuth, requirePermission, requireAnyPermission } = require('../lib
 
 function requireAgentApiKey(req, res, next) {
   const expectedKey = process.env.AGENT_API_KEY;
-  // If no API key is configured, allow all requests (backward compatible)
   if (!expectedKey) return next();
-
   const providedKey = req.headers['x-agent-key'];
   if (!providedKey || providedKey !== expectedKey) {
     return res.status(401).json({ error: 'Invalid or missing Agent API Key (X-Agent-Key header).' });
@@ -44,7 +42,7 @@ function getAssetRoutes(prisma) {
         if (org) orgId = org.id;
       }
 
-      // Upsert logic: find by serialNumber or hostname scoped to organization
+      // Upsert logic: find by serialNumber, MAC in networkSummary, or hostname scoped to organization
       let asset = null;
       
       if (serialNumber) {
@@ -56,6 +54,20 @@ function getAssetRoutes(prisma) {
         });
       }
       
+      // Match by MAC address in networkSummary if serialNumber not found or not provided
+      if (!asset && networkSummary) {
+        const macMatch = String(networkSummary).match(/([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/i);
+        if (macMatch) {
+          const cleanMac = macMatch[1].toUpperCase();
+          asset = await prisma.asset.findFirst({
+            where: {
+              networkSummary: { contains: cleanMac },
+              ...(orgId ? { organizationId: orgId } : {})
+            }
+          });
+        }
+      }
+
       if (!asset) {
         asset = await prisma.asset.findFirst({ 
           where: { 
@@ -90,26 +102,29 @@ function getAssetRoutes(prisma) {
         : installedSoftware;
 
       const data = {
-        hostname,
-        serialNumber: serialNumber || undefined,
-        ipAddress: ipAddress || '0.0.0.0',
-        osType: osType || 'Windows',
-        osVersion: osVersion || 'Unknown',
+        hostname: asset ? (asset.hostname || hostname) : hostname,
+        serialNumber: serialNumber || asset?.serialNumber || undefined,
+        ipAddress: ipAddress || asset?.ipAddress || '0.0.0.0',
+        osType: osType || asset?.osType || 'Windows',
+        osVersion: osVersion || asset?.osVersion || 'Unknown',
         status: 'ONLINE',
-        brand: brand || undefined,
-        model: model || undefined,
-        deviceType: deviceType || 'Unknown',
-        cpuModel: cpuModel || undefined,
-        ramSummary: ramSummary || undefined,
-        storageSummary: storageSummary || undefined,
-        networkSummary: networkSummary || undefined,
-        motherboard: motherboard || undefined,
-        graphicsInfo: graphicsInfo || undefined,
-        displayInfo: displayInfo || undefined,
-        assignedUser: assignedUser || undefined,
-        installedSoftware: serializedSoftware || undefined,
+        brand: asset?.brand || brand || undefined,
+        model: asset?.model || model || undefined,
+        deviceType: asset?.deviceType || deviceType || 'Unknown',
+        cpuModel: cpuModel || asset?.cpuModel || undefined,
+        ramSummary: ramSummary || asset?.ramSummary || undefined,
+        storageSummary: storageSummary || asset?.storageSummary || undefined,
+        networkSummary: networkSummary || asset?.networkSummary || undefined,
+        motherboard: motherboard || asset?.motherboard || undefined,
+        graphicsInfo: graphicsInfo || asset?.graphicsInfo || undefined,
+        displayInfo: displayInfo || asset?.displayInfo || undefined,
+        assignedUser: asset?.assignedUser || (assignedUser 
+          ? String(assignedUser).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim() 
+          : undefined),
+        location: asset?.location || undefined,
+        installedSoftware: serializedSoftware || asset?.installedSoftware || undefined,
         lastSeenAt: new Date(),
-        agentVersion: req.body.agentVersion || '1.0.0',
+        agentVersion: req.body.agentVersion || asset?.agentVersion || '1.0.0',
         organizationId: orgId || asset?.organizationId || null,
         customerId: customerId,
       };
@@ -242,7 +257,7 @@ function getAssetRoutes(prisma) {
     try {
       const id = Number.parseInt(req.params.id, 10);
       if (req.body.hostname !== undefined || req.body.serialNumber !== undefined) {
-        await ensureUniqueAssetIdentifiers(req.body, id);
+        await ensureUniqueAssetIdentifiers(req.body, id, req.auth.organizationId);
       }
 
       const updateData = {};
@@ -275,35 +290,48 @@ function getAssetRoutes(prisma) {
     }
   });
 
-  router.get('/:id/history', requirePermission('ASSETS_VIEW'), async (req, res, next) => {
+  router.get('/:id/history', requireAnyPermission('ASSETS_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const asset = await prisma.asset.findUnique({ where: { id } });
       if (!asset) throw createHttpError(404, 'Asset not found.');
 
-      const tickets = await prisma.ticket.findMany({
-        where: {
-          OR: [
-            { subject: { contains: asset.hostname } },
-            { description: { contains: asset.hostname } },
-            { description: { contains: asset.serialNumber || '---' } }
-          ]
-        },
-        orderBy: { createdAt: 'desc' }
-      });
+      const orConditions = [{ assetId: id }];
+      
+      if (asset.hostname && asset.hostname.trim()) {
+        const cleanHost = asset.hostname.trim();
+        orConditions.push({ title: { contains: cleanHost, mode: 'insensitive' } });
+        orConditions.push({ description: { contains: cleanHost, mode: 'insensitive' } });
+      }
+      if (asset.serialNumber && asset.serialNumber.trim()) {
+        const cleanSerial = asset.serialNumber.trim();
+        orConditions.push({ title: { contains: cleanSerial, mode: 'insensitive' } });
+        orConditions.push({ description: { contains: cleanSerial, mode: 'insensitive' } });
+      }
 
-      const maintenances = await prisma.maintenance.findMany({
-        where: { assetId: id },
-        orderBy: { date: 'desc' }
-      });
+      const [tickets, maintenances] = await Promise.all([
+        prisma.ticket.findMany({
+          where: {
+            OR: orConditions
+          },
+          include: {
+            assignedTo: { select: { id: true, name: true, username: true } },
+            createdBy: { select: { id: true, name: true, username: true } }
+          },
+          orderBy: { createdAt: 'desc' }
+        }),
+        prisma.maintenance.findMany({
+          where: { assetId: id },
+          orderBy: { date: 'desc' }
+        })
+      ]);
 
-      res.json({ tickets, maintenances });
+      res.json({ tickets: tickets || [], maintenances: maintenances || [] });
     } catch (error) {
+      console.error('Error in /assets/:id/history:', error);
       next(error);
     }
   });
-
-
 
   return router;
 }

@@ -2118,7 +2118,7 @@ export default function Tickets() {
 	                  <select value={form.ticketType || ''} onChange={(e) => setForm({...form, ticketType: e.target.value, category: '', sla: ''})} style={{ background: '#fff', border: '1px solid #ced4da', borderRadius: '4px', padding: '0.45rem', fontSize: '0.9rem' }}>
 	                    <option value="">Seleccionar tipo...</option>
 	                    <option value="Incidencia">Incidencia</option>
-	                    <option value="Petición">Petición</option>
+	                    <option value="Solicitud">Solicitud</option>
 	                  </select>
 	                </div>
 	                ) : null}
@@ -2640,7 +2640,7 @@ export default function Tickets() {
                   <label htmlFor="ticket-type" style={{ color: '#002D62', fontWeight: 500 }}>Tipo</label>
                   <select id="ticket-type" value={form.ticketType} onChange={(e) => setForm({...form, ticketType: e.target.value, category: ''})} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '0.4rem 0.6rem' }}>
                     <option value="Incidencia">Incidencia</option>
-                    <option value="Petición">Petición</option>
+                    <option value="Solicitud">Solicitud</option>
                   </select>
                 </div>
                 

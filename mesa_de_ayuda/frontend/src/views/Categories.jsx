@@ -1,6 +1,21 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { apiRequest } from '../lib/api';
 
+const TICKET_TYPES = [
+  { key: 'Incidencia', label: 'Incidencias', singular: 'Incidencia', icon: '🚨' },
+  { key: 'Solicitud', label: 'Solicitudes', singular: 'Solicitud', icon: '📋' },
+];
+
+function isMatchingType(catType, targetType) {
+  if (targetType === 'Incidencia') {
+    return catType === 'Incidencia';
+  }
+  if (targetType === 'Solicitud') {
+    return catType === 'Solicitud' || catType === 'Petición' || catType === 'Requerimiento';
+  }
+  return false;
+}
+
 const initialForm = {
   group: '',
   name: '',
@@ -43,7 +58,7 @@ export default function Categories() {
       setForm({
         group: category.group || '',
         name: category.name,
-        ticketType: category.ticketType,
+        ticketType: isMatchingType(category.ticketType, 'Solicitud') ? 'Solicitud' : 'Incidencia',
         sla: category.sla || '4 horas',
         isActive: category.isActive !== false,
       });
@@ -118,7 +133,7 @@ export default function Categories() {
 
   const filteredCategories = useMemo(() => {
     return categories.filter((c) => {
-      const matchesTab = c.ticketType === activeTab;
+      const matchesTab = isMatchingType(c.ticketType, activeTab);
       const q = search.toLowerCase().trim();
       const matchesSearch = !q || c.name?.toLowerCase().includes(q) || c.group?.toLowerCase().includes(q) || c.sla?.toLowerCase().includes(q);
       return matchesTab && matchesSearch;
@@ -273,13 +288,13 @@ export default function Categories() {
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Total Catálogo
+              Total Categorías
             </div>
             <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
               {categories.length}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              Tipologías registradas
+              En 2 tipologías de servicio
             </div>
           </div>
         </div>
@@ -410,7 +425,7 @@ export default function Categories() {
               ANS Promedio
             </div>
             <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
-              4h - 24h
+              2h - 8h
             </div>
             <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
               Ventana de resolución
@@ -447,7 +462,7 @@ export default function Categories() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
-        {/* Type Segmented Tabs */}
+        {/* Type Segmented Tabs: ONLY Incidencias and Solicitudes */}
         <div
           style={{
             display: 'flex',
@@ -459,28 +474,32 @@ export default function Categories() {
             flexWrap: 'wrap',
           }}
         >
-          {['Incidencia', 'Requerimiento', 'Problema', 'Cambio'].map((type) => {
-            const count = categories.filter((c) => c.ticketType === type).length;
-            const isSelected = activeTab === type;
+          {TICKET_TYPES.map((t) => {
+            const count = categories.filter((c) => isMatchingType(c.ticketType, t.key)).length;
+            const isSelected = activeTab === t.key;
             return (
               <button
-                key={type}
+                key={t.key}
                 type="button"
-                onClick={() => setActiveTab(type)}
+                onClick={() => setActiveTab(t.key)}
                 style={{
                   background: isSelected ? '#002D62' : 'transparent',
                   color: isSelected ? '#ffffff' : '#475569',
                   border: isSelected ? '1px solid rgba(0, 209, 255, 0.4)' : '1px solid transparent',
-                  padding: '0.45rem 0.9rem',
+                  padding: '0.5rem 1.2rem',
                   borderRadius: '8px',
-                  fontWeight: isSelected ? '700' : '500',
-                  fontSize: '0.82rem',
+                  fontWeight: isSelected ? '700' : '600',
+                  fontSize: '0.85rem',
                   cursor: 'pointer',
                   transition: 'all 0.15s ease',
                   boxShadow: isSelected ? '0 2px 8px rgba(0, 45, 98, 0.3)' : 'none',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
                 }}
               >
-                {type}s ({count})
+                <span>{t.icon}</span>
+                <span>{t.label} ({count})</span>
               </button>
             );
           })}
@@ -494,7 +513,7 @@ export default function Categories() {
           </svg>
           <input
             type="text"
-            placeholder={`Buscar categorías o grupos en ${activeTab}s...`}
+            placeholder={`Buscar en ${activeTab === 'Incidencia' ? 'Incidencias' : 'Solicitudes'}...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -513,13 +532,13 @@ export default function Categories() {
       {loading ? (
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
           <div style={{ width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTopColor: '#002D62', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem auto' }} />
-          Cargando catálogo de categorías por grupo temático...
+          Cargando catálogo de categorías...
         </div>
       ) : Object.keys(groupedCategories).length === 0 ? (
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3.5rem 1.5rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
           <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏷️</div>
           <h3 style={{ margin: '0 0 0.35rem 0', color: '#002D62', fontWeight: 800 }}>
-            No hay categorías de {activeTab}s
+            No hay categorías de {activeTab === 'Incidencia' ? 'Incidencias' : 'Solicitudes'}
           </h3>
           <p style={{ margin: '0 0 1.5rem 0', color: '#64748b', fontSize: '0.875rem' }}>
             Crea la primera categoría para clasificar tickets y establecer los tiempos de respuesta ANS.
@@ -789,7 +808,7 @@ export default function Categories() {
                 <input
                   required
                   type="text"
-                  placeholder="Ej: Falla de Conexión a Internet"
+                  placeholder="Ej: Falla de Conexión a Internet / Creación de Usuario"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   style={{
@@ -825,9 +844,7 @@ export default function Categories() {
                     }}
                   >
                     <option value="Incidencia">🚨 Incidencia</option>
-                    <option value="Requerimiento">📋 Requerimiento</option>
-                    <option value="Problema">🔍 Problema</option>
-                    <option value="Cambio">🔄 Cambio</option>
+                    <option value="Solicitud">📋 Solicitud</option>
                   </select>
                 </div>
 
@@ -881,6 +898,7 @@ export default function Categories() {
                 >
                   <option value="1 hora">⚡ 1 hora (Crítico)</option>
                   <option value="2 horas">⏱️ 2 horas (Urgente)</option>
+                  <option value="3 horas">⏱️ 3 horas</option>
                   <option value="4 horas">⏱️ 4 horas (Estándar)</option>
                   <option value="8 horas">📅 8 horas (1 día hábil)</option>
                   <option value="24 horas">📅 24 horas</option>

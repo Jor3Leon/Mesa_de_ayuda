@@ -9,7 +9,13 @@ export default function CategorySelector({ categoriesConfig, ticketType, value, 
   const filteredCategories = useMemo(() => {
     let list = categoriesConfig || [];
     if (ticketType) {
-      list = list.filter(c => c.ticketType === ticketType);
+      const isSolicitud = ticketType === 'Solicitud' || ticketType === 'Petición' || ticketType === 'Requerimiento';
+      list = list.filter(c => {
+        if (isSolicitud) {
+          return c.ticketType === 'Solicitud' || c.ticketType === 'Petición' || c.ticketType === 'Requerimiento';
+        }
+        return c.ticketType === ticketType;
+      });
     }
     
     // Filter by search

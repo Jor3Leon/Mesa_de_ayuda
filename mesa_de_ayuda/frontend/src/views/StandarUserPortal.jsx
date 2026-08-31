@@ -705,8 +705,8 @@ export default function StandarUserPortal() {
                     outline: 'none',
                   }}
                 >
-                  <option value="Incidencia">🚨 Falla o Incidencia (Equipo dañado, sin internet, impresora)</option>
-                  <option value="Requerimiento">📋 Requerimiento o Servicio (Instalación software, cuenta nueva)</option>
+                  <option value="Incidencia">🚨 Incidencia (Falla, equipo dañado, sin internet, impresora)</option>
+                  <option value="Solicitud">📋 Solicitud (Instalación de software, accesos, peticiones)</option>
                 </select>
               </div>
 

@@ -19,7 +19,11 @@ module.exports = function getCategoryRoutes(prisma) {
       const where = { ...orgFilter };
 
       if (ticketType) {
-        where.ticketType = ticketType;
+        if (ticketType === 'Solicitud' || ticketType === 'Petición') {
+          where.ticketType = { in: ['Solicitud', 'Petición', 'Requerimiento'] };
+        } else {
+          where.ticketType = ticketType;
+        }
       }
       
       if (isActive !== undefined) {
@@ -35,7 +39,7 @@ module.exports = function getCategoryRoutes(prisma) {
         ]
       });
 
-      // Si hay menos de 10 categorías registradas, sembrar automáticamente las 35 categorías por defecto
+      // Si hay menos de 10 categorías registradas, sembrar automáticamente las categorías por defecto
       if (categories.length < 10) {
         await ensureDefaultCategories(prisma, req.auth.organizationId);
         categories = await prisma.ticketCategory.findMany({
@@ -48,7 +52,13 @@ module.exports = function getCategoryRoutes(prisma) {
         });
       }
 
-      res.json(categories);
+      // Normalizar ticketType a 'Solicitud' para consistencia con frontend
+      const normalizedCategories = categories.map(c => ({
+        ...c,
+        ticketType: (c.ticketType === 'Petición' || c.ticketType === 'Requerimiento') ? 'Solicitud' : c.ticketType
+      }));
+
+      res.json(normalizedCategories);
     } catch (error) {
       next(error);
     }

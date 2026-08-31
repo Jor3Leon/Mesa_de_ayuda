@@ -14,9 +14,9 @@ const initialForm = {
 function getRoleBadgeStyle(role) {
   const r = (role || '').toUpperCase();
   if (r.includes('ADMIN')) return { bg: '#fee2e2', color: '#991b1b', border: '#fecaca', label: '🛡️ Administrador' };
-  if (r.includes('3') || r.includes('NIVEL 3')) return { bg: '#fef3c7', color: '#92400e', border: '#fde68a', label: '⚡ Nivel 3 (Infra)' };
-  if (r.includes('2') || r.includes('NIVEL 2')) return { bg: '#e0e7ff', color: '#3730a3', border: '#c7d2fe', label: '🔧 Nivel 2 (Especialista)' };
-  if (r.includes('1') || r.includes('NIVEL 1')) return { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', label: '🎧 Nivel 1 (Soporte)' };
+  if (r.includes('3') || r.includes('NIVEL 3')) return { bg: '#fef3c7', color: '#92400e', border: '#fde68a', label: '⚡ Nivel 3' };
+  if (r.includes('2') || r.includes('NIVEL 2')) return { bg: '#e0e7ff', color: '#3730a3', border: '#c7d2fe', label: '🔧 Nivel 2' };
+  if (r.includes('1') || r.includes('NIVEL 1')) return { bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe', label: '🎧 Nivel 1' };
   return { bg: '#f1f5f9', color: '#475569', border: '#cbd5e1', label: '👤 Usuario Estándar' };
 }
 
@@ -685,6 +685,7 @@ export default function Users() {
                             color: badge.color,
                             border: `1px solid ${badge.border}`,
                             display: 'inline-block',
+                            whiteSpace: 'nowrap',
                           }}
                         >
                           {badge.label}

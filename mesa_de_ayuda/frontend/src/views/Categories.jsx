@@ -6,6 +6,51 @@ const TICKET_TYPES = [
   { key: 'Solicitud', label: 'SOLICITUD', singular: 'Solicitud', icon: '📋' },
 ];
 
+export const ICON_CATEGORIES = [
+  {
+    title: '🖥️ Equipos & Dispositivos',
+    icons: ['🖥️', '💻', '📱', '⌨️', '🖱️', '💾', '🔌', '🔋', '📺', '🎧'],
+  },
+  {
+    title: '📡 Redes & Telecomunicaciones',
+    icons: ['📡', '🌐', '📶', '🖧', '🛰️', '🔗', '☁️', '🚀', '📍'],
+  },
+  {
+    title: '🖨️ Impresión & Periféricos',
+    icons: ['🖨️', '📠', '📄', '📑', '📦', '📷', '📽️', '🏷️', '🔖'],
+  },
+  {
+    title: '🛠️ Mantenimiento & Soporte',
+    icons: ['🛠️', '🔧', '🔨', '⚙️', '🔩', '🧹', '🛡️', '⚡', '🩹'],
+  },
+  {
+    title: '📂 Sistemas & Software',
+    icons: ['💻', '📂', '📁', '🗄️', '📊', '📝', '💿', '🧩', '📈'],
+  },
+  {
+    title: '🔑 Seguridad & Cuentas',
+    icons: ['🔑', '🔒', '👤', '👥', '🆔', '🎟️', '🛡️', '🚨', '🔐'],
+  },
+  {
+    title: '📧 Comunicaciones & General',
+    icons: ['📧', '✉️', '💬', '📞', '📢', '🔔', '📋', '⭐', '💡'],
+  },
+];
+
+export function resolveSubgroupIcon(subName, customIcon) {
+  if (customIcon) return customIcon;
+  const n = (subName || '').toLowerCase().trim();
+  if (n.includes('equipo') || n.includes('computo') || n.includes('hardware') || n.includes('laptop')) return '🖥️';
+  if (n.includes('impresora') || n.includes('escáner') || n.includes('escaner') || n.includes('tinta') || n.includes('toner')) return '🖨️';
+  if (n.includes('red') || n.includes('wifi') || n.includes('internet') || n.includes('conectividad')) return '📡';
+  if (n.includes('mantenimiento') || n.includes('soporte') || n.includes('revision') || n.includes('revisión')) return '🛠️';
+  if (n.includes('correo') || n.includes('email') || n.includes('mensaje')) return '📧';
+  if (n.includes('credencial') || n.includes('usuario') || n.includes('acceso') || n.includes('contraseña') || n.includes('password')) return '🔑';
+  if (n.includes('sistema') || n.includes('software') || n.includes('aplicacion') || n.includes('aplicación') || n.includes('qf') || n.includes('erp') || n.includes('universo')) return '💻';
+  if (n.includes('online') || n.includes('web') || n.includes('portal')) return '🌐';
+  return '📁';
+}
+
 function isMatchingType(catType, targetType) {
   if (targetType === 'Incidencia') {
     return catType === 'Incidencia';
@@ -19,7 +64,8 @@ function isMatchingType(catType, targetType) {
 const initialForm = {
   group: '',
   name: '',
-  ticketType: 'Incidencia',
+  ticketType: 'Solicitud',
+  icon: '💻',
   sla: '4 horas',
   isActive: true,
 };
@@ -35,6 +81,7 @@ export default function Categories() {
   const [editingId, setEditingId] = useState(null);
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('Solicitud');
+  const [activeIconCategory, setActiveIconCategory] = useState(0);
 
   useEffect(() => {
     fetchCategories();
@@ -52,19 +99,22 @@ export default function Categories() {
     }
   }
 
-  function handleOpenModal(category = null) {
+  function handleOpenModal(category = null, defaultGroup = '') {
     if (category) {
       setEditingId(category.id);
+      const defaultIcon = resolveSubgroupIcon(category.group || category.name);
       setForm({
         group: category.group || '',
         name: category.name,
         ticketType: isMatchingType(category.ticketType, 'Solicitud') ? 'Solicitud' : 'Incidencia',
+        icon: category.icon || defaultIcon,
         sla: category.sla || '4 horas',
         isActive: category.isActive !== false,
       });
     } else {
       setEditingId(null);
-      setForm({ ...initialForm, ticketType: activeTab });
+      const defaultIcon = defaultGroup ? resolveSubgroupIcon(defaultGroup) : '💻';
+      setForm({ ...initialForm, ticketType: activeTab, group: defaultGroup, icon: defaultIcon });
     }
     setFeedback('');
     setError('');
@@ -229,9 +279,12 @@ export default function Categories() {
         onMouseLeave={(e) => { if (isActive) e.currentTarget.style.borderColor = '#e2e8f0'; }}
       >
         <div style={{ flex: 1, minWidth: 0 }}>
-          <strong style={{ color: '#0f172a', fontSize: '0.88rem', display: 'block', wordBreak: 'break-word' }}>
-            {cat.name}
-          </strong>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+            <span style={{ fontSize: '1rem' }}>{cat.icon || resolveSubgroupIcon(cat.name)}</span>
+            <strong style={{ color: '#0f172a', fontSize: '0.88rem', wordBreak: 'break-word' }}>
+              {cat.name}
+            </strong>
+          </div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem', marginTop: '0.25rem', flexWrap: 'wrap' }}>
             <span
               style={{
@@ -372,7 +425,7 @@ export default function Categories() {
               </span>
             </div>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              Estructura oficial de clasificación por grupos temáticos y tiempos reglamentarios de respuesta.
+              Estructura oficial de clasificación por grupos temáticos, iconos contextuales y tiempos de respuesta.
             </p>
           </div>
         </div>
@@ -783,42 +836,48 @@ export default function Categories() {
                         gap: '1.25rem',
                       }}
                     >
-                      {Object.entries(group.subgroups).map(([subName, items]) => (
-                        <div
-                          key={subName}
-                          style={{
-                            background: '#f8fafc',
-                            borderRadius: '12px',
-                            border: '1px solid #e2e8f0',
-                            padding: '1.1rem',
-                            display: 'flex',
-                            flexDirection: 'column',
-                          }}
-                        >
+                      {Object.entries(group.subgroups).map(([subName, items]) => {
+                        const contextualIcon = resolveSubgroupIcon(subName);
+                        return (
                           <div
+                            key={subName}
                             style={{
-                              fontWeight: 800,
-                              color: '#002D62',
-                              fontSize: '0.92rem',
-                              marginBottom: '0.75rem',
-                              paddingBottom: '0.45rem',
-                              borderBottom: '1.5px solid #e2e8f0',
+                              background: '#f8fafc',
+                              borderRadius: '12px',
+                              border: '1px solid #e2e8f0',
+                              padding: '1.1rem',
                               display: 'flex',
-                              alignItems: 'center',
-                              justifyContent: 'space-between',
+                              flexDirection: 'column',
                             }}
                           >
-                            <span>📌 {subName}</span>
-                            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
-                              {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
-                            </span>
-                          </div>
+                            <div
+                              style={{
+                                fontWeight: 800,
+                                color: '#002D62',
+                                fontSize: '0.92rem',
+                                marginBottom: '0.75rem',
+                                paddingBottom: '0.45rem',
+                                borderBottom: '1.5px solid #e2e8f0',
+                                display: 'flex',
+                                alignItems: 'center',
+                                justifyContent: 'space-between',
+                              }}
+                            >
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '1.1rem' }}>{contextualIcon}</span>
+                                <span>{subName}</span>
+                              </div>
+                              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
+                                {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
+                              </span>
+                            </div>
 
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
-                            {items.map((cat) => renderCategoryItem(cat))}
+                            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
+                              {items.map((cat) => renderCategoryItem(cat))}
+                            </div>
                           </div>
-                        </div>
-                      ))}
+                        );
+                      })}
                     </div>
                   ) : (
                     /* Direct horizontal multi-column layout for other categories */
@@ -839,7 +898,7 @@ export default function Categories() {
         </div>
       )}
 
-      {/* 🪟 FLOATING MODAL WITH BACKDROP BLUR */}
+      {/* 🪟 FLOATING MODAL WITH BACKDROP BLUR & RICH ICON POOL */}
       {showModal && (
         <div
           style={{
@@ -859,8 +918,10 @@ export default function Categories() {
             style={{
               background: '#ffffff',
               borderRadius: '20px',
-              maxWidth: '500px',
+              maxWidth: '560px',
               width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
               padding: '2rem',
               boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
               border: '1px solid #e2e8f0',
@@ -868,28 +929,29 @@ export default function Categories() {
             }}
             onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                 <div
                   style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
                     background: '#f0f9ff',
                     color: '#002D62',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
-                    border: '1px solid rgba(0, 209, 255, 0.3)',
+                    border: '1.5px solid rgba(0, 209, 255, 0.4)',
+                    fontSize: '1.35rem',
                   }}
                 >
-                  🏷️
+                  {form.icon || '🏷️'}
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#002D62', fontWeight: '800' }}>
                     {editingId ? 'Editar Categoría' : 'Nueva Categoría'}
                   </h3>
-                  <small style={{ color: '#64748b' }}>Definición de tipología y tiempo ANS</small>
+                  <small style={{ color: '#64748b' }}>Definición de tipología, icono y tiempo ANS</small>
                 </div>
               </div>
               <button
@@ -913,6 +975,7 @@ export default function Categories() {
             </div>
 
             <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              {/* Name */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                   Nombre de la Categoría *
@@ -936,6 +999,7 @@ export default function Categories() {
                 />
               </div>
 
+              {/* Type and Group */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
@@ -967,9 +1031,13 @@ export default function Categories() {
                   <input
                     type="text"
                     list="group-options"
-                    placeholder="Ej: Sistemas de la Información"
+                    placeholder="Ej: Infraestructura - Equipos"
                     value={form.group}
-                    onChange={(e) => setForm({ ...form, group: e.target.value })}
+                    onChange={(e) => {
+                      const newGroup = e.target.value;
+                      const autoIcon = resolveSubgroupIcon(newGroup);
+                      setForm({ ...form, group: newGroup, icon: form.icon || autoIcon });
+                    }}
                     required
                     style={{
                       width: '100%',
@@ -986,10 +1054,91 @@ export default function Categories() {
                     {uniqueGroups.map((g) => (
                       <option key={g} value={g} />
                     ))}
+                    <option value="Sistemas de la Información" />
+                    <option value="Credenciales de Acceso" />
+                    <option value="Soporte Universo Online" />
+                    <option value="Infraestructura - Equipos" />
+                    <option value="Infraestructura - Red" />
+                    <option value="Infraestructura - Impresoras/Escáneres" />
+                    <option value="Plan de Mantenimiento" />
+                    <option value="Correo Institucional" />
                   </datalist>
                 </div>
               </div>
 
+              {/* 🎨 POOL DE ICONOS (ICON PICKER) */}
+              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+                  <label style={{ fontSize: '0.82rem', fontWeight: '700', color: '#002D62', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                    <span>🎨 Pool de Iconos para Selección</span>
+                  </label>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Seleccionado:</span>
+                    <span style={{ fontSize: '1.15rem', background: '#ffffff', padding: '0.1rem 0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
+                      {form.icon}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Category Pills inside Pool */}
+                <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.4rem', marginBottom: '0.5rem' }}>
+                  {ICON_CATEGORIES.map((cat, idx) => (
+                    <button
+                      key={cat.title}
+                      type="button"
+                      onClick={() => setActiveIconCategory(idx)}
+                      style={{
+                        fontSize: '0.72rem',
+                        fontWeight: activeIconCategory === idx ? '700' : '500',
+                        background: activeIconCategory === idx ? '#002D62' : '#ffffff',
+                        color: activeIconCategory === idx ? '#ffffff' : '#475569',
+                        border: activeIconCategory === idx ? '1px solid #002D62' : '1px solid #e2e8f0',
+                        borderRadius: '6px',
+                        padding: '0.2rem 0.5rem',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease',
+                      }}
+                    >
+                      {cat.title}
+                    </button>
+                  ))}
+                </div>
+
+                {/* Grid of Icons in active category */}
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '0.4rem', background: '#ffffff', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+                  {ICON_CATEGORIES[activeIconCategory].icons.map((ic) => {
+                    const isSelected = form.icon === ic;
+                    return (
+                      <button
+                        key={ic}
+                        type="button"
+                        onClick={() => setForm({ ...form, icon: ic })}
+                        style={{
+                          fontSize: '1.25rem',
+                          background: isSelected ? '#e0f8ff' : 'transparent',
+                          border: isSelected ? '2px solid #00D1FF' : '1px solid transparent',
+                          borderRadius: '8px',
+                          padding: '0.35rem 0',
+                          cursor: 'pointer',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          transition: 'all 0.15s ease',
+                          transform: isSelected ? 'scale(1.15)' : 'none',
+                        }}
+                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#f1f5f9'; }}
+                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+                        title={`Seleccionar ${ic}`}
+                      >
+                        {ic}
+                      </button>
+                    );
+                  })}
+                </div>
+              </div>
+
+              {/* SLA */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                   Acuerdo de Nivel de Servicio (ANS) *
@@ -1018,6 +1167,7 @@ export default function Categories() {
                 </select>
               </div>
 
+              {/* Active Toggle */}
               <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
                 <input
                   type="checkbox"
@@ -1031,6 +1181,7 @@ export default function Categories() {
                 </label>
               </div>
 
+              {/* Modal Actions */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"

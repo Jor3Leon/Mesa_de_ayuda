@@ -1061,8 +1061,8 @@ function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isColl
             </div>
             <div style={{
               overflow: 'hidden',
-              maxHeight: collapsed[section.title] ? '0px' : '500px',
-              transition: 'max-height 0.3s cubic-bezier(0.4, 0, 0.2, 1)',
+              maxHeight: collapsed[section.title] ? '0px' : '2000px',
+              transition: 'max-height 0.35s cubic-bezier(0.4, 0, 0.2, 1)',
             }}>
               {section.items.map((item) => (
                 <Link key={item.path} to={item.path} className={`sidebar-item ${isActive(item.path) ? 'active' : ''}`} onClick={onClose}>

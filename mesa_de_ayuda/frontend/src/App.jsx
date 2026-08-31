@@ -963,12 +963,9 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
           </div>
         )}
 
-        <button type="button" className="profile-chip profile-chip-button" onClick={onOpenProfile}>
+        <button type="button" className="profile-chip profile-chip-button" onClick={onOpenProfile} title="Mi Perfil">
           <UserAvatar user={user} />
-          <div>
-            <strong>{user.name}</strong>
-            <small>{user.phone || user.email}</small>
-          </div>
+          <strong style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 700 }}>{user.name}</strong>
         </button>
         <button type="button" className="btn-ghost" onClick={onLogout}>
           Salir

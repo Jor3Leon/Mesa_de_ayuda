@@ -9,31 +9,31 @@ const TICKET_TYPES = [
 export const ICON_CATEGORIES = [
   {
     title: '🖥️ Equipos & Dispositivos',
-    icons: ['🖥️', '💻', '📱', '⌨️', '🖱️', '💾', '🔌', '🔋', '📺', '🎧'],
+    icons: ['🖥️', '💻', '📱', '⌨️', '🖱️', '💾', '🔌', '🔋', '📺', '🎧', '🖲️', '🕹️'],
   },
   {
-    title: '📡 Redes & Telecomunicaciones',
-    icons: ['📡', '🌐', '📶', '🖧', '🛰️', '🔗', '☁️', '🚀', '📍'],
+    title: '📡 Redes & Conectividad',
+    icons: ['📡', '🌐', '📶', '🖧', '🛰️', '🔗', '☁️', '🚀', '📍', '🌍', '🗺️'],
   },
   {
     title: '🖨️ Impresión & Periféricos',
-    icons: ['🖨️', '📠', '📄', '📑', '📦', '📷', '📽️', '🏷️', '🔖'],
+    icons: ['🖨️', '📠', '📄', '📑', '📦', '📷', '📽️', '🏷️', '🔖', '🗂️'],
   },
   {
     title: '🛠️ Mantenimiento & Soporte',
-    icons: ['🛠️', '🔧', '🔨', '⚙️', '🔩', '🧹', '🛡️', '⚡', '🩹'],
+    icons: ['🛠️', '🔧', '🔨', '⚙️', '🔩', '🧹', '🛡️', '⚡', '🩹', '🧰', '🪛'],
   },
   {
     title: '📂 Sistemas & Software',
-    icons: ['💻', '📂', '📁', '🗄️', '📊', '📝', '💿', '🧩', '📈'],
+    icons: ['💻', '📂', '📁', '🗄️', '📊', '📝', '💿', '🧩', '📈', '📋', '🗃️'],
   },
   {
     title: '🔑 Seguridad & Cuentas',
-    icons: ['🔑', '🔒', '👤', '👥', '🆔', '🎟️', '🛡️', '🚨', '🔐'],
+    icons: ['🔑', '🔒', '👤', '👥', '🆔', '🎟️', '🛡️', '🚨', '🔐', '🪪', '🕵️'],
   },
   {
     title: '📧 Comunicaciones & General',
-    icons: ['📧', '✉️', '💬', '📞', '📢', '🔔', '📋', '⭐', '💡'],
+    icons: ['📧', '✉️', '💬', '📞', '📢', '🔔', '⭐', '💡', '📌', '✨', '🏷️'],
   },
 ];
 
@@ -48,6 +48,7 @@ export function resolveSubgroupIcon(subName, customIcon) {
   if (n.includes('credencial') || n.includes('usuario') || n.includes('acceso') || n.includes('contraseña') || n.includes('password')) return '🔑';
   if (n.includes('sistema') || n.includes('software') || n.includes('aplicacion') || n.includes('aplicación') || n.includes('qf') || n.includes('erp') || n.includes('universo')) return '💻';
   if (n.includes('online') || n.includes('web') || n.includes('portal')) return '🌐';
+  if (n.includes('infraestructura')) return '🏗️';
   return '📁';
 }
 
@@ -61,14 +62,83 @@ function isMatchingType(catType, targetType) {
   return false;
 }
 
-const initialForm = {
-  group: '',
-  name: '',
-  ticketType: 'Solicitud',
-  icon: '💻',
-  sla: '4 horas',
-  isActive: true,
-};
+// Reusable Icon Picker Component
+function IconPicker({ selectedIcon, onSelectIcon }) {
+  const [activeCatIdx, setActiveCatIdx] = useState(0);
+
+  return (
+    <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
+        <label style={{ fontSize: '0.82rem', fontWeight: '700', color: '#002D62', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+          <span>🎨 Personalizar Icono:</span>
+        </label>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+          <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Seleccionado:</span>
+          <span style={{ fontSize: '1.2rem', background: '#ffffff', padding: '0.1rem 0.45rem', borderRadius: '8px', border: '1.5px solid #00D1FF' }}>
+            {selectedIcon || '🏷️'}
+          </span>
+        </div>
+      </div>
+
+      {/* Category Tabs */}
+      <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.4rem', marginBottom: '0.5rem' }}>
+        {ICON_CATEGORIES.map((cat, idx) => (
+          <button
+            key={cat.title}
+            type="button"
+            onClick={() => setActiveCatIdx(idx)}
+            style={{
+              fontSize: '0.72rem',
+              fontWeight: activeCatIdx === idx ? '700' : '500',
+              background: activeCatIdx === idx ? '#002D62' : '#ffffff',
+              color: activeCatIdx === idx ? '#ffffff' : '#475569',
+              border: activeCatIdx === idx ? '1px solid #002D62' : '1px solid #e2e8f0',
+              borderRadius: '6px',
+              padding: '0.22rem 0.5rem',
+              cursor: 'pointer',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {cat.title}
+          </button>
+        ))}
+      </div>
+
+      {/* Grid of Icons in selected category */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))', gap: '0.35rem', background: '#ffffff', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
+        {ICON_CATEGORIES[activeCatIdx].icons.map((ic) => {
+          const isSelected = selectedIcon === ic;
+          return (
+            <button
+              key={ic}
+              type="button"
+              onClick={() => onSelectIcon(ic)}
+              style={{
+                fontSize: '1.25rem',
+                background: isSelected ? '#e0f8ff' : 'transparent',
+                border: isSelected ? '2px solid #00D1FF' : '1px solid transparent',
+                borderRadius: '8px',
+                padding: '0.3rem 0',
+                cursor: 'pointer',
+                display: 'flex',
+                alignItems: 'center',
+                justifyContent: 'center',
+                transition: 'all 0.15s ease',
+                transform: isSelected ? 'scale(1.15)' : 'none',
+              }}
+              onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#f1f5f9'; }}
+              onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
+              title={`Seleccionar ${ic}`}
+            >
+              {ic}
+            </button>
+          );
+        })}
+      </div>
+    </div>
+  );
+}
 
 export default function Categories() {
   const [categories, setCategories] = useState([]);
@@ -76,12 +146,43 @@ export default function Categories() {
   const [error, setError] = useState('');
   const [feedback, setFeedback] = useState('');
   const [search, setSearch] = useState('');
-  const [showModal, setShowModal] = useState(false);
-  const [form, setForm] = useState(initialForm);
-  const [editingId, setEditingId] = useState(null);
-  const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('Solicitud');
-  const [activeIconCategory, setActiveIconCategory] = useState(0);
+
+  // Modal 1: Nueva Categoría Principal (Grupo Temático)
+  const [showMainCategoryModal, setShowMainCategoryModal] = useState(false);
+  const [mainCatForm, setMainCatForm] = useState({
+    name: '',
+    ticketType: 'Solicitud',
+    icon: '📁',
+    firstItemName: 'General',
+    sla: '4 horas',
+  });
+
+  // Modal 2: Nueva Subcategoría / Ítem (Directo desde la tarjeta)
+  const [showSubcategoryModal, setShowSubcategoryModal] = useState(false);
+  const [subcatForm, setSubcatForm] = useState({
+    mainGroup: '',
+    subpanel: '',
+    name: '',
+    ticketType: 'Solicitud',
+    icon: '🖥️',
+    sla: '4 horas',
+    isActive: true,
+  });
+
+  // Modal 3: Edición de Categoría existente
+  const [showEditModal, setShowEditModal] = useState(false);
+  const [editForm, setEditForm] = useState({
+    id: null,
+    name: '',
+    group: '',
+    ticketType: 'Solicitud',
+    icon: '💻',
+    sla: '4 horas',
+    isActive: true,
+  });
+
+  const [saving, setSaving] = useState(false);
 
   useEffect(() => {
     fetchCategories();
@@ -99,59 +200,139 @@ export default function Categories() {
     }
   }
 
-  function handleOpenModal(category = null, defaultGroup = '') {
-    if (category) {
-      setEditingId(category.id);
-      const defaultIcon = resolveSubgroupIcon(category.group || category.name);
-      setForm({
-        group: category.group || '',
-        name: category.name,
-        ticketType: isMatchingType(category.ticketType, 'Solicitud') ? 'Solicitud' : 'Incidencia',
-        icon: category.icon || defaultIcon,
-        sla: category.sla || '4 horas',
-        isActive: category.isActive !== false,
-      });
-    } else {
-      setEditingId(null);
-      const defaultIcon = defaultGroup ? resolveSubgroupIcon(defaultGroup) : '💻';
-      setForm({ ...initialForm, ticketType: activeTab, group: defaultGroup, icon: defaultIcon });
-    }
+  // --- Handlers para Modal 1: Nueva Categoría Principal ---
+  function handleOpenMainCategoryModal() {
+    setMainCatForm({
+      name: '',
+      ticketType: activeTab,
+      icon: '📁',
+      firstItemName: '',
+      sla: '4 horas',
+    });
     setFeedback('');
     setError('');
-    setShowModal(true);
+    setShowMainCategoryModal(true);
   }
 
-  function handleCloseModal() {
-    setShowModal(false);
-    setForm(initialForm);
-    setEditingId(null);
+  async function handleCreateMainCategory(e) {
+    e.preventDefault();
+    if (!mainCatForm.name.trim()) {
+      setError('El nombre de la categoría principal es obligatorio.');
+      return;
+    }
+    setSaving(true);
+    setFeedback('');
+    setError('');
+
+    try {
+      const itemName = mainCatForm.firstItemName.trim() || 'Servicio General';
+      const created = await apiRequest('/categories', {
+        method: 'POST',
+        body: {
+          group: mainCatForm.name.trim(),
+          name: itemName,
+          ticketType: mainCatForm.ticketType,
+          icon: mainCatForm.icon,
+          sla: mainCatForm.sla,
+          isActive: true,
+        },
+      });
+      setCategories((prev) => [...prev, created]);
+      setFeedback(`Categoría principal "${mainCatForm.name}" creada exitosamente.`);
+      setShowMainCategoryModal(false);
+    } catch (err) {
+      setError('Error al crear categoría: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
   }
 
-  async function handleSubmit(e) {
+  // --- Handlers para Modal 2: Nueva Subcategoría ---
+  function handleOpenSubcategoryModal(mainGroupName, defaultSubpanel = '') {
+    const autoIcon = resolveSubgroupIcon(defaultSubpanel || mainGroupName);
+    setSubcatForm({
+      mainGroup: mainGroupName,
+      subpanel: defaultSubpanel,
+      name: '',
+      ticketType: activeTab,
+      icon: autoIcon,
+      sla: '4 horas',
+      isActive: true,
+    });
+    setFeedback('');
+    setError('');
+    setShowSubcategoryModal(true);
+  }
+
+  async function handleCreateSubcategory(e) {
+    e.preventDefault();
+    if (!subcatForm.name.trim()) {
+      setError('El nombre de la subcategoría es obligatorio.');
+      return;
+    }
+    setSaving(true);
+    setFeedback('');
+    setError('');
+
+    try {
+      let finalGroup = subcatForm.mainGroup;
+      if (subcatForm.subpanel.trim()) {
+        finalGroup = `${subcatForm.mainGroup} - ${subcatForm.subpanel.trim()}`;
+      }
+
+      const created = await apiRequest('/categories', {
+        method: 'POST',
+        body: {
+          group: finalGroup,
+          name: subcatForm.name.trim(),
+          ticketType: subcatForm.ticketType,
+          icon: subcatForm.icon,
+          sla: subcatForm.sla,
+          isActive: subcatForm.isActive,
+        },
+      });
+      setCategories((prev) => [...prev, created]);
+      setFeedback(`Subcategoría "${subcatForm.name}" agregada exitosamente a ${subcatForm.mainGroup}.`);
+      setShowSubcategoryModal(false);
+    } catch (err) {
+      setError('Error al crear subcategoría: ' + err.message);
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  // --- Handlers para Modal 3: Edición ---
+  function handleOpenEditModal(category) {
+    setEditForm({
+      id: category.id,
+      name: category.name,
+      group: category.group || '',
+      ticketType: isMatchingType(category.ticketType, 'Solicitud') ? 'Solicitud' : 'Incidencia',
+      icon: category.icon || resolveSubgroupIcon(category.name, category.group),
+      sla: category.sla || '4 horas',
+      isActive: category.isActive !== false,
+    });
+    setFeedback('');
+    setError('');
+    setShowEditModal(true);
+  }
+
+  async function handleUpdateCategory(e) {
     e.preventDefault();
     setSaving(true);
     setFeedback('');
     setError('');
 
     try {
-      if (editingId) {
-        const updated = await apiRequest(`/categories/${editingId}`, {
-          method: 'PUT',
-          body: form,
-        });
-        setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
-        setFeedback('Categoría actualizada exitosamente.');
-      } else {
-        const created = await apiRequest('/categories', {
-          method: 'POST',
-          body: form,
-        });
-        setCategories((prev) => [...prev, created]);
-        setFeedback('Categoría creada exitosamente.');
-      }
-      handleCloseModal();
+      const updated = await apiRequest(`/categories/${editForm.id}`, {
+        method: 'PUT',
+        body: editForm,
+      });
+      setCategories((prev) => prev.map((c) => (c.id === updated.id ? updated : c)));
+      setFeedback(`Categoría "${editForm.name}" actualizada.`);
+      setShowEditModal(false);
     } catch (err) {
-      setError('Error al guardar: ' + err.message);
+      setError('Error al actualizar: ' + err.message);
     } finally {
       setSaving(false);
     }
@@ -194,7 +375,7 @@ export default function Categories() {
   const structuredHierarchy = useMemo(() => {
     const mainGroupsMap = {};
 
-    // Defined order of main groups
+    // Defined official order of main groups
     const order = [
       'Sistemas de la Información',
       'Credenciales de Acceso',
@@ -215,12 +396,16 @@ export default function Categories() {
       } else if (g === 'Plan de Mantenimiento') {
         mainKey = 'Infraestructura';
         subKey = 'Plan de Mantenimiento';
+      } else if (g.includes(' - ')) {
+        const parts = g.split(' - ');
+        mainKey = parts[0];
+        subKey = parts[1];
       }
 
       if (!mainGroupsMap[mainKey]) {
         mainGroupsMap[mainKey] = {
           name: mainKey,
-          hasSubgroups: mainKey === 'Infraestructura',
+          hasSubgroups: mainKey === 'Infraestructura' || Boolean(subKey),
           directItems: [],
           subgroups: {},
         };
@@ -250,10 +435,6 @@ export default function Categories() {
     return list;
   }, [filteredCategories]);
 
-  const uniqueGroups = useMemo(() => {
-    return Array.from(new Set(categories.map((c) => (c.group || '').trim()).filter(Boolean)));
-  }, [categories]);
-
   const activeCount = categories.filter((c) => c.isActive !== false).length;
   const groupsCount = structuredHierarchy.length;
 
@@ -280,7 +461,7 @@ export default function Categories() {
       >
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
-            <span style={{ fontSize: '1rem' }}>{cat.icon || resolveSubgroupIcon(cat.name)}</span>
+            <span style={{ fontSize: '1.05rem' }}>{cat.icon || resolveSubgroupIcon(cat.name)}</span>
             <strong style={{ color: '#0f172a', fontSize: '0.88rem', wordBreak: 'break-word' }}>
               {cat.name}
             </strong>
@@ -331,7 +512,7 @@ export default function Categories() {
           </button>
           <button
             type="button"
-            onClick={() => handleOpenModal(cat)}
+            onClick={() => handleOpenEditModal(cat)}
             style={{
               background: '#f8fafc',
               border: '1px solid #cbd5e1',
@@ -341,7 +522,7 @@ export default function Categories() {
               cursor: 'pointer',
               fontSize: '0.8rem',
             }}
-            title="Editar categoría"
+            title="Editar subcategoría"
           >
             ✏️
           </button>
@@ -357,7 +538,7 @@ export default function Categories() {
               cursor: 'pointer',
               fontSize: '0.8rem',
             }}
-            title="Eliminar categoría"
+            title="Eliminar subcategoría"
           >
             🗑️
           </button>
@@ -425,13 +606,14 @@ export default function Categories() {
               </span>
             </div>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              Estructura oficial de clasificación por grupos temáticos, iconos contextuales y tiempos de respuesta.
+              Gestión modular de categorías principales, creación directa de subcategorías y tiempos de respuesta.
             </p>
           </div>
         </div>
 
+        {/* Botón Independiente: Nueva Categoría Principal */}
         <button
-          onClick={() => handleOpenModal()}
+          onClick={handleOpenMainCategoryModal}
           style={{
             display: 'inline-flex',
             alignItems: 'center',
@@ -451,7 +633,7 @@ export default function Categories() {
           <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
-          Nueva Categoría
+          Nueva Categoría Principal
         </button>
       </div>
 
@@ -465,119 +647,38 @@ export default function Categories() {
         }}
       >
         {/* KPI 1: Total */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
-          }}
-        >
-          <div
-            style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
-              border: '1px solid #6ee7b7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#059669',
-            }}
-          >
+        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', border: '1px solid #6ee7b7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
               <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Total Categorías
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
-              {categories.length}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              En 2 tipologías de servicio
-            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Categorías</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{categories.length}</div>
+            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>En 2 tipologías de servicio</div>
           </div>
         </div>
 
         {/* KPI 2: Activas */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
-          }}
-        >
-          <div
-            style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)',
-              border: '1px solid #93c5fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2563eb',
-            }}
-          >
+        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', border: '1px solid #93c5fd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
               <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Categorías Activas
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
-              {activeCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>
-              Disponibles para radicación
-            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categorías Activas</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{activeCount}</div>
+            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>Disponibles para radicación</div>
           </div>
         </div>
 
         {/* KPI 3: Grupos */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
-          }}
-        >
-          <div
-            style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)',
-              border: '1px solid #c4b5fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#7c3aed',
-            }}
-          >
+        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', border: '1px solid #c4b5fd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
@@ -586,59 +687,24 @@ export default function Categories() {
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Grupos Principales
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
-              {groupsCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
-              Estructura por áreas
-            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Grupos Principales</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{groupsCount}</div>
+            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>Estructura por áreas</div>
           </div>
         </div>
 
-        {/* KPI 4: SLA Estándar */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
-            border: '1px solid #e2e8f0',
-            display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
-          }}
-        >
-          <div
-            style={{
-              width: '50px',
-              height: '50px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              border: '1px solid #fcd34d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-            }}
-          >
+        {/* KPI 4: SLA */}
+        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
+          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
             <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
           </div>
           <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              ANS Promedio
-            </div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
-              1h - 8h
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
-              Ventana de resolución
-            </div>
+            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ANS Promedio</div>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>1h - 8h</div>
+            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>Ventana de resolución</div>
           </div>
         </div>
       </div>
@@ -671,7 +737,7 @@ export default function Categories() {
           boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
         }}
       >
-        {/* Type Segmented Tabs: ONLY SOLICITUD and INCIDENCIAS */}
+        {/* Type Segmented Tabs */}
         <div
           style={{
             display: 'flex',
@@ -737,7 +803,7 @@ export default function Categories() {
         </div>
       </div>
 
-      {/* 📦 HORIZONTAL CARDS EXACTLY AS IN OFFICIAL SPECIFICATION */}
+      {/* 📦 HORIZONTAL CARDS WITH DIRECT SUBCATEGORY CREATION BUTTON */}
       {loading ? (
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
           <div style={{ width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTopColor: '#002D62', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem auto' }} />
@@ -753,7 +819,7 @@ export default function Categories() {
             Crea la primera categoría para clasificar tickets y establecer los tiempos de respuesta ANS.
           </p>
           <button
-            onClick={() => handleOpenModal()}
+            onClick={handleOpenMainCategoryModal}
             style={{
               background: '#002D62',
               color: '#ffffff',
@@ -765,7 +831,7 @@ export default function Categories() {
               boxShadow: '0 4px 12px rgba(0, 45, 98, 0.3)',
             }}
           >
-            + Crear Primera Categoría
+            + Crear Primera Categoría Principal
           </button>
         </div>
       ) : (
@@ -796,39 +862,65 @@ export default function Categories() {
                     display: 'flex',
                     justifyContent: 'space-between',
                     alignItems: 'center',
+                    gap: '1rem',
+                    flexWrap: 'wrap',
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
                     <span style={{ fontSize: '1.25rem' }}>
-                      {group.name.includes('Sistemas') ? '💻' :
-                       group.name.includes('Credenciales') ? '🔑' :
-                       group.name.includes('Universo') ? '🌐' :
-                       group.name.includes('Infraestructura') ? '🏗️' :
-                       group.name.includes('Correo') ? '📧' : '📁'}
+                      {resolveSubgroupIcon(group.name)}
                     </span>
                     <strong style={{ color: '#002D62', fontSize: '1.05rem', fontWeight: 800 }}>
                       {group.name}:
                     </strong>
                   </div>
-                  <span
-                    style={{
-                      fontSize: '0.74rem',
-                      fontWeight: '700',
-                      background: '#e0f8ff',
-                      color: '#002D62',
-                      border: '1px solid rgba(0, 209, 255, 0.35)',
-                      padding: '0.2rem 0.65rem',
-                      borderRadius: '9999px',
-                    }}
-                  >
-                    {totalItemsCount} {totalItemsCount === 1 ? 'categoría' : 'categorías'}
-                  </span>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
+                    <span
+                      style={{
+                        fontSize: '0.74rem',
+                        fontWeight: '700',
+                        background: '#e0f8ff',
+                        color: '#002D62',
+                        border: '1px solid rgba(0, 209, 255, 0.35)',
+                        padding: '0.2rem 0.65rem',
+                        borderRadius: '9999px',
+                      }}
+                    >
+                      {totalItemsCount} {totalItemsCount === 1 ? 'categoría' : 'categorías'}
+                    </span>
+
+                    {/* ➕ Botón para crear Subcategoría directamente en esta tarjeta */}
+                    <button
+                      type="button"
+                      onClick={() => handleOpenSubcategoryModal(group.name)}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: '0.35rem',
+                        background: '#002D62',
+                        color: '#ffffff',
+                        border: '1px solid rgba(0, 209, 255, 0.4)',
+                        padding: '0.35rem 0.75rem',
+                        borderRadius: '8px',
+                        fontSize: '0.78rem',
+                        fontWeight: '700',
+                        cursor: 'pointer',
+                        boxShadow: '0 2px 6px rgba(0, 45, 98, 0.25)',
+                        transition: 'all 0.15s ease',
+                      }}
+                      title={`Agregar subcategoría a ${group.name}`}
+                    >
+                      <span style={{ fontSize: '0.95rem', lineHeight: 1, color: '#00D1FF' }}>+</span>
+                      <span>Subcategoría</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Interior of Horizontal Card */}
                 <div style={{ padding: '1.25rem 1.5rem' }}>
                   {group.hasSubgroups ? (
-                    /* Sub-sections layout for Infraestructura */
+                    /* Sub-sections layout for Infraestructura and nested groups */
                     <div
                       style={{
                         display: 'grid',
@@ -867,9 +959,29 @@ export default function Categories() {
                                 <span style={{ fontSize: '1.1rem' }}>{contextualIcon}</span>
                                 <span>{subName}</span>
                               </div>
-                              <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
-                                {items.length} {items.length === 1 ? 'ítem' : 'ítems'}
-                              </span>
+
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: 700 }}>
+                                  ({items.length})
+                                </span>
+                                <button
+                                  type="button"
+                                  onClick={() => handleOpenSubcategoryModal(group.name, subName)}
+                                  style={{
+                                    background: '#ffffff',
+                                    border: '1px solid #cbd5e1',
+                                    borderRadius: '6px',
+                                    padding: '0.15rem 0.45rem',
+                                    fontSize: '0.72rem',
+                                    fontWeight: '700',
+                                    color: '#002D62',
+                                    cursor: 'pointer',
+                                  }}
+                                  title={`Agregar ítem a ${subName}`}
+                                >
+                                  +
+                                </button>
+                              </div>
                             </div>
 
                             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.55rem', flex: 1 }}>
@@ -880,7 +992,7 @@ export default function Categories() {
                       })}
                     </div>
                   ) : (
-                    /* Direct horizontal multi-column layout for other categories */
+                    /* Direct horizontal multi-column layout for direct categories */
                     <div
                       style={{
                         display: 'grid',
@@ -898,8 +1010,8 @@ export default function Categories() {
         </div>
       )}
 
-      {/* 🪟 FLOATING MODAL WITH BACKDROP BLUR & RICH ICON POOL */}
-      {showModal && (
+      {/* 🪟 MODAL 1: NUEVA CATEGORÍA PRINCIPAL (GRUPO) */}
+      {showMainCategoryModal && (
         <div
           style={{
             position: 'fixed',
@@ -912,7 +1024,7 @@ export default function Categories() {
             padding: '1rem',
             zIndex: 9999,
           }}
-          onClick={handleCloseModal}
+          onClick={() => setShowMainCategoryModal(false)}
         >
           <div
             style={{
@@ -945,17 +1057,17 @@ export default function Categories() {
                     fontSize: '1.35rem',
                   }}
                 >
-                  {form.icon || '🏷️'}
+                  {mainCatForm.icon || '📁'}
                 </div>
                 <div>
                   <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#002D62', fontWeight: '800' }}>
-                    {editingId ? 'Editar Categoría' : 'Nueva Categoría'}
+                    Nueva Categoría Principal
                   </h3>
-                  <small style={{ color: '#64748b' }}>Definición de tipología, icono y tiempo ANS</small>
+                  <small style={{ color: '#64748b' }}>Crea un nuevo grupo temático independiente</small>
                 </div>
               </div>
               <button
-                onClick={handleCloseModal}
+                onClick={() => setShowMainCategoryModal(false)}
                 style={{
                   background: '#f1f5f9',
                   border: 'none',
@@ -974,18 +1086,17 @@ export default function Categories() {
               </button>
             </div>
 
-            <form onSubmit={handleSubmit} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
-              {/* Name */}
+            <form onSubmit={handleCreateMainCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                  Nombre de la Categoría *
+                  Nombre de la Categoría Principal *
                 </label>
                 <input
                   required
                   type="text"
-                  placeholder="Ej: QfDocument / Hardware / Creación de usuarios"
-                  value={form.name}
-                  onChange={(e) => setForm({ ...form, name: e.target.value })}
+                  placeholder="Ej: Seguridad Informática, Gestión Documental, etc."
+                  value={mainCatForm.name}
+                  onChange={(e) => setMainCatForm({ ...mainCatForm, name: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.7rem 0.9rem',
@@ -999,15 +1110,14 @@ export default function Categories() {
                 />
               </div>
 
-              {/* Type and Group */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
                     Tipología de Ticket *
                   </label>
                   <select
-                    value={form.ticketType}
-                    onChange={(e) => setForm({ ...form, ticketType: e.target.value })}
+                    value={mainCatForm.ticketType}
+                    onChange={(e) => setMainCatForm({ ...mainCatForm, ticketType: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.7rem 0.9rem',
@@ -1026,19 +1136,11 @@ export default function Categories() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                    Grupo / Subgrupo *
+                    ANS Sugerido *
                   </label>
-                  <input
-                    type="text"
-                    list="group-options"
-                    placeholder="Ej: Infraestructura - Equipos"
-                    value={form.group}
-                    onChange={(e) => {
-                      const newGroup = e.target.value;
-                      const autoIcon = resolveSubgroupIcon(newGroup);
-                      setForm({ ...form, group: newGroup, icon: form.icon || autoIcon });
-                    }}
-                    required
+                  <select
+                    value={mainCatForm.sla}
+                    onChange={(e) => setMainCatForm({ ...mainCatForm, sla: e.target.value })}
                     style={{
                       width: '100%',
                       padding: '0.7rem 0.9rem',
@@ -1049,103 +1151,31 @@ export default function Categories() {
                       background: '#f8fafc',
                       outline: 'none',
                     }}
-                  />
-                  <datalist id="group-options">
-                    {uniqueGroups.map((g) => (
-                      <option key={g} value={g} />
-                    ))}
-                    <option value="Sistemas de la Información" />
-                    <option value="Credenciales de Acceso" />
-                    <option value="Soporte Universo Online" />
-                    <option value="Infraestructura - Equipos" />
-                    <option value="Infraestructura - Red" />
-                    <option value="Infraestructura - Impresoras/Escáneres" />
-                    <option value="Plan de Mantenimiento" />
-                    <option value="Correo Institucional" />
-                  </datalist>
+                  >
+                    <option value="1 hora">⚡ 1 hora (Crítico)</option>
+                    <option value="2 horas">⏱️ 2 horas (Urgente)</option>
+                    <option value="4 horas">⏱️ 4 horas (Estándar)</option>
+                    <option value="8 horas">📅 8 horas (1 día hábil)</option>
+                    <option value="24 horas">📅 24 horas</option>
+                  </select>
                 </div>
               </div>
 
-              {/* 🎨 POOL DE ICONOS (ICON PICKER) */}
-              <div style={{ background: '#f8fafc', border: '1px solid #e2e8f0', borderRadius: '12px', padding: '0.85rem' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem' }}>
-                  <label style={{ fontSize: '0.82rem', fontWeight: '700', color: '#002D62', margin: 0, display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-                    <span>🎨 Pool de Iconos para Selección</span>
-                  </label>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                    <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>Seleccionado:</span>
-                    <span style={{ fontSize: '1.15rem', background: '#ffffff', padding: '0.1rem 0.4rem', borderRadius: '6px', border: '1px solid #cbd5e1' }}>
-                      {form.icon}
-                    </span>
-                  </div>
-                </div>
+              {/* Selector de Icono con Pool */}
+              <IconPicker
+                selectedIcon={mainCatForm.icon}
+                onSelectIcon={(ic) => setMainCatForm({ ...mainCatForm, icon: ic })}
+              />
 
-                {/* Category Pills inside Pool */}
-                <div style={{ display: 'flex', gap: '0.3rem', overflowX: 'auto', paddingBottom: '0.4rem', marginBottom: '0.5rem' }}>
-                  {ICON_CATEGORIES.map((cat, idx) => (
-                    <button
-                      key={cat.title}
-                      type="button"
-                      onClick={() => setActiveIconCategory(idx)}
-                      style={{
-                        fontSize: '0.72rem',
-                        fontWeight: activeIconCategory === idx ? '700' : '500',
-                        background: activeIconCategory === idx ? '#002D62' : '#ffffff',
-                        color: activeIconCategory === idx ? '#ffffff' : '#475569',
-                        border: activeIconCategory === idx ? '1px solid #002D62' : '1px solid #e2e8f0',
-                        borderRadius: '6px',
-                        padding: '0.2rem 0.5rem',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
-                        transition: 'all 0.15s ease',
-                      }}
-                    >
-                      {cat.title}
-                    </button>
-                  ))}
-                </div>
-
-                {/* Grid of Icons in active category */}
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(10, 1fr)', gap: '0.4rem', background: '#ffffff', padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1' }}>
-                  {ICON_CATEGORIES[activeIconCategory].icons.map((ic) => {
-                    const isSelected = form.icon === ic;
-                    return (
-                      <button
-                        key={ic}
-                        type="button"
-                        onClick={() => setForm({ ...form, icon: ic })}
-                        style={{
-                          fontSize: '1.25rem',
-                          background: isSelected ? '#e0f8ff' : 'transparent',
-                          border: isSelected ? '2px solid #00D1FF' : '1px solid transparent',
-                          borderRadius: '8px',
-                          padding: '0.35rem 0',
-                          cursor: 'pointer',
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'center',
-                          transition: 'all 0.15s ease',
-                          transform: isSelected ? 'scale(1.15)' : 'none',
-                        }}
-                        onMouseEnter={(e) => { if (!isSelected) e.currentTarget.style.background = '#f1f5f9'; }}
-                        onMouseLeave={(e) => { if (!isSelected) e.currentTarget.style.background = 'transparent'; }}
-                        title={`Seleccionar ${ic}`}
-                      >
-                        {ic}
-                      </button>
-                    );
-                  })}
-                </div>
-              </div>
-
-              {/* SLA */}
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                  Acuerdo de Nivel de Servicio (ANS) *
+                  Primera Subcategoría Inicial (Opcional)
                 </label>
-                <select
-                  value={form.sla}
-                  onChange={(e) => setForm({ ...form, sla: e.target.value })}
+                <input
+                  type="text"
+                  placeholder="Ej: Servicio General / Atención Técnica"
+                  value={mainCatForm.firstItemName}
+                  onChange={(e) => setMainCatForm({ ...mainCatForm, firstItemName: e.target.value })}
                   style={{
                     width: '100%',
                     padding: '0.7rem 0.9rem',
@@ -1156,36 +1186,13 @@ export default function Categories() {
                     background: '#f8fafc',
                     outline: 'none',
                   }}
-                >
-                  <option value="1 hora">⚡ 1 hora (Crítico)</option>
-                  <option value="2 horas">⏱️ 2 horas (Urgente)</option>
-                  <option value="3 horas">⏱️ 3 horas</option>
-                  <option value="4 horas">⏱️ 4 horas (Estándar)</option>
-                  <option value="8 horas">📅 8 horas (1 día hábil)</option>
-                  <option value="24 horas">📅 24 horas</option>
-                  <option value="48 horas">📅 48 horas (2 días)</option>
-                </select>
-              </div>
-
-              {/* Active Toggle */}
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
-                <input
-                  type="checkbox"
-                  id="cat-modal-isActive"
-                  checked={form.isActive}
-                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
-                  style={{ width: '17px', height: '17px', cursor: 'pointer' }}
                 />
-                <label htmlFor="cat-modal-isActive" style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer', margin: 0 }}>
-                  Categoría Activa (disponible para selección)
-                </label>
               </div>
 
-              {/* Modal Actions */}
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"
-                  onClick={handleCloseModal}
+                  onClick={() => setShowMainCategoryModal(false)}
                   style={{
                     background: '#f1f5f9',
                     border: '1px solid #e2e8f0',
@@ -1214,7 +1221,494 @@ export default function Categories() {
                     boxShadow: '0 4px 12px rgba(0, 45, 98, 0.35)',
                   }}
                 >
-                  {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Categoría'}
+                  {saving ? 'Creando...' : 'Crear Categoría Principal'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🪟 MODAL 2: NUEVA SUBCATEGORÍA (CREACIÓN DIRECTA DESDE LA TARJETA) */}
+      {showSubcategoryModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 9999,
+          }}
+          onClick={() => setShowSubcategoryModal(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '560px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '2rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #e2e8f0',
+              boxSizing: 'border-box',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: '#f0f9ff',
+                    color: '#002D62',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1.5px solid rgba(0, 209, 255, 0.4)',
+                    fontSize: '1.35rem',
+                  }}
+                >
+                  {subcatForm.icon || '🏷️'}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#002D62', fontWeight: '800' }}>
+                    Nueva Subcategoría
+                  </h3>
+                  <small style={{ color: '#64748b' }}>
+                    Agregando a: <strong style={{ color: '#002D62' }}>{subcatForm.mainGroup}</strong>
+                  </small>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowSubcategoryModal(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  fontWeight: '700',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleCreateSubcategory} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              {/* Main Group (Read only pill) */}
+              <div style={{ background: '#f1f5f9', padding: '0.65rem 0.85rem', borderRadius: '10px', display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                <span style={{ fontSize: '0.8rem', color: '#64748b', fontWeight: 600 }}>Categoría Principal:</span>
+                <span style={{ fontSize: '0.85rem', color: '#002D62', fontWeight: 800 }}>{subcatForm.mainGroup}</span>
+              </div>
+
+              {/* Subpanel (if applicable) */}
+              {subcatForm.mainGroup === 'Infraestructura' && (
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Subpanel / Sección de Infraestructura *
+                  </label>
+                  <select
+                    value={subcatForm.subpanel}
+                    onChange={(e) => {
+                      const newSub = e.target.value;
+                      setSubcatForm({ ...subcatForm, subpanel: newSub, icon: resolveSubgroupIcon(newSub) });
+                    }}
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box',
+                      background: '#f8fafc',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="Equipos">🖥️ Equipos (Hardware / Software)</option>
+                    <option value="Red">📡 Red (Internet / WiFi / Usuario)</option>
+                    <option value="Impresoras/Escáneres">🖨️ Impresoras / Escáneres</option>
+                    <option value="Plan de Mantenimiento">🛠️ Plan de Mantenimiento</option>
+                  </select>
+                </div>
+              )}
+
+              {/* Subcategory Name */}
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                  Nombre de la Subcategoría / Servicio *
+                </label>
+                <input
+                  required
+                  type="text"
+                  placeholder="Ej: Cambio de Disco Duro, Servidores, etc."
+                  value={subcatForm.name}
+                  onChange={(e) => setSubcatForm({ ...subcatForm, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    boxSizing: 'border-box',
+                    background: '#f8fafc',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              {/* Type and SLA */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Tipología *
+                  </label>
+                  <select
+                    value={subcatForm.ticketType}
+                    onChange={(e) => setSubcatForm({ ...subcatForm, ticketType: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box',
+                      background: '#f8fafc',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="Incidencia">🚨 Incidencia</option>
+                    <option value="Solicitud">📋 Solicitud</option>
+                  </select>
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Acuerdo de Nivel de Servicio (ANS) *
+                  </label>
+                  <select
+                    value={subcatForm.sla}
+                    onChange={(e) => setSubcatForm({ ...subcatForm, sla: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box',
+                      background: '#f8fafc',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="1 hora">⚡ 1 hora (Crítico)</option>
+                    <option value="2 horas">⏱️ 2 horas (Urgente)</option>
+                    <option value="3 horas">⏱️ 3 horas</option>
+                    <option value="4 horas">⏱️ 4 horas (Estándar)</option>
+                    <option value="8 horas">📅 8 horas (1 día hábil)</option>
+                    <option value="24 horas">📅 24 horas</option>
+                    <option value="48 horas">📅 48 horas (2 días)</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Selector de Icono con Pool */}
+              <IconPicker
+                selectedIcon={subcatForm.icon}
+                onSelectIcon={(ic) => setSubcatForm({ ...subcatForm, icon: ic })}
+              />
+
+              {/* Checkbox Activa */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                <input
+                  type="checkbox"
+                  id="subcat-modal-isActive"
+                  checked={subcatForm.isActive}
+                  onChange={(e) => setSubcatForm({ ...subcatForm, isActive: e.target.checked })}
+                  style={{ width: '17px', height: '17px', cursor: 'pointer' }}
+                />
+                <label htmlFor="subcat-modal-isActive" style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer', margin: 0 }}>
+                  Subcategoría Activa (disponible para radicar tickets)
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowSubcategoryModal(false)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #e2e8f0',
+                    color: '#475569',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '10px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    background: '#002D62',
+                    color: '#ffffff',
+                    padding: '0.65rem 1.35rem',
+                    borderRadius: '10px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    border: '1px solid rgba(0, 209, 255, 0.4)',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(0, 45, 98, 0.35)',
+                  }}
+                >
+                  {saving ? 'Guardando...' : 'Crear Subcategoría'}
+                </button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* 🪟 MODAL 3: EDITAR SUBCATEGORÍA / CATEGORÍA */}
+      {showEditModal && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 9999,
+          }}
+          onClick={() => setShowEditModal(false)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '560px',
+              width: '100%',
+              maxHeight: '90vh',
+              overflowY: 'auto',
+              padding: '2rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #e2e8f0',
+              boxSizing: 'border-box',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
+                <div
+                  style={{
+                    width: '42px',
+                    height: '42px',
+                    borderRadius: '12px',
+                    background: '#f0f9ff',
+                    color: '#002D62',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    border: '1.5px solid rgba(0, 209, 255, 0.4)',
+                    fontSize: '1.35rem',
+                  }}
+                >
+                  {editForm.icon || '🏷️'}
+                </div>
+                <div>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#002D62', fontWeight: '800' }}>
+                    Editar Subcategoría
+                  </h3>
+                  <small style={{ color: '#64748b' }}>Modificación de datos, icono y tiempos ANS</small>
+                </div>
+              </div>
+              <button
+                onClick={() => setShowEditModal(false)}
+                style={{
+                  background: '#f1f5f9',
+                  border: 'none',
+                  borderRadius: '50%',
+                  width: '32px',
+                  height: '32px',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  color: '#64748b',
+                  fontWeight: '700',
+                }}
+              >
+                ✕
+              </button>
+            </div>
+
+            <form onSubmit={handleUpdateCategory} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                  Nombre de la Subcategoría *
+                </label>
+                <input
+                  required
+                  type="text"
+                  value={editForm.name}
+                  onChange={(e) => setEditForm({ ...editForm, name: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    boxSizing: 'border-box',
+                    background: '#f8fafc',
+                    outline: 'none',
+                  }}
+                />
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Grupo / Sección *
+                  </label>
+                  <input
+                    type="text"
+                    value={editForm.group}
+                    onChange={(e) => setEditForm({ ...editForm, group: e.target.value })}
+                    required
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box',
+                      background: '#f8fafc',
+                      outline: 'none',
+                    }}
+                  />
+                </div>
+
+                <div>
+                  <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                    Tipología de Ticket *
+                  </label>
+                  <select
+                    value={editForm.ticketType}
+                    onChange={(e) => setEditForm({ ...editForm, ticketType: e.target.value })}
+                    style={{
+                      width: '100%',
+                      padding: '0.7rem 0.9rem',
+                      borderRadius: '10px',
+                      border: '1.5px solid #cbd5e1',
+                      fontSize: '0.88rem',
+                      boxSizing: 'border-box',
+                      background: '#f8fafc',
+                      outline: 'none',
+                    }}
+                  >
+                    <option value="Incidencia">🚨 Incidencia</option>
+                    <option value="Solicitud">📋 Solicitud</option>
+                  </select>
+                </div>
+              </div>
+
+              {/* Selector de Icono con Pool */}
+              <IconPicker
+                selectedIcon={editForm.icon}
+                onSelectIcon={(ic) => setEditForm({ ...editForm, icon: ic })}
+              />
+
+              <div>
+                <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
+                  Acuerdo de Nivel de Servicio (ANS) *
+                </label>
+                <select
+                  value={editForm.sla}
+                  onChange={(e) => setEditForm({ ...editForm, sla: e.target.value })}
+                  style={{
+                    width: '100%',
+                    padding: '0.7rem 0.9rem',
+                    borderRadius: '10px',
+                    border: '1.5px solid #cbd5e1',
+                    fontSize: '0.88rem',
+                    boxSizing: 'border-box',
+                    background: '#f8fafc',
+                    outline: 'none',
+                  }}
+                >
+                  <option value="1 hora">⚡ 1 hora (Crítico)</option>
+                  <option value="2 horas">⏱️ 2 horas (Urgente)</option>
+                  <option value="3 horas">⏱️ 3 horas</option>
+                  <option value="4 horas">⏱️ 4 horas (Estándar)</option>
+                  <option value="8 horas">📅 8 horas (1 día hábil)</option>
+                  <option value="24 horas">📅 24 horas</option>
+                  <option value="48 horas">📅 48 horas (2 días)</option>
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                <input
+                  type="checkbox"
+                  id="edit-modal-isActive"
+                  checked={editForm.isActive}
+                  onChange={(e) => setEditForm({ ...editForm, isActive: e.target.checked })}
+                  style={{ width: '17px', height: '17px', cursor: 'pointer' }}
+                />
+                <label htmlFor="edit-modal-isActive" style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer', margin: 0 }}>
+                  Categoría Activa (disponible para selección)
+                </label>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
+                <button
+                  type="button"
+                  onClick={() => setShowEditModal(false)}
+                  style={{
+                    background: '#f1f5f9',
+                    border: '1px solid #e2e8f0',
+                    color: '#475569',
+                    padding: '0.65rem 1.25rem',
+                    borderRadius: '10px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    cursor: 'pointer',
+                  }}
+                >
+                  Cancelar
+                </button>
+                <button
+                  type="submit"
+                  disabled={saving}
+                  style={{
+                    background: '#002D62',
+                    color: '#ffffff',
+                    padding: '0.65rem 1.35rem',
+                    borderRadius: '10px',
+                    fontWeight: '600',
+                    fontSize: '0.875rem',
+                    border: '1px solid rgba(0, 209, 255, 0.4)',
+                    cursor: saving ? 'not-allowed' : 'pointer',
+                    boxShadow: '0 4px 12px rgba(0, 45, 98, 0.35)',
+                  }}
+                >
+                  {saving ? 'Guardando...' : 'Guardar Cambios'}
                 </button>
               </div>
             </form>

@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import logoImg from '../assets/logo.png';
+import bgImg from '../assets/login-bg.jpg';
 
 export default function Login({ onLogin }) {
   const [form, setForm] = useState(() => ({
@@ -62,23 +63,31 @@ export default function Login({ onLogin }) {
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'center',
-        background: 'linear-gradient(135deg, #f8fafc 0%, #edf2f7 50%, #e2e8f0 100%)',
+        backgroundImage: `url(${bgImg})`,
+        backgroundSize: 'cover',
+        backgroundPosition: 'center',
+        backgroundRepeat: 'no-repeat',
+        backgroundAttachment: 'fixed',
         padding: '1.5rem',
         fontFamily: "'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif",
         boxSizing: 'border-box',
+        position: 'relative',
       }}
     >
       <div
         style={{
           width: '100%',
           maxWidth: '390px',
-          background: 'radial-gradient(ellipse at top, #ffffff 50%, #f8fbff 100%)',
+          background: 'rgba(255, 255, 255, 0.92)',
+          backdropFilter: 'blur(16px)',
+          WebkitBackdropFilter: 'blur(16px)',
           borderRadius: '28px',
           padding: '2.5rem 2rem',
           border: '1.5px solid #dbeafe',
-          boxShadow: '0 20px 45px -10px rgba(37, 99, 235, 0.16), 0 0 0 1px rgba(255, 255, 255, 0.9) inset, 0 4px 16px -2px rgba(0, 0, 0, 0.04)',
+          boxShadow: '0 25px 50px -12px rgba(15, 35, 75, 0.18), 0 0 0 1px rgba(255, 255, 255, 0.95) inset, 0 4px 20px -2px rgba(0, 0, 0, 0.05)',
           boxSizing: 'border-box',
           position: 'relative',
+          zIndex: 1,
         }}
       >
         {/* Logo & Header */}

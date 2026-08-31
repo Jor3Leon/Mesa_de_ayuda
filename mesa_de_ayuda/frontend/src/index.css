@@ -379,21 +379,25 @@ textarea {
 }
 
 .brand-mark {
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   width: 44px;
   height: 44px;
   border-radius: 12px;
-  font-weight: 800;
-  letter-spacing: 0.08em;
-  background: linear-gradient(
-    135deg,
-    #002D62 0%,
-    #001D40 60%,
-    #00D1FF 100%
-  );
-  color: #ffffff;
-  box-shadow: 0 4px 12px rgba(0, 45, 98, 0.35);
+  background: #ffffff;
+  padding: 4px;
+  border: 1.5px solid rgba(0, 209, 255, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 45, 98, 0.15);
+  overflow: hidden;
+  box-sizing: border-box;
+}
+
+.brand-mark img {
+  width: 100%;
+  height: 100%;
+  object-fit: contain;
+  display: block;
 }
 
 .sidebar-toggle-btn {
@@ -2680,15 +2684,14 @@ tbody tr:hover {
   }
 
   .brand-mark {
-    width: 30px !important;
-    height: 30px !important;
+    width: 32px !important;
+    height: 32px !important;
     border-radius: 8px !important;
-    font-size: 0.74rem !important;
-    font-weight: 800 !important;
     flex-shrink: 0 !important;
-    background: linear-gradient(135deg, #10b981 0%, #059669 100%) !important;
-    color: #ffffff !important;
-    box-shadow: 0 2px 6px rgba(16, 185, 129, 0.25) !important;
+    background: #ffffff !important;
+    padding: 2px !important;
+    border: 1px solid rgba(0, 209, 255, 0.4) !important;
+    box-shadow: 0 2px 6px rgba(0, 45, 98, 0.15) !important;
   }
 
   .brand-text {

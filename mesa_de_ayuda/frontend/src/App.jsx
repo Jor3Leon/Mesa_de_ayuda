@@ -19,6 +19,7 @@ import StandarUserPortal from './views/StandarUserPortal';
 import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
 import Discovery from './views/Discovery';
+import logoImg from './assets/logo.png';
 
 function getShortRoleLabel(role) {
   const normalized = (role || '').trim().toUpperCase();
@@ -875,7 +876,9 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
             <line x1="3" y1="18" x2="21" y2="18" />
           </svg>
         </button>
-        <div className="brand-mark">AY</div>
+        <div className="brand-mark">
+          <img src={logoImg} alt="Logo Mesa de Ayuda" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+        </div>
         <div className="brand-text">
           <p className="brand-title">Mesa de Ayuda</p>
           <p className="brand-subtitle">Centro de operación y soporte</p>
@@ -1007,7 +1010,9 @@ function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isColl
       {/* Header del sidebar en mobile */}
       <div className="sidebar-mobile-header">
         <div className="sidebar-mobile-brand">
-          <div className="brand-mark" style={{ width: 34, height: 34, fontSize: '0.85rem', borderRadius: '10px' }}>AY</div>
+          <div className="brand-mark" style={{ width: 36, height: 36, padding: '2px', borderRadius: '10px' }}>
+            <img src={logoImg} alt="Logo Mesa de Ayuda" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+          </div>
           <div style={{ minWidth: 0 }}>
             <span style={{ fontWeight: 700, fontSize: '0.95rem', color: '#0f172a', display: 'block', lineHeight: 1.2 }}>Mesa de Ayuda</span>
             <small style={{ fontSize: '0.72rem', color: '#64748b' }}>Navegación del sistema</small>

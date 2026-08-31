@@ -1744,31 +1744,32 @@ export default function Tickets() {
                   const waitTimeStr = waitTimeMs > 0 ? diffHMS(0, waitTimeMs) : '0 segundos';
 
                   return (
-                    <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '8px', padding: '2rem', minHeight: '500px', display: 'flex', flexDirection: 'column', gap: '3rem' }}>
+                    <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '12px', padding: '1.25rem', minHeight: '400px', display: 'flex', flexDirection: 'column', gap: '2rem' }}>
                       
                       <section>
-                        <h4 style={{ margin: '0 0 2rem 0', fontWeight: 700, color: '#1a1a1a', fontSize: '1.1rem' }}>Fechas</h4>
-                        <div style={{ position: 'relative', paddingLeft: '180px' }}>
-                          <div style={{ position: 'absolute', left: '205px', top: '10px', bottom: '10px', width: '2px', background: '#e0e0e0' }} />
+                        <h4 style={{ margin: '0 0 1.25rem 0', fontWeight: 700, color: '#1a1a1a', fontSize: '1rem' }}>Fechas</h4>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '1.1rem', position: 'relative', paddingLeft: '0.5rem' }}>
+                          <div style={{ position: 'absolute', left: '19px', top: '12px', bottom: '12px', width: '2px', background: '#e2e8f0' }} />
                           
                           {timelineEvents.map((ev, idx) => (
-                            <div key={idx} style={{ display: 'flex', alignItems: 'center', marginBottom: idx === timelineEvents.length - 1 ? 0 : '2.5rem', zIndex: 1, position: 'relative' }}>
-                              <div style={{ position: 'absolute', left: '-180px', width: '160px' }}>
-                                {formatDate(ev.date)}
-                              </div>
+                            <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '0.85rem', position: 'relative', zIndex: 1 }}>
                               <div style={{ 
                                 width: '28px', height: '28px', background: '#fff', 
-                                border: ev.icon === '*' ? 'none' : '2px solid #bdbdbd', 
+                                border: ev.icon === '*' ? '2px solid #00D1FF' : '2px solid #94a3b8', 
                                 borderRadius: '50%', display: 'flex', alignItems: 'center', justifyContent: 'center', 
-                                margin: '0 1rem', position: 'absolute', left: '12px', 
-                                fontSize: ev.icon === '*' ? '1.5rem' : '0.9rem', color: '#666',
-                                fontWeight: 700, boxShadow: '0 0 0 4px #fff'
+                                fontSize: ev.icon === '*' ? '1rem' : '0.78rem', color: '#002D62',
+                                fontWeight: 700, boxShadow: '0 0 0 3px #fff', flexShrink: 0
                               }}>
-                                {ev.icon}
+                                {ev.icon === '*' ? '★' : ev.icon}
                               </div>
-                              <div style={{ marginLeft: '60px', color: '#334155', fontSize: '0.92rem', fontWeight: 500, display: 'flex', alignItems: 'center', gap: '0.6rem' }}>
-                                {ev.label} 
-                                {ev.clock && <span style={{fontSize: '1.1rem', color: '#1e293b'}}>⏱</span>}
+                              <div style={{ flex: 1, minWidth: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '0.25rem', background: '#f8fafc', padding: '0.45rem 0.75rem', borderRadius: '8px', border: '1px solid #f1f5f9' }}>
+                                <span style={{ color: '#0f172a', fontSize: '0.85rem', fontWeight: 600, display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                  {ev.label} 
+                                  {ev.clock && <span style={{fontSize: '0.9rem', color: '#0ea5e9'}}>⏱</span>}
+                                </span>
+                                <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+                                  {formatDate(ev.date)}
+                                </span>
                               </div>
                             </div>
                           ))}

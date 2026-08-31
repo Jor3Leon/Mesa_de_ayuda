@@ -489,68 +489,54 @@ export default function Roles() {
       )}
 
       {/* 🧭 SPLIT LAYOUT (ROLES SELECTOR + PERMISSIONS MATRIX) */}
-      <div
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-          gap: '1.5rem',
-          alignItems: 'start',
-        }}
-      >
+      <div className="roles-split-container">
         {/* LEFT COLUMN: ROLES SELECTOR */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
+        <div className="roles-selector-box">
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+            <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>
               Niveles & Perfiles ({roles.length})
             </h3>
-            <span style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600' }}>Selecciona uno</span>
+            <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>Selecciona uno</span>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+          <div className="roles-selector-list">
             {roles.map((r) => {
               const isSelected = selectedRole?.id === r.id;
               const permCount = r.permissionCodes?.length || 0;
               return (
                 <div
                   key={r.id}
+                  className="roles-selector-item"
                   onClick={() => handleSelectRole(r)}
                   style={{
-                    padding: '1rem',
-                    borderRadius: '12px',
+                    padding: '0.75rem 0.85rem',
+                    borderRadius: '10px',
                     border: isSelected ? '2px solid #7c3aed' : '1px solid #e2e8f0',
                     background: isSelected ? '#f5f3ff' : '#ffffff',
                     cursor: 'pointer',
-                    transition: 'all 0.2s ease',
-                    boxShadow: isSelected ? '0 4px 14px rgba(124, 58, 237, 0.15)' : 'none',
+                    transition: 'all 0.15s ease',
+                    boxShadow: isSelected ? '0 4px 12px rgba(124, 58, 237, 0.12)' : 'none',
                   }}
                 >
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-                    <span style={{ fontWeight: '800', fontSize: '0.95rem', color: isSelected ? '#5b21b6' : '#0f172a' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.2rem' }}>
+                    <span style={{ fontWeight: '800', fontSize: '0.88rem', color: isSelected ? '#5b21b6' : '#0f172a' }}>
                       {r.name}
                     </span>
                     <span
                       style={{
-                        fontSize: '0.75rem',
+                        fontSize: '0.7rem',
                         fontWeight: '700',
-                        padding: '0.2rem 0.55rem',
+                        padding: '0.15rem 0.45rem',
                         borderRadius: '9999px',
                         background: isSelected ? '#ddd6fe' : '#f1f5f9',
                         color: isSelected ? '#4c1d95' : '#475569',
                       }}
                     >
-                      {permCount} permisos
+                      {permCount} perms
                     </span>
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.8rem', color: '#64748b' }}>
-                    {r.description || 'Perfil de acceso estándar del sistema.'}
+                  <p className="roles-desc" style={{ margin: 0, fontSize: '0.75rem', color: '#64748b' }}>
+                    {r.description || 'Perfil de acceso del sistema.'}
                   </p>
                 </div>
               );
@@ -559,16 +545,7 @@ export default function Roles() {
         </div>
 
         {/* RIGHT COLUMN: PERMISSIONS MATRIX */}
-        <div
-          style={{
-            background: '#ffffff',
-            borderRadius: '16px',
-            border: '1px solid #e2e8f0',
-            padding: '1.5rem',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            gridColumn: 'span 2',
-          }}
-        >
+        <div className="roles-matrix-box">
           {selectedRole ? (
             <form onSubmit={handleSave}>
               <div
@@ -576,18 +553,18 @@ export default function Roles() {
                   display: 'flex',
                   justifyContent: 'space-between',
                   alignItems: 'center',
-                  marginBottom: '1.5rem',
+                  marginBottom: '1.25rem',
                   borderBottom: '1px solid #f1f5f9',
-                  paddingBottom: '1rem',
+                  paddingBottom: '0.85rem',
                   flexWrap: 'wrap',
-                  gap: '0.75rem',
+                  gap: '0.65rem',
                 }}
               >
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: '800', color: '#0f172a' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.05rem', fontWeight: '800', color: '#0f172a' }}>
                     Privilegios para: <span style={{ color: '#7c3aed' }}>{selectedRole.name}</span>
                   </h3>
-                  <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
+                  <p style={{ margin: '0.15rem 0 0 0', fontSize: '0.78rem', color: '#64748b' }}>
                     {selectedRole.description || 'Configura qué acciones tiene permitido realizar este perfil.'}
                   </p>
                 </div>
@@ -598,13 +575,13 @@ export default function Roles() {
                   style={{
                     background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
                     color: '#ffffff',
-                    padding: '0.65rem 1.5rem',
-                    borderRadius: '10px',
+                    padding: '0.5rem 1.25rem',
+                    borderRadius: '8px',
                     fontWeight: '700',
-                    fontSize: '0.875rem',
+                    fontSize: '0.82rem',
                     border: 'none',
                     cursor: saving ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(124, 58, 237, 0.35)',
+                    boxShadow: '0 4px 12px rgba(124, 58, 237, 0.3)',
                   }}
                 >
                   {saving ? 'Guardando...' : '💾 Guardar Matriz'}

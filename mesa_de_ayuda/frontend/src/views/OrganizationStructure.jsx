@@ -1041,7 +1041,7 @@ export default function OrganizationStructure() {
 
                   {/* DEPENDENCIAS & OFICINAS TREE BODY */}
                   {isSedeExpanded && (
-                    <div style={{ padding: '1rem 1.25rem 1.25rem 2.25rem', background: '#fafafa' }}>
+                    <div className="tree-sede-body" style={{ padding: '0.85rem 1rem 1rem 1.5rem', background: '#fafafa' }}>
                       {(sede.dependencias || []).length === 0 && (sede.oficinasDirectas || []).length === 0 && (
                         <div style={{ padding: '1.5rem', textAlign: 'center', background: '#ffffff', borderRadius: '10px', border: '1px dashed #cbd5e1' }}>
                           <span style={{ fontSize: '0.875rem', color: '#64748b' }}>Esta sede no tiene dependencias registradas.</span>
@@ -1115,9 +1115,9 @@ export default function OrganizationStructure() {
                                 </div>
                               </div>
 
-                              {/* OFICINAS GRID */}
+                              {/* OFICINAS LIST CONTAINER */}
                               {isDepExpanded && (
-                                <div style={{ padding: '0.85rem 1rem 0.85rem 2rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
+                                <div className="tree-dep-body" style={{ padding: '0.65rem 0.85rem', background: '#f8fafc', borderTop: '1px solid #f1f5f9' }}>
                                   {(dep.oficinas || []).length === 0 ? (
                                     <div style={{ fontSize: '0.8rem', color: '#94a3b8' }}>
                                       No hay oficinas creadas en esta dependencia.{' '}

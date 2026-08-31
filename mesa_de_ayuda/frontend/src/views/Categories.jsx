@@ -125,6 +125,20 @@ export default function Categories() {
     });
   }, [categories, activeTab, search]);
 
+  const groupedCategories = useMemo(() => {
+    const groups = {};
+    filteredCategories.forEach((cat) => {
+      const g = (cat.group || 'General').trim();
+      if (!groups[g]) groups[g] = [];
+      groups[g].push(cat);
+    });
+    return groups;
+  }, [filteredCategories]);
+
+  const uniqueGroups = useMemo(() => {
+    return Array.from(new Set(categories.map((c) => (c.group || '').trim()).filter(Boolean)));
+  }, [categories]);
+
   const activeCount = categories.filter((c) => c.isActive !== false).length;
   const groupsCount = new Set(categories.map((c) => c.group || 'General')).size;
 
@@ -187,7 +201,7 @@ export default function Categories() {
               </span>
             </div>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              Clasificación de solicitudes por tipología y tiempos máximos de respuesta reglamentarios.
+              Clasificación de solicitudes por grupos temáticos y tiempos máximos de respuesta reglamentarios.
             </p>
           </div>
         </div>
@@ -217,7 +231,7 @@ export default function Categories() {
         </button>
       </div>
 
-      {/* 📊 ENTERPRISE KPI METRICS GRID */}
+      {/* 📊 KPI METRICS GRID */}
       <div
         style={{
           display: 'grid',
@@ -232,7 +246,7 @@ export default function Categories() {
             background: '#ffffff',
             borderRadius: '14px',
             padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
@@ -241,8 +255,8 @@ export default function Categories() {
         >
           <div
             style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
               border: '1px solid #6ee7b7',
@@ -252,19 +266,20 @@ export default function Categories() {
               color: '#059669',
             }}
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 6h16M4 12h16M4 18h16" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
+              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
             </svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Total Categorías
+              Total Catálogo
             </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
               {categories.length}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              En 4 tipologías de servicio
+              Tipologías registradas
             </div>
           </div>
         </div>
@@ -275,7 +290,7 @@ export default function Categories() {
             background: '#ffffff',
             borderRadius: '14px',
             padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
@@ -284,26 +299,27 @@ export default function Categories() {
         >
           <div
             style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '12px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              border: '1px solid #bfdbfe',
+              background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)',
+              border: '1px solid #93c5fd',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
               color: '#2563eb',
             }}
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
+              <polyline points="22 4 12 14.01 9 11.01" />
             </svg>
           </div>
           <div>
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Categorías Activas
             </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
               {activeCount}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>
@@ -318,7 +334,7 @@ export default function Categories() {
             background: '#ffffff',
             borderRadius: '14px',
             padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
@@ -327,8 +343,8 @@ export default function Categories() {
         >
           <div
             style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)',
               border: '1px solid #c4b5fd',
@@ -338,7 +354,7 @@ export default function Categories() {
               color: '#7c3aed',
             }}
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <rect x="3" y="3" width="7" height="7" />
               <rect x="14" y="3" width="7" height="7" />
               <rect x="14" y="14" width="7" height="7" />
@@ -349,7 +365,7 @@ export default function Categories() {
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Grupos Temáticos
             </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
               {groupsCount}
             </div>
             <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
@@ -364,7 +380,7 @@ export default function Categories() {
             background: '#ffffff',
             borderRadius: '14px',
             padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
             border: '1px solid #e2e8f0',
             display: 'flex',
             alignItems: 'center',
@@ -373,8 +389,8 @@ export default function Categories() {
         >
           <div
             style={{
-              width: '52px',
-              height: '52px',
+              width: '50px',
+              height: '50px',
               borderRadius: '12px',
               background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
               border: '1px solid #fcd34d',
@@ -384,7 +400,7 @@ export default function Categories() {
               color: '#d97706',
             }}
           >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <circle cx="12" cy="12" r="10" />
               <polyline points="12 6 12 12 16 14" />
             </svg>
@@ -393,7 +409,7 @@ export default function Categories() {
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               ANS Promedio
             </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>
               4h - 24h
             </div>
             <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
@@ -449,24 +465,21 @@ export default function Categories() {
             return (
               <button
                 key={type}
+                type="button"
                 onClick={() => setActiveTab(type)}
                 style={{
-                  padding: '0.45rem 0.95rem',
+                  background: isSelected ? '#002D62' : 'transparent',
+                  color: isSelected ? '#ffffff' : '#475569',
+                  border: isSelected ? '1px solid rgba(0, 209, 255, 0.4)' : '1px solid transparent',
+                  padding: '0.45rem 0.9rem',
                   borderRadius: '8px',
-                  border: 'none',
-                  background: isSelected ? '#ffffff' : 'transparent',
-                  color: isSelected ? '#0f172a' : '#64748b',
                   fontWeight: isSelected ? '700' : '500',
                   fontSize: '0.82rem',
                   cursor: 'pointer',
-                  boxShadow: isSelected ? '0 1px 4px rgba(0,0,0,0.08)' : 'none',
                   transition: 'all 0.15s ease',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
+                  boxShadow: isSelected ? '0 2px 8px rgba(0, 45, 98, 0.3)' : 'none',
                 }}
               >
-                <span>{type === 'Incidencia' ? '🚨' : type === 'Requerimiento' ? '📋' : type === 'Problema' ? '🔍' : '🔄'}</span>
                 {type}s ({count})
               </button>
             );
@@ -481,7 +494,7 @@ export default function Categories() {
           </svg>
           <input
             type="text"
-            placeholder={`Buscar en ${activeTab}s...`}
+            placeholder={`Buscar categorías o grupos en ${activeTab}s...`}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             style={{
@@ -496,181 +509,204 @@ export default function Categories() {
         </div>
       </div>
 
-      {/* 📦 ENTERPRISE CATEGORIES TABLE */}
-      <div
-        style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 4px 20px -4px rgba(0,0,0,0.05)',
-          overflow: 'hidden',
-        }}
-      >
-        {loading ? (
-          <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
-            Cargando catálogo de categorías...
-          </div>
-        ) : filteredCategories.length === 0 ? (
-          <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center' }}>
-            <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>🏷️</div>
-            <h3 style={{ margin: '0 0 0.25rem 0', color: '#1e293b' }}>
-              No hay categorías de {activeTab}s
-            </h3>
-            <p style={{ margin: '0 0 1.25rem 0', color: '#64748b', fontSize: '0.875rem' }}>
-              Crea la primera categoría para clasificar tickets de este tipo.
-            </p>
-            <button
-              onClick={() => handleOpenModal()}
+      {/* 📦 CATEGORIES ORGANIZED BY THEMATIC GROUP */}
+      {loading ? (
+        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3.5rem', textAlign: 'center', color: '#64748b' }}>
+          <div style={{ width: '36px', height: '36px', border: '3px solid #e2e8f0', borderTopColor: '#002D62', borderRadius: '50%', animation: 'spin 1s linear infinite', margin: '0 auto 1rem auto' }} />
+          Cargando catálogo de categorías por grupo temático...
+        </div>
+      ) : Object.keys(groupedCategories).length === 0 ? (
+        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '3.5rem 1.5rem', textAlign: 'center', boxShadow: '0 2px 8px rgba(0,0,0,0.03)' }}>
+          <div style={{ fontSize: '2.5rem', marginBottom: '0.75rem' }}>🏷️</div>
+          <h3 style={{ margin: '0 0 0.35rem 0', color: '#002D62', fontWeight: 800 }}>
+            No hay categorías de {activeTab}s
+          </h3>
+          <p style={{ margin: '0 0 1.5rem 0', color: '#64748b', fontSize: '0.875rem' }}>
+            Crea la primera categoría para clasificar tickets y establecer los tiempos de respuesta ANS.
+          </p>
+          <button
+            onClick={() => handleOpenModal()}
+            style={{
+              background: '#002D62',
+              color: '#ffffff',
+              border: '1px solid rgba(0, 209, 255, 0.4)',
+              padding: '0.65rem 1.35rem',
+              borderRadius: '10px',
+              fontWeight: '600',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0, 45, 98, 0.3)',
+            }}
+          >
+            + Crear Primera Categoría
+          </button>
+        </div>
+      ) : (
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fill, minmax(350px, 1fr))',
+            gap: '1.25rem',
+            alignItems: 'start',
+          }}
+        >
+          {Object.entries(groupedCategories).map(([groupName, items]) => (
+            <div
+              key={groupName}
               style={{
-                background: '#10b981',
-                color: '#ffffff',
-                border: 'none',
-                padding: '0.6rem 1.25rem',
-                borderRadius: '8px',
-                fontWeight: '600',
-                cursor: 'pointer',
+                background: '#ffffff',
+                borderRadius: '16px',
+                border: '1px solid #e2e8f0',
+                boxShadow: '0 4px 16px -2px rgba(0, 45, 98, 0.05)',
+                overflow: 'hidden',
+                display: 'flex',
+                flexDirection: 'column',
+                transition: 'transform 0.2s ease, box-shadow 0.2s ease',
               }}
             >
-              + Crear Primera Categoría
-            </button>
-          </div>
-        ) : (
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1.5px solid #e2e8f0', color: '#475569', fontWeight: '700', textTransform: 'uppercase', fontSize: '0.75rem', letterSpacing: '0.04em' }}>
-                  <th style={{ padding: '1rem 1.25rem' }}>Categoría / Asunto</th>
-                  <th style={{ padding: '1rem 1.25rem' }}>Grupo Temático</th>
-                  <th style={{ padding: '1rem 1.25rem' }}>Acuerdo de Servicio (ANS)</th>
-                  <th style={{ padding: '1rem 1.25rem' }}>Estado</th>
-                  <th style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {filteredCategories.map((category) => {
-                  const isActive = category.isActive !== false;
+              {/* Group Header */}
+              <div
+                style={{
+                  padding: '1rem 1.25rem',
+                  background: 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)',
+                  borderBottom: '1px solid #e2e8f0',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '1.15rem' }}>📁</span>
+                  <strong style={{ color: '#002D62', fontSize: '0.95rem', fontWeight: 800 }}>
+                    {groupName}
+                  </strong>
+                </div>
+                <span
+                  style={{
+                    fontSize: '0.72rem',
+                    fontWeight: '700',
+                    background: '#e0f8ff',
+                    color: '#002D62',
+                    border: '1px solid rgba(0, 209, 255, 0.35)',
+                    padding: '0.2rem 0.6rem',
+                    borderRadius: '9999px',
+                  }}
+                >
+                  {items.length} {items.length === 1 ? 'categoría' : 'categorías'}
+                </span>
+              </div>
+
+              {/* Items List inside Group */}
+              <div style={{ padding: '0.85rem', display: 'flex', flexDirection: 'column', gap: '0.6rem' }}>
+                {items.map((cat) => {
+                  const isActive = cat.isActive !== false;
                   return (
-                    <tr
-                      key={category.id}
+                    <div
+                      key={cat.id}
                       style={{
-                        borderBottom: '1px solid #f1f5f9',
-                        transition: 'background 0.15s ease',
+                        padding: '0.85rem 1rem',
+                        borderRadius: '12px',
+                        border: '1px solid #f1f5f9',
+                        background: isActive ? '#ffffff' : '#f8fafc',
+                        opacity: isActive ? 1 : 0.65,
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center',
+                        gap: '0.75rem',
+                        transition: 'all 0.15s ease',
+                        boxShadow: isActive ? '0 1px 3px rgba(0,0,0,0.02)' : 'none',
                       }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = '#f8fafc')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
+                      onMouseEnter={(e) => { if (isActive) e.currentTarget.style.borderColor = '#cbd5e1'; }}
+                      onMouseLeave={(e) => { if (isActive) e.currentTarget.style.borderColor = '#f1f5f9'; }}
                     >
-                      <td style={{ padding: '1rem 1.25rem' }}>
-                        <strong style={{ color: '#0f172a', fontSize: '0.92rem', display: 'block' }}>
-                          {category.name}
+                      <div style={{ flex: 1, minWidth: 0 }}>
+                        <strong style={{ color: '#0f172a', fontSize: '0.9rem', display: 'block', wordBreak: 'break-word' }}>
+                          {cat.name}
                         </strong>
-                        <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                          ID: #{category.id}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 1.25rem' }}>
-                        <span
-                          style={{
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            padding: '0.2rem 0.6rem',
-                            borderRadius: '8px',
-                            background: '#f1f5f9',
-                            color: '#475569',
-                            border: '1px solid #cbd5e1',
-                          }}
-                        >
-                          📁 {category.group || 'General'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 1.25rem' }}>
-                        <span
-                          style={{
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                            fontSize: '0.78rem',
-                            fontWeight: '700',
-                            padding: '0.2rem 0.65rem',
-                            borderRadius: '9999px',
-                            background: '#eff6ff',
-                            color: '#1e40af',
-                            border: '1px solid #bfdbfe',
-                          }}
-                        >
-                          ⏱️ {category.sla || '4 horas'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '1rem 1.25rem' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.35rem', flexWrap: 'wrap' }}>
+                          <span
+                            style={{
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.3rem',
+                              fontSize: '0.72rem',
+                              fontWeight: '700',
+                              padding: '0.15rem 0.5rem',
+                              borderRadius: '6px',
+                              background: '#f0f9ff',
+                              color: '#002D62',
+                              border: '1px solid rgba(0, 209, 255, 0.25)',
+                            }}
+                          >
+                            ⏱️ ANS: {cat.sla || 'Sin tiempo'}
+                          </span>
+                          {!isActive && (
+                            <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#ef4444', background: '#fef2f2', padding: '0.1rem 0.4rem', borderRadius: '4px' }}>
+                              Inactiva
+                            </span>
+                          )}
+                        </div>
+                      </div>
+
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', flexShrink: 0 }}>
                         <button
                           type="button"
-                          onClick={() => handleToggleActive(category)}
+                          onClick={() => handleToggleActive(cat)}
                           style={{
                             background: isActive ? '#ecfdf5' : '#fef2f2',
-                            color: isActive ? '#047857' : '#b91c1c',
+                            color: isActive ? '#059669' : '#b91c1c',
                             border: `1px solid ${isActive ? '#a7f3d0' : '#fecaca'}`,
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '9999px',
+                            padding: '0.3rem 0.6rem',
+                            borderRadius: '8px',
                             fontSize: '0.75rem',
                             fontWeight: '700',
                             cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
+                            transition: 'all 0.15s ease',
                           }}
+                          title={isActive ? 'Desactivar categoría' : 'Activar categoría'}
                         >
-                          <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: isActive ? '#10b981' : '#ef4444' }} />
-                          {isActive ? 'Habilitada' : 'Inactiva'}
+                          {isActive ? '🟢 Activa' : '⚪ Inactiva'}
                         </button>
-                      </td>
-                      <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                        <div style={{ display: 'inline-flex', gap: '0.5rem' }}>
-                          <button
-                            onClick={() => handleOpenModal(category)}
-                            style={{
-                              background: '#f8fafc',
-                              border: '1px solid #cbd5e1',
-                              borderRadius: '8px',
-                              padding: '0.4rem 0.75rem',
-                              color: '#0f172a',
-                              fontWeight: '600',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                              display: 'inline-flex',
-                              alignItems: 'center',
-                              gap: '0.35rem',
-                            }}
-                          >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                            </svg>
-                            Editar
-                          </button>
-                          <button
-                            onClick={() => handleDelete(category.id, category.name)}
-                            style={{
-                              background: '#fef2f2',
-                              border: '1px solid #fecaca',
-                              borderRadius: '8px',
-                              padding: '0.4rem 0.65rem',
-                              color: '#b91c1c',
-                              fontWeight: '600',
-                              fontSize: '0.8rem',
-                              cursor: 'pointer',
-                            }}
-                          >
-                            🗑️
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
+                        <button
+                          type="button"
+                          onClick={() => handleOpenModal(cat)}
+                          style={{
+                            background: '#f8fafc',
+                            border: '1px solid #cbd5e1',
+                            borderRadius: '8px',
+                            padding: '0.3rem 0.55rem',
+                            color: '#002D62',
+                            cursor: 'pointer',
+                            fontSize: '0.82rem',
+                          }}
+                          title="Editar categoría"
+                        >
+                          ✏️
+                        </button>
+                        <button
+                          type="button"
+                          onClick={() => handleDelete(cat.id, cat.name)}
+                          style={{
+                            background: '#fef2f2',
+                            border: '1px solid #fecaca',
+                            borderRadius: '8px',
+                            padding: '0.3rem 0.55rem',
+                            color: '#b91c1c',
+                            cursor: 'pointer',
+                            fontSize: '0.82rem',
+                          }}
+                          title="Eliminar categoría"
+                        >
+                          🗑️
+                        </button>
+                      </div>
+                    </div>
                   );
                 })}
-              </tbody>
-            </table>
-          </div>
-        )}
-      </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {/* 🪟 FLOATING MODAL WITH BACKDROP BLUR */}
       {showModal && (
@@ -708,17 +744,18 @@ export default function Categories() {
                     width: '38px',
                     height: '38px',
                     borderRadius: '10px',
-                    background: '#ecfdf5',
-                    color: '#059669',
+                    background: '#f0f9ff',
+                    color: '#002D62',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
+                    border: '1px solid rgba(0, 209, 255, 0.3)',
                   }}
                 >
                   🏷️
                 </div>
                 <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: '800' }}>
+                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#002D62', fontWeight: '800' }}>
                     {editingId ? 'Editar Categoría' : 'Nueva Categoría'}
                   </h3>
                   <small style={{ color: '#64748b' }}>Definición de tipología y tiempo ANS</small>
@@ -796,13 +833,15 @@ export default function Categories() {
 
                 <div>
                   <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                    Grupo Temático
+                    Grupo Temático *
                   </label>
                   <input
                     type="text"
+                    list="group-options"
                     placeholder="Ej: Redes & Conectividad"
                     value={form.group}
                     onChange={(e) => setForm({ ...form, group: e.target.value })}
+                    required
                     style={{
                       width: '100%',
                       padding: '0.7rem 0.9rem',
@@ -814,6 +853,11 @@ export default function Categories() {
                       outline: 'none',
                     }}
                   />
+                  <datalist id="group-options">
+                    {uniqueGroups.map((g) => (
+                      <option key={g} value={g} />
+                    ))}
+                  </datalist>
                 </div>
               </div>
 
@@ -844,6 +888,19 @@ export default function Categories() {
                 </select>
               </div>
 
+              <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginTop: '0.2rem' }}>
+                <input
+                  type="checkbox"
+                  id="cat-modal-isActive"
+                  checked={form.isActive}
+                  onChange={(e) => setForm({ ...form, isActive: e.target.checked })}
+                  style={{ width: '17px', height: '17px', cursor: 'pointer' }}
+                />
+                <label htmlFor="cat-modal-isActive" style={{ fontSize: '0.85rem', fontWeight: '600', color: '#334155', cursor: 'pointer', margin: 0 }}>
+                  Categoría Activa (disponible para selección)
+                </label>
+              </div>
+
               <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem', marginTop: '0.75rem' }}>
                 <button
                   type="button"
@@ -865,15 +922,15 @@ export default function Categories() {
                   type="submit"
                   disabled={saving}
                   style={{
-                    background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)',
+                    background: '#002D62',
                     color: '#ffffff',
                     padding: '0.65rem 1.35rem',
                     borderRadius: '10px',
                     fontWeight: '600',
                     fontSize: '0.875rem',
-                    border: 'none',
+                    border: '1px solid rgba(0, 209, 255, 0.4)',
                     cursor: saving ? 'not-allowed' : 'pointer',
-                    boxShadow: '0 4px 12px rgba(16, 185, 129, 0.35)',
+                    boxShadow: '0 4px 12px rgba(0, 45, 98, 0.35)',
                   }}
                 >
                   {saving ? 'Guardando...' : editingId ? 'Guardar Cambios' : 'Crear Categoría'}

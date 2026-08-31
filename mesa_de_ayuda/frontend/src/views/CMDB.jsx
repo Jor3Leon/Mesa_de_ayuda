@@ -741,7 +741,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                             </div>
                           </td>
                           <td>
-                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#002E5D' }}>
+                            <div style={{ fontSize: '0.9rem', fontWeight: 600, color: '#002D62' }}>
                               {asset.deviceType || 'Equipo de Cómputo'}
                             </div>
                             <div className="muted-text" style={{ fontSize: '0.75rem' }}>

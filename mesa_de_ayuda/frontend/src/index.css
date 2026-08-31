@@ -1,24 +1,29 @@
 :root {
-  --color-primary: #0f9d3a;
-  --color-primary-dark: #0b7d2e;
-  --color-secondary: #ffbf1f;
-  --color-success: #0f9d3a;
-  --color-warning: #ffbf1f;
-  --color-danger: #e21b23;
+  /* 🎨 PALETA DE COLORES PREMIUM INFRASTRUCTURE SYSTEM */
+  --color-primary: #002D62;       /* Primary: Deep Navy Blue */
+  --color-primary-dark: #001D40;  /* Primary Dark */
+  --color-secondary: #00D1FF;     /* Secondary: Vibrant Cyan */
+  --color-secondary-dark: #00A3CC;
+  --color-tertiary: #475569;      /* Tertiary: Slate Grey */
+  --color-neutral: #F8FAFC;       /* Neutral: Off-white / Slate 50 */
+  --color-success: #10b981;
+  --color-warning: #f59e0b;
+  --color-danger: #ef4444;
   --color-header: #ffffff;
-  --color-header-alt: #f8f8f8;
+  --color-header-alt: #F8FAFC;
   --color-sidebar: #ffffff;
-  --color-bg: #f4f4f4;
+  --color-bg: #F8FAFC;
   --color-panel: #ffffff;
   --color-panel-alt: #fcfcfc;
-  --color-text: #212121;
-  --color-muted: #7a7a7a;
-  --color-border: rgba(0, 0, 0, 0.09);
-  --color-sidebar-hover: #f4fff7;
-  --shadow-soft: 0 10px 24px rgba(0, 0, 0, 0.06);
-  --shadow-premium: 0 20px 40px rgba(0, 0, 0, 0.08);
-  --glass-bg: rgba(255, 255, 255, 0.7);
-  --glass-border: rgba(255, 255, 255, 0.4);
+  --color-text: #0f172a;
+  --color-text-primary: #002D62;
+  --color-muted: #475569;
+  --color-border: #e2e8f0;
+  --color-sidebar-hover: #f0f9ff;
+  --shadow-soft: 0 10px 24px rgba(0, 45, 98, 0.05);
+  --shadow-premium: 0 20px 40px rgba(0, 45, 98, 0.08);
+  --glass-bg: rgba(255, 255, 255, 0.85);
+  --glass-border: rgba(0, 209, 255, 0.2);
 }
 
 * {
@@ -34,10 +39,20 @@ body,
 }
 
 body {
-  font-family: "Segoe UI", "Inter", system-ui, sans-serif;
+  font-family: "Source Sans 3", "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", system-ui, sans-serif;
   color: var(--color-text);
-  background: linear-gradient(180deg, #f3f3f3 0%, #f6f6f6 100%);
+  background: var(--color-bg);
   -webkit-font-smoothing: antialiased;
+}
+
+h1, h2, h3, h4, h5, h6, .brand-title, .section-heading h2, .section-heading h3, .headline {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+  color: var(--color-primary);
+  letter-spacing: -0.02em;
+}
+
+.label, label, th, .badge, .status-pill, button {
+  font-family: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
 
 a {
@@ -347,13 +362,13 @@ textarea {
   position: absolute;
   left: 0;
   right: 0;
-  bottom: -8px;
-  height: 6px;
+  bottom: -4px;
+  height: 4px;
   background: linear-gradient(
     90deg,
-    var(--color-danger) 0 33.33%,
-    var(--color-secondary) 33.33% 66.66%,
-    var(--color-primary) 66.66% 100%
+    var(--color-primary) 0%,
+    var(--color-secondary) 50%,
+    var(--color-primary) 100%
   );
 }
 
@@ -366,19 +381,19 @@ textarea {
 .brand-mark {
   display: grid;
   place-items: center;
-  width: 46px;
-  height: 46px;
-  border-radius: 14px;
+  width: 44px;
+  height: 44px;
+  border-radius: 12px;
   font-weight: 800;
   letter-spacing: 0.08em;
   background: linear-gradient(
-    180deg,
-    var(--color-danger) 0 34%,
-    var(--color-secondary) 34% 67%,
-    var(--color-primary) 67% 100%
+    135deg,
+    #002D62 0%,
+    #001D40 60%,
+    #00D1FF 100%
   );
-  color: white;
-  box-shadow: inset 0 1px 0 rgba(255, 255, 255, 0.5);
+  color: #ffffff;
+  box-shadow: 0 4px 12px rgba(0, 45, 98, 0.35);
 }
 
 .sidebar-toggle-btn {
@@ -399,13 +414,14 @@ textarea {
 
 .sidebar-toggle-btn:hover {
   color: var(--color-primary);
-  background: var(--color-sidebar-hover);
-  border-color: rgba(15, 157, 58, 0.1);
+  background: #f0f9ff;
+  border-color: rgba(0, 209, 255, 0.3);
 }
 
 .brand-title {
   font-size: 1.1rem;
-  font-weight: 700;
+  font-weight: 800;
+  color: var(--color-primary);
 }
 
 .brand-subtitle,
@@ -476,16 +492,16 @@ textarea {
 }
 
 .profile-chip-button:hover {
-  border-color: rgba(15, 157, 58, 0.2);
-  box-shadow: 0 10px 24px rgba(15, 157, 58, 0.08);
+  border-color: rgba(0, 209, 255, 0.4);
+  box-shadow: 0 10px 24px rgba(0, 45, 98, 0.08);
 }
 
 .status-dot {
   width: 10px;
   height: 10px;
   border-radius: 50%;
-  background: var(--color-primary);
-  box-shadow: 0 0 0 6px rgba(15, 157, 58, 0.14);
+  background: var(--color-secondary);
+  box-shadow: 0 0 0 4px rgba(0, 209, 255, 0.2);
 }
 
 .profile-avatar {
@@ -495,7 +511,7 @@ textarea {
   height: 40px;
   border-radius: 50%;
   color: white;
-  background: var(--color-primary);
+  background: linear-gradient(135deg, #002D62 0%, #001D40 100%);
   font-weight: 700;
   object-fit: cover;
 }
@@ -603,21 +619,22 @@ textarea {
   margin-bottom: 0.3rem;
   padding: 0.9rem;
   border: 1px solid transparent;
-  border-radius: 18px;
+  border-radius: 16px;
   transition: 0.2s ease;
   color: var(--color-text);
   text-decoration: none;
 }
 
 .sidebar-item:hover {
-  border-color: rgba(15, 157, 58, 0.15);
+  border-color: rgba(0, 209, 255, 0.25);
   background: var(--color-sidebar-hover);
 }
 
 .sidebar-item.active {
-  border-color: rgba(15, 157, 58, 0.2);
-  background: #ffffff;
-  box-shadow: inset 0 -2px 0 var(--color-primary);
+  border-color: rgba(0, 45, 98, 0.12);
+  background: #f0f9ff;
+  box-shadow: inset 4px 0 0 var(--color-secondary);
+  color: var(--color-primary);
 }
 
 .sidebar-icon,
@@ -627,9 +644,16 @@ textarea {
   place-items: center;
   width: 38px;
   height: 38px;
-  border-radius: 12px;
+  border-radius: 10px;
   color: var(--color-primary);
-  background: rgba(15, 157, 58, 0.08);
+  background: rgba(0, 45, 98, 0.06);
+  transition: all 0.2s ease;
+}
+
+.sidebar-item.active .sidebar-icon {
+  color: #ffffff;
+  background: linear-gradient(135deg, #002D62 0%, #001D40 100%);
+  box-shadow: 0 4px 10px rgba(0, 45, 98, 0.25);
 }
 
 /* En desktop el contenido vertical es visible, la bottom nav no */
@@ -742,9 +766,9 @@ textarea {
 }
 
 .inventory-new-btn {
-  background: #002E5D !important;
+  background: var(--color-primary) !important;
   color: #fff !important;
-  box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+  box-shadow: 0 2px 4px rgba(0, 45, 98, 0.2);
   padding: 0.6rem 1.5rem;
   border-radius: 10px;
   font-weight: 600;
@@ -1182,8 +1206,24 @@ textarea {
 
 .btn {
   color: white;
-  background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
-  box-shadow: 0 8px 16px rgba(15, 157, 58, 0.18);
+  background: var(--color-primary);
+  box-shadow: 0 4px 14px rgba(0, 45, 98, 0.25);
+  font-weight: 600;
+}
+
+.btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  color: var(--color-primary);
+  background: #f1f5f9;
+  border: 1px solid #cbd5e1;
+  font-weight: 600;
+}
+
+.btn-secondary:hover {
+  background: #e2e8f0;
 }
 
 .btn-ghost {
@@ -1223,19 +1263,22 @@ textarea {
 }
 
 .field label {
-  font-size: 0.9rem;
+  font-size: 0.85rem;
   font-weight: 600;
+  color: #334155;
 }
 
 .field input,
 .field select,
 .field textarea {
   width: 100%;
-  padding: 0.85rem 0.95rem;
+  padding: 0.75rem 0.95rem;
   border: 1px solid var(--color-border);
-  border-radius: 14px;
+  border-radius: 12px;
   background: #ffffff;
   color: var(--color-text);
+  font-family: inherit;
+  transition: border-color 0.15s ease, box-shadow 0.15s ease;
 }
 
 .login-form-portal .field input,
@@ -1247,8 +1290,8 @@ textarea {
 .field input:focus,
 .field select:focus,
 .field textarea:focus {
-  outline: 2px solid rgba(15, 157, 58, 0.18);
-  border-color: rgba(15, 157, 58, 0.3);
+  outline: 2px solid rgba(0, 209, 255, 0.4);
+  border-color: var(--color-secondary);
 }
 
 .field textarea {

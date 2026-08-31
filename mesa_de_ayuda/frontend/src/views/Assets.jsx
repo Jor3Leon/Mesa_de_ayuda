@@ -1187,7 +1187,7 @@ export default function Assets() {
                                     <button 
                                       type="button" 
                                       className="btn-ghost" 
-                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002D62', background: 'transparent', border: 'none' }}
                                       onClick={() => setViewingUserProfile(userMatch)}
                                     >
                                       {userMatch.username || cleanName}
@@ -1250,7 +1250,7 @@ export default function Assets() {
                                     <button 
                                       type="button" 
                                       className="btn-ghost" 
-                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002D62', background: 'transparent', border: 'none' }}
                                       onClick={() => setViewingUserProfile(userMatch)}
                                     >
                                       {userMatch.username || cleanName}
@@ -1299,7 +1299,7 @@ export default function Assets() {
                                   <button 
                                     type="button" 
                                     className="btn-ghost" 
-                                    style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', background: 'transparent', border: 'none' }}
+                                    style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002D62', background: 'transparent', border: 'none' }}
                                     onClick={() => setViewingUserProfile(userMatch)}
                                   >
                                     {userMatch.username || cleanName}
@@ -1476,7 +1476,7 @@ export default function Assets() {
                     return (
                       <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '12px', padding: '0.9rem', marginBottom: '1.2rem' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#002E5D', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                          <span style={{ fontSize: '0.8rem', fontWeight: 800, color: '#002D62', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
                             <span>⏱️</span> Trazabilidad & Vida Útil del Activo
                           </span>
                           <span className="badge badge-info" style={{ fontSize: '0.68rem' }}>
@@ -1518,7 +1518,7 @@ export default function Assets() {
                                 <div style={{ background: '#fff', border: '1px solid var(--color-border)', borderRadius: '14px', padding: '1.25rem', boxShadow: '0 4px 12px rgba(0,0,0,0.03)', width: '100%' }}>
                                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.85rem' }}>
                                     <div style={{ flex: 1, marginRight: '1rem' }}>
-                                      <strong style={{ display: 'block', fontSize: '1.05rem', color: '#002E5D', lineHeight: '1.3' }}>{item.title}</strong>
+                                      <strong style={{ display: 'block', fontSize: '1.05rem', color: '#002D62', lineHeight: '1.3' }}>{item.title}</strong>
                                       <span className="muted-text" style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--color-muted)', textTransform: 'uppercase', letterSpacing: '0.02em', marginTop: '0.25rem', display: 'block' }}>TICKET #{item.id}</span>
                                     </div>
                                     <span className={`badge ${getTicketStatusClass(item.status)}`} style={{ fontSize: '0.75rem', whiteSpace: 'nowrap' }}>{getStatusLabel(item.status)}</span>
@@ -1586,7 +1586,7 @@ export default function Assets() {
           <div className="modal-card" style={{ maxWidth: '900px', padding: '2rem' }} onClick={(e) => e.stopPropagation()}>
             <div className="section-heading">
               <div>
-                <h3 style={{ fontSize: '1.4rem', color: '#002E5D', marginBottom: '0.2rem' }}>
+                <h3 style={{ fontSize: '1.4rem', color: '#002D62', marginBottom: '0.2rem' }}>
                   {editingAssetId ? 'Editar dispositivo' : 'Registrar nuevo dispositivo'}
                 </h3>
                 <p className="muted-text">Completa los campos técnicos para mantener la integridad del inventario.</p>
@@ -1899,7 +1899,7 @@ export default function Assets() {
           <div className="modal-card" style={{ maxWidth: '400px', padding: '1.5rem' }}>
             <div className="section-heading" style={{ marginBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', color: '#002E5D' }}>Detalles de Usuario</h3>
+                <h3 style={{ fontSize: '1.2rem', color: '#002D62' }}>Detalles de Usuario</h3>
                 <p className="muted-text">Información de contacto oficial.</p>
               </div>
               <button type="button" className="btn-ghost" onClick={() => setViewingUserProfile(null)}>&times;</button>
@@ -1944,7 +1944,7 @@ export default function Assets() {
             <div className="asset-detail-body" style={{ marginTop: '1.5rem' }}>
               <div className="asset-detail-hero" style={{ borderBottom: '1px solid #eee', paddingBottom: '1rem', marginBottom: '1rem' }}>
                 <div>
-                  <strong style={{ fontSize: '1.2rem', color: '#002E5D' }}>{viewingTicket.title}</strong>
+                  <strong style={{ fontSize: '1.2rem', color: '#002D62' }}>{viewingTicket.title}</strong>
                   <p className="muted-text">{viewingTicket.category || 'Sin categoría definida'}</p>
                 </div>
                 <span className={`badge ${getTicketStatusClass(viewingTicket.status)}`}>{getStatusLabel(viewingTicket.status)}</span>

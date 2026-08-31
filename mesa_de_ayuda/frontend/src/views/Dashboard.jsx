@@ -111,12 +111,12 @@ export default function Dashboard({ user }) {
       
       {/* 🌟 HERO OPERATIONAL PANEL */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2rem',
         marginBottom: '1.75rem',
-        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3), 0 8px 10px -6px rgba(15, 23, 42, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+        border: '1px solid rgba(0, 209, 255, 0.25)',
         color: '#ffffff',
         display: 'flex',
         flexWrap: 'wrap',
@@ -131,16 +131,16 @@ export default function Dashboard({ user }) {
               fontWeight: '700',
               padding: '0.2rem 0.6rem',
               borderRadius: '9999px',
-              background: 'rgba(59, 130, 246, 0.2)',
-              border: '1px solid rgba(59, 130, 246, 0.4)',
-              color: '#93c5fd'
+              background: 'rgba(0, 209, 255, 0.18)',
+              border: '1px solid rgba(0, 209, 255, 0.4)',
+              color: '#00D1FF'
             }}>
               ITSM & RMM Operations
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>• Centro de Monitoreo Activo</span>
+            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>• Centro de Monitoreo Activo</span>
           </div>
 
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em' }}>
+          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
             Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
           </h1>
           <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '600px', lineHeight: 1.5 }}>
@@ -435,18 +435,18 @@ export default function Dashboard({ user }) {
               <AreaChart data={chart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="ticketGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#2563eb" stopOpacity={0.0}/>
+                    <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.45}/>
+                    <stop offset="95%" stopColor="#002D62" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
                 <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} allowDecimals={false} />
                 <Tooltip 
-                  contentStyle={{ background: '#0f172a', border: 'none', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                  labelStyle={{ color: '#93c5fd', fontWeight: '700' }}
+                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
-                <Area type="monotone" dataKey="tickets" stroke="#2563eb" strokeWidth={3} fillOpacity={1} fill="url(#ticketGradient)" />
+                <Area type="monotone" dataKey="tickets" stroke="#002D62" strokeWidth={3} fillOpacity={1} fill="url(#ticketGradient)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>

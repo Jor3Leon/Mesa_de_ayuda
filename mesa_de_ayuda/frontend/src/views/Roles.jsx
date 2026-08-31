@@ -204,12 +204,12 @@ export default function Roles() {
       {/* 🌟 HERO CONTROL BAR */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           marginBottom: '1.75rem',
-          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
           display: 'flex',
           flexWrap: 'wrap',
@@ -224,11 +224,11 @@ export default function Roles() {
               width: '42px',
               height: '42px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(124, 58, 237, 0.4)',
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
               color: '#ffffff',
             }}
           >
@@ -238,7 +238,7 @@ export default function Roles() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
                 Matriz de Roles & Permisos (RBAC)
               </h1>
               <span
@@ -247,15 +247,15 @@ export default function Roles() {
                   fontWeight: '700',
                   padding: '0.15rem 0.55rem',
                   borderRadius: '9999px',
-                  background: 'rgba(124, 58, 237, 0.2)',
-                  color: '#c4b5fd',
-                  border: '1px solid rgba(124, 58, 237, 0.4)',
+                  background: 'rgba(0, 209, 255, 0.18)',
+                  color: '#00D1FF',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
                 }}
               >
                 Security v2.2
               </span>
             </div>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Define privilegios operativos y permisos modulares para cada nivel técnico y perfil institucional.
             </p>
           </div>
@@ -269,19 +269,19 @@ export default function Roles() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
-              background: 'linear-gradient(135deg, #7c3aed 0%, #6366f1 100%)',
+              background: '#002D62',
               color: '#ffffff',
               padding: '0.65rem 1.35rem',
               borderRadius: '10px',
               fontWeight: '600',
               fontSize: '0.875rem',
-              border: 'none',
+              border: '1px solid rgba(0, 209, 255, 0.4)',
               cursor: saving ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 14px rgba(124, 58, 237, 0.4)',
+              boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
               transition: 'all 0.2s ease',
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
               <polyline points="17 21 17 13 7 13 7 21" />
               <polyline points="7 3 7 8 15 8" />

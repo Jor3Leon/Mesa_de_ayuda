@@ -70,12 +70,12 @@ export default function Scripts() {
       {/* 🌟 HERO CONTROL BAR */}
       <div
         style={{
-          background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
           borderRadius: '16px',
           padding: '1.75rem 2rem',
           marginBottom: '1.75rem',
-          boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
-          border: '1px solid rgba(255, 255, 255, 0.1)',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
           display: 'flex',
           flexWrap: 'wrap',
@@ -90,11 +90,11 @@ export default function Scripts() {
               width: '42px',
               height: '42px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(99, 102, 241, 0.4)',
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
               color: '#ffffff',
             }}
           >
@@ -104,7 +104,7 @@ export default function Scripts() {
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
                 Automatización de Scripts & Políticas RMM
               </h1>
               <span
@@ -113,15 +113,15 @@ export default function Scripts() {
                   fontWeight: '700',
                   padding: '0.15rem 0.55rem',
                   borderRadius: '9999px',
-                  background: 'rgba(99, 102, 241, 0.2)',
-                  color: '#c7d2fe',
-                  border: '1px solid rgba(99, 102, 241, 0.4)',
+                  background: 'rgba(0, 209, 255, 0.18)',
+                  color: '#00D1FF',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
                 }}
               >
                 Automation v2.2
               </span>
             </div>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Biblioteca de acciones remotas para mantenimiento desatendido, optimización y soporte preventivo.
             </p>
           </div>
@@ -133,19 +133,19 @@ export default function Scripts() {
             display: 'inline-flex',
             alignItems: 'center',
             gap: '0.5rem',
-            background: 'linear-gradient(135deg, #6366f1 0%, #4f46e5 100%)',
+            background: '#002D62',
             color: '#ffffff',
             padding: '0.65rem 1.25rem',
             borderRadius: '10px',
             fontWeight: '600',
             fontSize: '0.875rem',
-            border: 'none',
+            border: '1px solid rgba(0, 209, 255, 0.4)',
             cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)',
+            boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
             transition: 'all 0.2s ease',
           }}
         >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
             <path d="M12 5v14M5 12h14" />
           </svg>
           Nueva Tarea Remota

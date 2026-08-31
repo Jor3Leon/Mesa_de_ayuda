@@ -1176,10 +1176,10 @@ export default function Tickets() {
                   Estadísticas
                 </div>
                 <div onClick={() => setActiveTab('elementos')} style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #e0e0e0', cursor: 'pointer', background: activeTab === 'elementos' ? '#f8f9fa' : 'transparent', fontWeight: activeTab === 'elementos' ? 700 : 400, borderLeft: activeTab === 'elementos' ? '3px solid #29b6f6' : '3px solid transparent' }}>
-                  Elementos {selectedTicket.assetId && <span style={{float: 'right', background: '#e0edf9', color: '#002E5D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>1</span>}
+                  Elementos {selectedTicket.assetId && <span style={{float: 'right', background: '#e0edf9', color: '#002D62', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>1</span>}
                 </div>
                 <div onClick={() => setActiveTab('historico')} style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #e0e0e0', cursor: 'pointer', background: activeTab === 'historico' ? '#f8f9fa' : 'transparent', fontWeight: activeTab === 'historico' ? 700 : 400, borderLeft: activeTab === 'historico' ? '3px solid #29b6f6' : '3px solid transparent' }}>
-                  Histórico <span style={{float: 'right', background: '#e0edf9', color: '#002E5D', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>{activities.length}</span>
+                  Histórico <span style={{float: 'right', background: '#e0edf9', color: '#002D62', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>{activities.length}</span>
                 </div>
               </div>
 
@@ -1206,7 +1206,7 @@ export default function Tickets() {
                                 <button 
                                   type="button" 
                                   className="btn-ghost" 
-                                  style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 700, color: '#002E5D', background: 'transparent', display: 'inline', border: 'none' }}
+                                  style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 700, color: '#002D62', background: 'transparent', display: 'inline', border: 'none' }}
                                   onClick={() => {
                                     const match = users.find(u => u.name === (selectedTicket.createdBy?.name || 'Administrador'));
                                     if (match) setViewingUserProfile(match);
@@ -1311,7 +1311,7 @@ export default function Tickets() {
                                     <button 
                                       type="button" 
                                       className="btn-ghost" 
-                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 700, color: '#002E5D', background: 'transparent', display: 'inline', border: 'none' }}
+                                      style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 700, color: '#002D62', background: 'transparent', display: 'inline', border: 'none' }}
                                       onClick={() => {
                                         const match = users.find(u => u.name === c.author);
                                         if (match) setViewingUserProfile(match);
@@ -1673,7 +1673,7 @@ export default function Tickets() {
                     <div style={{ border: '1px dashed #ccc', background: '#f8fbfc', padding: '1.2rem', textAlign: 'center', borderRadius: '6px', cursor: 'pointer' }}
                       onClick={() => document.getElementById('ticket-files').click()}>
                       <input id="ticket-files" type="file" multiple style={{ display: 'none' }} />
-                      <p style={{ fontWeight: 600, marginBottom: '0.4rem', color: '#002E5D', fontSize: '0.9rem' }}>&#128206; Archivo(s) - 10 MB max</p>
+                      <p style={{ fontWeight: 600, marginBottom: '0.4rem', color: '#002D62', fontSize: '0.9rem' }}>&#128206; Archivo(s) - 10 MB max</p>
                       <div style={{ display: 'inline-flex', border: '1px solid #d9d9d9', borderRadius: '4px', overflow: 'hidden', background: '#fff' }}>
                         <button type="button" style={{ background: '#fff', border: 'none', borderRight: '1px solid #d9d9d9', padding: '0.45rem 0.9rem', cursor: 'pointer', fontSize: '0.85rem', pointerEvents: 'none' }}>Elegir archivos</button>
                         <span style={{ padding: '0.45rem 0.9rem', color: '#888', fontSize: '0.85rem' }}>Sin archivos seleccionados</span>
@@ -2038,7 +2038,7 @@ export default function Tickets() {
                         <div style={{ padding: '1.5rem', display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1.2rem 2rem' }}>
                           <div>
                             <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.2rem', textTransform: 'uppercase', fontWeight: 600 }}>Hostname</div>
-                            <div style={{ fontWeight: 700, color: '#002E5D', fontSize: '1rem' }}>{asset.hostname || '—'}</div>
+                            <div style={{ fontWeight: 700, color: '#002D62', fontSize: '1rem' }}>{asset.hostname || '—'}</div>
                           </div>
                           <div>
                             <div style={{ fontSize: '0.75rem', color: '#888', marginBottom: '0.2rem', textTransform: 'uppercase', fontWeight: 600 }}>Tipo de dispositivo</div>
@@ -2097,7 +2097,7 @@ export default function Tickets() {
               <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem', background: '#f8f9fa', padding: '1.5rem', borderRadius: '8px', border: '1px solid #e9ecef', height: 'fit-content' }}>
                   
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Estado</label>
+                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Estado</label>
                   <select 
                     value={form.status} 
                     onChange={(e) => setForm({...form, status: e.target.value})} 
@@ -2114,7 +2114,7 @@ export default function Tickets() {
 
 	                {canConfigureTicket ? (
 	                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-	                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Tipo</label>
+	                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Tipo</label>
 	                  <select value={form.ticketType || ''} onChange={(e) => setForm({...form, ticketType: e.target.value, category: '', sla: ''})} style={{ background: '#fff', border: '1px solid #ced4da', borderRadius: '4px', padding: '0.45rem', fontSize: '0.9rem' }}>
 	                    <option value="">Seleccionar tipo...</option>
 	                    <option value="Incidencia">Incidencia</option>
@@ -2125,7 +2125,7 @@ export default function Tickets() {
 
 	                {canConfigureTicket ? (
 	                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-	                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Categoría *</label>
+	                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Categoría *</label>
 	                  <CategorySelector 
                       categoriesConfig={categoriesConfig}
                       ticketType={form.ticketType}
@@ -2138,7 +2138,7 @@ export default function Tickets() {
 	                ) : null}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Elementos asociados</label>
+                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Elementos asociados</label>
                   <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ced4da', paddingBottom: '0.2rem', opacity: isStandardUser(currentUser) ? 0.7 : 1 }}>
                     <span style={{color: '#666', marginRight: '0.5rem'}}>🔍</span>
                     <input 
@@ -2159,7 +2159,7 @@ export default function Tickets() {
 
 	                {canConfigureTicket ? (
 	                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-	                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>ANS (Tiempo)</label>
+	                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>ANS (Tiempo)</label>
 	                  <select value={form.sla && form.sla.startsWith('SCHEDULED:') ? 'custom' : (form.sla || '')} onChange={(e) => setForm({...form, sla: e.target.value === 'custom' ? form.sla : e.target.value})} style={{ background: '#fff', border: '1px solid #ced4da', borderRadius: '4px', padding: '0.45rem', fontSize: '0.9rem' }}>
 	                    <option value="">Sin ANS</option>
                     <option value="2h">2 horas</option>
@@ -2174,7 +2174,7 @@ export default function Tickets() {
 
 	                {canConfigureTicket ? (
 	                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-	                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Técnico Asignado</label>
+	                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Técnico Asignado</label>
 	                  <ResponsibleSelector
 	                    users={assignableUsers}
                     selectedIds={form.responsibleUserIds}
@@ -2194,7 +2194,7 @@ export default function Tickets() {
 	                ) : null}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <label style={{ color: '#002E5D', fontWeight: 600, fontSize: '0.85rem' }}>Ubicación *</label>
+                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Ubicación *</label>
                   <select 
                     value={form.locationId} 
                     onChange={(e) => setForm({...form, locationId: e.target.value})} 
@@ -2216,7 +2216,7 @@ export default function Tickets() {
                   >
                     <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                       👥 Participantes 
-                      <span style={{ background: '#002E5D', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '10px', fontSize: '0.7rem' }}>{participantCount}</span>
+                      <span style={{ background: '#002D62', color: '#fff', padding: '0.1rem 0.4rem', borderRadius: '10px', fontSize: '0.7rem' }}>{participantCount}</span>
                     </span>
                     <span style={{ transform: accParticipantes ? 'rotate(180deg)' : 'none', transition: 'transform 0.2s' }}>^</span>
                   </div>
@@ -2225,11 +2225,11 @@ export default function Tickets() {
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem', paddingLeft: '0.5rem', fontSize: '0.8rem' }}>
                       <div>
                         <span style={{ color: '#888' }}>Solicitante</span><br/>
-                        <div style={{ padding: '0.2rem 0', background: 'transparent', border: 'none', borderRadius: '4px', marginTop: '0.2rem', color: '#002E5D' }}>
+                        <div style={{ padding: '0.2rem 0', background: 'transparent', border: 'none', borderRadius: '4px', marginTop: '0.2rem', color: '#002D62' }}>
                           <button 
                             type="button" 
                             className="btn-ghost" 
-                            style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', border: 'none', background: 'transparent', fontSize: '0.85rem' }}
+                            style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002D62', border: 'none', background: 'transparent', fontSize: '0.85rem' }}
                             onClick={() => {
                               const match = users.find(u => u.name === (selectedTicket.createdBy?.name || 'Administrador'));
                               if (match) setViewingUserProfile(match);
@@ -2245,11 +2245,11 @@ export default function Tickets() {
                           {form.responsibleUserIds.length > 0 ? form.responsibleUserIds.map((userId) => {
                             const user = assignableUsers.find((candidate) => String(candidate.id) === String(userId));
                             return (
-                              <div key={userId} style={{ padding: '0.2rem 0', background: 'transparent', border: 'none', borderRadius: '4px', color: '#002E5D', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                              <div key={userId} style={{ padding: '0.2rem 0', background: 'transparent', border: 'none', borderRadius: '4px', color: '#002D62', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
                                 <button 
                                   type="button" 
                                   className="btn-ghost" 
-                                  style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002E5D', border: 'none', background: 'transparent', fontSize: '0.85rem' }}
+                                  style={{ padding: 0, height: 'auto', textAlign: 'left', fontWeight: 600, color: '#002D62', border: 'none', background: 'transparent', fontSize: '0.85rem' }}
                                   onClick={() => setViewingUserProfile(user)}
                                 >
                                   👤 {user?.name || 'Responsable'}
@@ -2637,7 +2637,7 @@ export default function Tickets() {
                 </div>
                 <form style={{ display: 'flex', flexDirection: 'column', gap: '1.2rem' }} onSubmit={handleSubmit}>
                 <div className="field full" style={{ gap: '0.2rem' }}>
-                  <label htmlFor="ticket-type" style={{ color: '#002E5D', fontWeight: 500 }}>Tipo</label>
+                  <label htmlFor="ticket-type" style={{ color: '#002D62', fontWeight: 500 }}>Tipo</label>
                   <select id="ticket-type" value={form.ticketType} onChange={(e) => setForm({...form, ticketType: e.target.value, category: ''})} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '0.4rem 0.6rem' }}>
                     <option value="Incidencia">Incidencia</option>
                     <option value="Petición">Petición</option>
@@ -2645,7 +2645,7 @@ export default function Tickets() {
                 </div>
                 
                 <div className="field full" style={{ gap: '0.2rem' }}>
-                  <label htmlFor="ticket-category" style={{ color: '#002E5D', fontWeight: 500 }}>Categoría <span style={{color: 'red'}}>*</span></label>
+                  <label htmlFor="ticket-category" style={{ color: '#002D62', fontWeight: 500 }}>Categoría <span style={{color: 'red'}}>*</span></label>
                   <CategorySelector 
                     categoriesConfig={categoriesConfig}
                     ticketType={form.ticketType}
@@ -2658,7 +2658,7 @@ export default function Tickets() {
                 </div>
 
                 <div className="field full" style={{ gap: '0.2rem' }}>
-                  <label htmlFor="ticket-asset-new" style={{ color: '#002E5D', fontWeight: 500 }}>Elementos asociados</label>
+                  <label htmlFor="ticket-asset-new" style={{ color: '#002D62', fontWeight: 500 }}>Elementos asociados</label>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', marginTop: '0.2rem' }}>
                     <div style={{ display: 'grid', placeItems: 'center', padding: '0 0.2rem' }}>
                       <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#666" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg>
@@ -2674,7 +2674,7 @@ export default function Tickets() {
                 </div>
 
                 <div className="field full" style={{ gap: '0.2rem' }}>
-                  <label htmlFor="ticket-location" style={{ color: '#002E5D', fontWeight: 500 }}>Ubicación <span style={{color: 'red'}}>*</span></label>
+                  <label htmlFor="ticket-location" style={{ color: '#002D62', fontWeight: 500 }}>Ubicación <span style={{color: 'red'}}>*</span></label>
                   <select id="ticket-location" value={form.locationId} onChange={(e) => setForm({...form, locationId: e.target.value})} required style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '0.4rem 0.6rem', width: '100%' }}>
                     <option value="">-----</option>
                     {locations.map((l) => <option key={l.id} value={l.id}>{l.name}</option>)}
@@ -2682,7 +2682,7 @@ export default function Tickets() {
                 </div>
 
                 <div className="field full" style={{ gap: '0.2rem' }}>
-                  <label htmlFor="ticket-title" style={{ color: '#002E5D', fontWeight: 500 }}>Título <span style={{color: 'red'}}>*</span></label>
+                  <label htmlFor="ticket-title" style={{ color: '#002D62', fontWeight: 500 }}>Título <span style={{color: 'red'}}>*</span></label>
                   <input 
                     id="ticket-title" 
                     required 
@@ -2699,7 +2699,7 @@ export default function Tickets() {
                 </div>
 
                 <div className="field full" style={{ gap: '0.2rem', marginBottom: '2rem' }}>
-                  <label style={{ color: '#002E5D', fontWeight: 500 }}>Descripción <span style={{color: 'red'}}>*</span></label>
+                  <label style={{ color: '#002D62', fontWeight: 500 }}>Descripción <span style={{color: 'red'}}>*</span></label>
                   <RichTextEditor value={form.description} onChange={(val) => setForm({...form, description: val})} />
                 </div>
 
@@ -2719,7 +2719,7 @@ export default function Tickets() {
           <div className="modal-card" style={{ maxWidth: '400px', padding: '1.5rem', zIndex: 1100 }}>
             <div className="section-heading" style={{ marginBottom: '1rem' }}>
               <div>
-                <h3 style={{ fontSize: '1.2rem', color: '#002E5D' }}>Detalles de Usuario</h3>
+                <h3 style={{ fontSize: '1.2rem', color: '#002D62' }}>Detalles de Usuario</h3>
                 <p className="muted-text">Información de contacto oficial.</p>
               </div>
               <button type="button" className="btn-ghost" onClick={() => setViewingUserProfile(null)}>&times;</button>

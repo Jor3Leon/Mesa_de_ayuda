@@ -313,15 +313,14 @@ export default function OrganizationStructure() {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-      
-      {/* 🌟 HERO & CONTROL BAR */}
+       {/* 🌟 HERO CONTROL BAR */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2rem',
         marginBottom: '1.75rem',
-        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3), 0 8px 10px -6px rgba(15, 23, 42, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+        border: '1px solid rgba(0, 209, 255, 0.25)',
         color: '#ffffff',
         display: 'flex',
         flexWrap: 'wrap',
@@ -335,11 +334,12 @@ export default function OrganizationStructure() {
               width: '42px',
               height: '42px',
               borderRadius: '10px',
-              background: 'linear-gradient(135deg, #3b82f6 0%, #2563eb 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)'
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+              color: '#ffffff'
             }}>
               <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <path d="M3 21h18" />
@@ -352,21 +352,21 @@ export default function OrganizationStructure() {
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffffff' }}>
                 Estructura Organizacional & Ubicaciones
                 <span style={{ 
                   fontSize: '0.75rem', 
-                  fontWeight: '600', 
-                  padding: '0.2rem 0.6rem', 
+                  fontWeight: '700', 
+                  padding: '0.15rem 0.55rem', 
                   borderRadius: '9999px', 
-                  background: 'rgba(59, 130, 246, 0.2)', 
-                  border: '1px solid rgba(59, 130, 246, 0.4)',
-                  color: '#93c5fd'
+                  background: 'rgba(0, 209, 255, 0.18)', 
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
+                  color: '#00D1FF'
                 }}>
                   ITAM v2.2
                 </span>
               </h1>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
                 Jerarquía corporativa de 3 niveles: Sedes, Dependencias y Oficinas físicas para localización exacta de Activos TI.
               </p>
             </div>
@@ -381,19 +381,19 @@ export default function OrganizationStructure() {
               display: 'inline-flex',
               alignItems: 'center',
               gap: '0.5rem',
-              background: '#ffffff',
-              color: '#0f172a',
+              background: '#002D62',
+              color: '#ffffff',
               padding: '0.65rem 1.15rem',
               borderRadius: '10px',
               fontWeight: '600',
               fontSize: '0.875rem',
-              border: 'none',
+              border: '1px solid rgba(0, 209, 255, 0.4)',
               cursor: 'pointer',
-              boxShadow: '0 2px 8px rgba(0,0,0,0.1)',
+              boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
               transition: 'all 0.2s ease'
             }}
           >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#2563eb" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
               <path d="M12 5v14M5 12h14" />
             </svg>
             Nueva Sede

@@ -311,30 +311,68 @@ export default function Discovery() {
 
   return (
     <div className="view-container" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-      {/* Hero Panel */}
-      <section className="hero-panel discovery-hero">
+      {/* 🌟 HERO CONTROL BAR */}
+      <section
+        style={{
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          borderRadius: '16px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.25rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
+          color: '#ffffff',
+          display: 'grid',
+          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(240px, 0.6fr)',
+          gap: '1.25rem',
+          alignItems: 'center',
+        }}
+      >
         <div className="discovery-hero-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.35rem', flexWrap: 'wrap' }}>
-            <span className="badge badge-info" style={{ textTransform: 'uppercase', letterSpacing: '0.04em', fontSize: '0.7rem' }}>
-              RMM &bull; Módulo de Activos
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.45rem', flexWrap: 'wrap' }}>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: '700',
+                padding: '0.15rem 0.55rem',
+                borderRadius: '9999px',
+                background: 'rgba(0, 209, 255, 0.18)',
+                color: '#00D1FF',
+                border: '1px solid rgba(0, 209, 255, 0.4)',
+              }}
+            >
+              RMM • Módulo de Activos
             </span>
-            <span className="badge badge-success" style={{ fontSize: '0.7rem' }}>SNMP v1/v2c &bull; eSCL &bull; WSD &bull; HTTP</span>
+            <span
+              style={{
+                fontSize: '0.75rem',
+                fontWeight: '600',
+                padding: '0.15rem 0.55rem',
+                borderRadius: '9999px',
+                background: 'rgba(16, 185, 129, 0.15)',
+                color: '#34d399',
+                border: '1px solid rgba(16, 185, 129, 0.3)',
+              }}
+            >
+              SNMP v1/v2c • eSCL • WSD • HTTP
+            </span>
           </div>
-          <h2 style={{ margin: '0 0 0.25rem 0', fontWeight: 800 }}>Network Device Discovery</h2>
-          <p className="muted-text" style={{ maxWidth: '780px', margin: 0, fontSize: '0.85rem' }}>
+          <h1 style={{ margin: '0 0 0.35rem 0', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: '#ffffff' }}>
+            Network Device Discovery
+          </h1>
+          <p style={{ maxWidth: '780px', margin: 0, fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.5 }}>
             Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local
             a través del Agente RMM. Integración directa y deduplicación nativa con <strong>Dispositivos</strong> y <strong>CMDB</strong>.
           </p>
         </div>
 
-        <div className="discovery-hero-stats">
-          <div className="stat-card" style={{ padding: '0.65rem 0.85rem' }}>
-            <span style={{ fontSize: '0.7rem' }}>Agentes en Red</span>
-            <strong style={{ color: '#0ea5e9', fontSize: '1.15rem' }}>{agents.length} Activos</strong>
+        <div className="discovery-hero-stats" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
+          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '120px' }}>
+            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agentes en Red</span>
+            <strong style={{ color: '#00D1FF', fontSize: '1.25rem', fontWeight: 800 }}>{agents.length} Activos</strong>
           </div>
-          <div className="stat-card" style={{ padding: '0.65rem 0.85rem' }}>
-            <span style={{ fontSize: '0.7rem' }}>Sede Activa</span>
-            <strong style={{ fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{selectedLocation || 'Principal'}</strong>
+          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '120px' }}>
+            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sede Activa</span>
+            <strong style={{ color: '#ffffff', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}>{selectedLocation || 'Principal'}</strong>
           </div>
         </div>
       </section>

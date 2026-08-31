@@ -86,12 +86,12 @@ export default function Analytics() {
       
       {/* 🌟 HERO CONTROL BAR */}
       <div style={{
-        background: 'linear-gradient(135deg, #0f172a 0%, #1e293b 50%, #0f172a 100%)',
+        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2rem',
         marginBottom: '1.75rem',
-        boxShadow: '0 10px 25px -5px rgba(15, 23, 42, 0.3)',
-        border: '1px solid rgba(255, 255, 255, 0.1)',
+        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+        border: '1px solid rgba(0, 209, 255, 0.25)',
         color: '#ffffff',
         display: 'flex',
         flexWrap: 'wrap',
@@ -104,25 +104,25 @@ export default function Analytics() {
             width: '42px',
             height: '42px',
             borderRadius: '10px',
-            background: 'linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%)',
+            background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
-            boxShadow: '0 4px 12px rgba(37, 99, 235, 0.4)',
+            boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
             fontSize: '1.25rem'
           }}>
             📊
           </div>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
                 Analítica Operacional & BI
               </h1>
-              <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.55rem', borderRadius: '9999px', background: 'rgba(59, 130, 246, 0.2)', color: '#93c5fd', border: '1px solid rgba(59, 130, 246, 0.4)' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.15rem 0.55rem', borderRadius: '9999px', background: 'rgba(0, 209, 255, 0.18)', color: '#00D1FF', border: '1px solid rgba(0, 209, 255, 0.4)' }}>
                 ITIL Metrics
               </span>
             </div>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#94a3b8' }}>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Indicadores de carga técnica, cumplimiento de acuerdos ANS y salud del parque tecnológico.
             </p>
           </div>

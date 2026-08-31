@@ -322,10 +322,6 @@ export default function Discovery() {
           boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
           border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
-          display: 'grid',
-          gridTemplateColumns: 'minmax(0, 1.4fr) minmax(240px, 0.6fr)',
-          gap: '1.25rem',
-          alignItems: 'center',
         }}
       >
         <div className="discovery-hero-info">
@@ -365,17 +361,6 @@ export default function Discovery() {
           <p style={{ maxWidth: '780px', margin: 0, fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.5 }}>
             Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local.
           </p>
-        </div>
-
-        <div className="discovery-hero-stats" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '110px' }}>
-            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agentes</span>
-            <strong style={{ color: '#00D1FF', fontSize: '1.15rem', fontWeight: 800 }}>{agents.length} Activos</strong>
-          </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '110px' }}>
-            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sede Activa</span>
-            <strong style={{ color: '#ffffff', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}>{selectedLocation || 'Principal'}</strong>
-          </div>
         </div>
       </section>
 
@@ -455,48 +440,6 @@ export default function Discovery() {
                   required
                 />
               </div>
-            </div>
-
-            {/* Sede / Location */}
-            <div className="form-group" style={{ marginBottom: '0.9rem' }}>
-              <label style={{ fontSize: '0.82rem' }}><strong>Sede / Ubicación</strong></label>
-              <select
-                className="search-input"
-                style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.88rem', padding: '0.5rem 0.65rem' }}
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-              >
-                {locations.map((loc) => (
-                  <option key={loc.id} value={loc.name}>{loc.name}</option>
-                ))}
-                {locations.length === 0 && <option value="Sede Principal">Sede Principal</option>}
-              </select>
-            </div>
-
-            {/* Agent Selector */}
-            <div className="form-group" style={{ marginBottom: '0.9rem' }}>
-              <label style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.82rem' }}>
-                <strong>Agente RMM Explorador</strong>
-                <span className="badge badge-success" style={{ fontSize: '0.65rem', padding: '0.15rem 0.4rem' }}>En Línea</span>
-              </label>
-              <select
-                className="search-input"
-                style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.88rem', padding: '0.5rem 0.65rem' }}
-                value={selectedAgentId}
-                onChange={(e) => setSelectedAgentId(e.target.value)}
-              >
-                {agents.map((ag) => (
-                  <option key={ag.id} value={ag.id}>
-                    {ag.hostname} ({ag.ipAddress}) - {ag.brand || 'PC'}
-                  </option>
-                ))}
-                {agents.length === 0 && <option value="">Sondeo Directo / Servidor Local</option>}
-              </select>
-              {selectedAgentObj && (
-                <div style={{ fontSize: '0.7rem', color: '#64748b', marginTop: '3px' }}>
-                  Agente: <strong>{selectedAgentObj.hostname}</strong> ({selectedAgentObj.ipAddress})
-                </div>
-              )}
             </div>
 
             {/* SNMP Community (Advanced Accordion) */}
@@ -874,21 +817,6 @@ export default function Discovery() {
                           <option key={loc.id} value={loc.name}>{loc.name}</option>
                         ))}
                         {locations.length === 0 && <option value="Sede Principal">Sede Principal</option>}
-                      </select>
-                    </div>
-
-                    <div className="form-group">
-                      <label style={{ fontSize: '0.8rem' }}><strong>Usuario</strong></label>
-                      <select
-                        className="search-input"
-                        value={regForm.customerId}
-                        onChange={(e) => setRegForm({ ...regForm, customerId: e.target.value })}
-                        style={{ width: '100%', boxSizing: 'border-box', fontSize: '0.88rem' }}
-                      >
-                        {customers.map((c) => (
-                          <option key={c.id} value={c.id}>{c.name}</option>
-                        ))}
-                        {customers.length === 0 && <option value="1">General / Corporativo</option>}
                       </select>
                     </div>
                   </div>

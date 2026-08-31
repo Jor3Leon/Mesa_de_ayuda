@@ -313,6 +313,7 @@ export default function Discovery() {
     <div className="view-container" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
       {/* 🌟 HERO CONTROL BAR */}
       <section
+        className="discovery-hero-section"
         style={{
           background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
           borderRadius: '16px',
@@ -328,51 +329,52 @@ export default function Discovery() {
         }}
       >
         <div className="discovery-hero-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.45rem', flexWrap: 'wrap' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem', flexWrap: 'wrap' }}>
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: '700',
                 padding: '0.15rem 0.55rem',
-                borderRadius: '9999px',
+                borderRadius: '6px',
                 background: 'rgba(0, 209, 255, 0.18)',
                 color: '#00D1FF',
                 border: '1px solid rgba(0, 209, 255, 0.4)',
+                whiteSpace: 'nowrap',
               }}
             >
-              RMM • Módulo de Activos
+              RMM • Activos
             </span>
             <span
               style={{
-                fontSize: '0.75rem',
+                fontSize: '0.72rem',
                 fontWeight: '600',
                 padding: '0.15rem 0.55rem',
-                borderRadius: '9999px',
+                borderRadius: '6px',
                 background: 'rgba(16, 185, 129, 0.15)',
                 color: '#34d399',
                 border: '1px solid rgba(16, 185, 129, 0.3)',
+                whiteSpace: 'nowrap',
               }}
             >
-              SNMP v1/v2c • eSCL • WSD • HTTP
+              SNMP • eSCL • WSD
             </span>
           </div>
           <h1 style={{ margin: '0 0 0.35rem 0', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: '#ffffff' }}>
             Network Device Discovery
           </h1>
           <p style={{ maxWidth: '780px', margin: 0, fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-            Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local
-            a través del Agente RMM. Integración directa y deduplicación nativa con <strong>Dispositivos</strong> y <strong>CMDB</strong>.
+            Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local.
           </p>
         </div>
 
         <div className="discovery-hero-stats" style={{ display: 'flex', gap: '0.75rem', justifyContent: 'flex-end', flexWrap: 'wrap' }}>
-          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '120px' }}>
-            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agentes en Red</span>
-            <strong style={{ color: '#00D1FF', fontSize: '1.25rem', fontWeight: 800 }}>{agents.length} Activos</strong>
+          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '110px' }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Agentes</span>
+            <strong style={{ color: '#00D1FF', fontSize: '1.15rem', fontWeight: 800 }}>{agents.length} Activos</strong>
           </div>
-          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '120px' }}>
-            <span style={{ fontSize: '0.7rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sede Activa</span>
-            <strong style={{ color: '#ffffff', fontSize: '1.05rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}>{selectedLocation || 'Principal'}</strong>
+          <div style={{ background: 'rgba(255, 255, 255, 0.08)', border: '1px solid rgba(255, 255, 255, 0.15)', borderRadius: '12px', padding: '0.65rem 1rem', minWidth: '110px' }}>
+            <span style={{ fontSize: '0.68rem', color: '#94a3b8', display: 'block', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Sede Activa</span>
+            <strong style={{ color: '#ffffff', fontSize: '1rem', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', fontWeight: 700 }}>{selectedLocation || 'Principal'}</strong>
           </div>
         </div>
       </section>

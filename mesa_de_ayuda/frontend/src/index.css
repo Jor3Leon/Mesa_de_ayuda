@@ -4800,6 +4800,353 @@ tbody tr:hover {
   }
 }
 
+/* ==========================================================================
+   📱 COMPACT MOBILE RESPONSIVE ENGINE FOR ADMIN & ASSETS MODULES
+   Optimized for smartphones (<= 768px): Compact cards, readable typography,
+   2x2 metric grids, streamlined forms and touch-friendly controls.
+   ========================================================================== */
+
+@media (max-width: 768px) {
+  /* 🌟 Outer Container */
+  .view-container,
+  div[style*="maxWidth: 1600px"],
+  div[style*="maxWidth: '1600px'"],
+  div[style*="max-width: 1600px"] {
+    padding: 0.55rem 0.55rem 3.5rem !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+  }
+
+  /* 🌟 Hero Gradient Control Banners */
+  div[style*="linear-gradient(135deg, #001D40"],
+  section[style*="linear-gradient(135deg, #001D40"],
+  .discovery-hero,
+  .hero-card {
+    padding: 0.85rem 1rem !important;
+    border-radius: 12px !important;
+    margin-bottom: 0.75rem !important;
+    display: flex !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+    gap: 0.65rem !important;
+    grid-template-columns: 1fr !important;
+  }
+
+  div[style*="linear-gradient(135deg, #001D40"] h1,
+  section[style*="linear-gradient(135deg, #001D40"] h1 {
+    font-size: 1.1rem !important;
+    line-height: 1.25 !important;
+    margin-bottom: 0.2rem !important;
+  }
+
+  div[style*="linear-gradient(135deg, #001D40"] p,
+  section[style*="linear-gradient(135deg, #001D40"] p {
+    font-size: 0.76rem !important;
+    line-height: 1.35 !important;
+    margin-top: 0.15rem !important;
+  }
+
+  /* Hero action buttons */
+  div[style*="linear-gradient(135deg, #001D40"] > button,
+  section[style*="linear-gradient(135deg, #001D40"] > button,
+  div[style*="linear-gradient(135deg, #001D40"] button[type="submit"] {
+    width: 100% !important;
+    padding: 0.5rem 0.85rem !important;
+    font-size: 0.82rem !important;
+    justify-content: center !important;
+    margin-top: 0.25rem !important;
+    border-radius: 8px !important;
+  }
+
+  /* Discovery & Custom Hero Stats on Mobile */
+  .discovery-hero-stats,
+  div[style*="discovery-hero-stats"] {
+    display: flex !important;
+    width: 100% !important;
+    gap: 0.4rem !important;
+    justify-content: space-between !important;
+    flex-wrap: nowrap !important;
+  }
+
+  .discovery-hero-stats > div {
+    flex: 1 1 0 !important;
+    min-width: 0 !important;
+    padding: 0.45rem 0.65rem !important;
+    border-radius: 8px !important;
+  }
+
+  .discovery-hero-stats strong {
+    font-size: 1rem !important;
+  }
+
+  .discovery-hero-info > div:first-child {
+    display: flex !important;
+    flex-wrap: wrap !important;
+    gap: 0.3rem !important;
+    margin-bottom: 0.35rem !important;
+  }
+
+  .discovery-hero-info span {
+    font-size: 0.68rem !important;
+    padding: 0.1rem 0.45rem !important;
+  }
+
+  /* 📊 KPI Metrics Grid: Compact 2x2 layout */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"],
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"],
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'"] {
+    display: grid !important;
+    grid-template-columns: repeat(2, 1fr) !important;
+    gap: 0.45rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* KPI Card */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] > div,
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] > div,
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))'"] > div {
+    padding: 0.55rem 0.65rem !important;
+    border-radius: 10px !important;
+    gap: 0.5rem !important;
+    display: flex !important;
+    align-items: center !important;
+  }
+
+  /* KPI Icon Box */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] > div > div:first-child,
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] > div > div:first-child {
+    width: 32px !important;
+    height: 32px !important;
+    min-width: 32px !important;
+    border-radius: 8px !important;
+  }
+
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] svg,
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] svg {
+    width: 18px !important;
+    height: 18px !important;
+  }
+
+  /* KPI Value */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] div[style*="fontSize: '1.75rem'"],
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] div[style*="font-size: 1.75rem"],
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] div[style*="fontSize: '1.85rem'"] {
+    font-size: 1.15rem !important;
+    line-height: 1.1 !important;
+  }
+
+  /* KPI Label */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] div[style*="textTransform: 'uppercase'"],
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] div[style*="text-transform: uppercase"] {
+    font-size: 0.65rem !important;
+    letter-spacing: 0.02em !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* KPI Subtitle (bottom small text) */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))'"] > div > div:last-child > div:last-child {
+    font-size: 0.62rem !important;
+    margin-top: 0.1rem !important;
+    white-space: nowrap !important;
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+  }
+
+  /* 🧭 Control Bar & Segmented Tabs on Mobile */
+  div[style*="marginBottom: '1.5rem'"][style*="justifyContent: 'space-between'"],
+  div[style*="margin-bottom: 1.5rem"][style*="justify-content: space-between"] {
+    padding: 0.5rem 0.65rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 0.75rem !important;
+    gap: 0.45rem !important;
+    flex-direction: column !important;
+    align-items: stretch !important;
+  }
+
+  div[style*="background: '#f1f5f9'"][style*="borderRadius: '12px'"],
+  div[style*="background: #f1f5f9"][style*="border-radius: 12px"] {
+    width: 100% !important;
+    display: flex !important;
+    gap: 0.25rem !important;
+    padding: 0.25rem !important;
+    box-sizing: border-box !important;
+  }
+
+  div[style*="background: '#f1f5f9'"] button,
+  div[style*="background: #f1f5f9"] button {
+    flex: 1 1 0 !important;
+    padding: 0.38rem 0.45rem !important;
+    font-size: 0.78rem !important;
+    justify-content: center !important;
+    text-align: center !important;
+    border-radius: 6px !important;
+  }
+
+  /* Search input inside control bar */
+  div[style*="background: '#f8fafc'"][style*="borderRadius: '10px'"],
+  div[style*="background: #f8fafc"][style*="border-radius: 10px"] {
+    width: 100% !important;
+    max-width: 100% !important;
+    min-width: 0 !important;
+    padding: 0.35rem 0.65rem !important;
+    box-sizing: border-box !important;
+  }
+
+  div[style*="background: '#f8fafc'"] input,
+  div[style*="background: #f8fafc"] input {
+    font-size: 0.8rem !important;
+  }
+
+  /* 📦 Horizontal Thematic Cards */
+  div[style*="borderRadius: '16px'"][style*="boxShadow: '0 4px 16px -2px"],
+  div[style*="border-radius: 16px"][style*="box-shadow: 0 4px 16px -2px"] {
+    border-radius: 12px !important;
+    margin-bottom: 0.65rem !important;
+  }
+
+  /* Thematic Card Header */
+  div[style*="linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)"] {
+    padding: 0.65rem 0.85rem !important;
+    gap: 0.4rem !important;
+    flex-wrap: wrap !important;
+  }
+
+  div[style*="linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)"] strong {
+    font-size: 0.92rem !important;
+  }
+
+  div[style*="linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)"] button {
+    padding: 0.28rem 0.55rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Card Body */
+  div[style*="padding: '1.25rem 1.5rem'"],
+  div[style*="padding: 1.25rem 1.5rem"] {
+    padding: 0.65rem 0.75rem !important;
+  }
+
+  /* Subpanels (Equipos, Red, Impresoras, etc.) */
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'"],
+  div[style*="grid-template-columns: repeat(auto-fit, minmax(300px, 1fr))"],
+  div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.6rem !important;
+  }
+
+  div[style*="background: '#f8fafc'"][style*="borderRadius: '12px'"][style*="padding: '1.1rem'"],
+  div[style*="background: #f8fafc"][style*="border-radius: 12px"][style*="padding: 1.1rem"] {
+    padding: 0.6rem 0.75rem !important;
+    border-radius: 10px !important;
+  }
+
+  /* Item Row / Category Box on Mobile */
+  div[style*="borderRadius: '10px'"][style*="border: '1px solid #e2e8f0'"],
+  div[style*="border-radius: 10px"][style*="border: 1px solid #e2e8f0"] {
+    padding: 0.5rem 0.65rem !important;
+    border-radius: 8px !important;
+    gap: 0.45rem !important;
+  }
+
+  div[style*="borderRadius: '10px'"][style*="border: '1px solid #e2e8f0'"] strong {
+    font-size: 0.82rem !important;
+    line-height: 1.25 !important;
+  }
+
+  div[style*="borderRadius: '10px'"][style*="border: '1px solid #e2e8f0'"] span[style*="fontSize: '0.72rem'"] {
+    font-size: 0.66rem !important;
+    padding: 0.1rem 0.35rem !important;
+  }
+
+  /* Action Buttons inside item */
+  div[style*="borderRadius: '10px'"][style*="border: '1px solid #e2e8f0'"] button {
+    padding: 0.2rem 0.42rem !important;
+    font-size: 0.72rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* Direct grid for non-subpanel categories */
+  div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(330px, 1fr))'"],
+  div[style*="grid-template-columns: repeat(auto-fill, minmax(330px, 1fr))"],
+  div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))'"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.5rem !important;
+  }
+
+  /* 🌳 Organization Structure Tree nodes on Mobile */
+  .tree-node,
+  div[style*="background: '#f8fafc'"][style*="borderRadius: '14px'"] {
+    padding: 0.6rem 0.75rem !important;
+    border-radius: 10px !important;
+    margin-bottom: 0.45rem !important;
+  }
+
+  /* 🛡️ Roles & RBAC Matrix on Mobile */
+  .rbac-role-selector,
+  div[style*="roles-grid"],
+  div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(200px, 1fr))'"] {
+    display: flex !important;
+    overflow-x: auto !important;
+    gap: 0.35rem !important;
+    padding-bottom: 0.45rem !important;
+  }
+
+  .rbac-role-btn,
+  div[style*="roles-grid"] button {
+    padding: 0.4rem 0.75rem !important;
+    font-size: 0.78rem !important;
+    white-space: nowrap !important;
+    flex-shrink: 0 !important;
+  }
+
+  /* 🪟 Modals & Dialogs on Mobile */
+  div[style*="maxWidth: '560px'"],
+  div[style*="maxWidth: '500px'"],
+  div[style*="max-width: 560px"],
+  div[style*="max-width: 500px"] {
+    padding: 1.15rem !important;
+    border-radius: 14px !important;
+    max-width: 95vw !important;
+    max-height: 88vh !important;
+  }
+
+  div[style*="maxWidth: '560px'"] form,
+  div[style*="maxWidth: '500px'"] form {
+    gap: 0.75rem !important;
+  }
+
+  div[style*="gridTemplateColumns: '1fr 1fr'"],
+  div[style*="grid-template-columns: 1fr 1fr"] {
+    grid-template-columns: 1fr !important;
+    gap: 0.65rem !important;
+  }
+
+  div[style*="maxWidth: '560px'"] input,
+  div[style*="maxWidth: '560px'"] select,
+  div[style*="maxWidth: '560px'"] textarea,
+  div[style*="maxWidth: '500px'"] input,
+  div[style*="maxWidth: '500px'"] select,
+  div[style*="maxWidth: '500px'"] textarea {
+    padding: 0.55rem 0.75rem !important;
+    font-size: 0.82rem !important;
+  }
+
+  /* Icon Pool on Mobile */
+  div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))'"] {
+    grid-template-columns: repeat(7, 1fr) !important;
+    gap: 0.25rem !important;
+  }
+
+  div[style*="gridTemplateColumns: 'repeat(auto-fill, minmax(36px, 1fr))'"] button {
+    font-size: 1.1rem !important;
+    padding: 0.2rem 0 !important;
+  }
+}
+
+
 
 
 

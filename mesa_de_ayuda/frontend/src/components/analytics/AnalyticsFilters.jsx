@@ -1,6 +1,6 @@
 import React from 'react';
 
-export default function AnalyticsFilters({ filters, onChange }) {
+export default function AnalyticsFilters({ filters, onChange, isLevel2 = false }) {
   const handleChange = (field, value) => {
     onChange({ ...filters, [field]: value });
   };
@@ -79,11 +79,20 @@ export default function AnalyticsFilters({ filters, onChange }) {
         <span className="analytics-filter-label">Vista</span>
         <select
           className="analytics-filter-select"
-          value={filters.viewMode || 'global'}
+          value={isLevel2 ? 'personal' : (filters.viewMode || 'global')}
+          disabled={isLevel2}
           onChange={(e) => handleChange('viewMode', e.target.value)}
+          style={{ opacity: isLevel2 ? 0.95 : 1 }}
+          title={isLevel2 ? 'Vista fija en métricas personales para Técnico Nivel 2' : 'Seleccionar vista'}
         >
-          <option value="global">Estadísticas Globales</option>
-          <option value="personal">Mis Estadísticas</option>
+          {isLevel2 ? (
+            <option value="personal">Mis Estadísticas (Nivel 2)</option>
+          ) : (
+            <>
+              <option value="global">Estadísticas Globales</option>
+              <option value="personal">Mis Estadísticas</option>
+            </>
+          )}
         </select>
       </div>
     </div>

@@ -1242,6 +1242,11 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
 
   function handleRoleSwitch(role) {
     setViewAsRole(role);
+    if (role && role !== user?.role) {
+      localStorage.setItem('mesa_de_ayuda_view_as_role', role);
+    } else {
+      localStorage.removeItem('mesa_de_ayuda_view_as_role');
+    }
   }
 
   // No es necesario forzar el colapso en el montaje ya que el estado inicial es true
@@ -1260,7 +1265,10 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
         viewAsRole={viewAsRole}
         onRoleSwitch={handleRoleSwitch}
         navSections={navSections} 
-        onLogout={onLogout}
+        onLogout={() => {
+          localStorage.removeItem('mesa_de_ayuda_view_as_role');
+          onLogout();
+        }}
         isSidebarCollapsed={isSidebarCollapsed}
         onToggleSidebar={toggleSidebar}
         onOpenProfile={() => setIsProfileOpen(true)}
@@ -1282,7 +1290,10 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
           navSections={navSections}
           isCollapsed={isSidebarCollapsed}
           onClose={closeSidebar}
-          onLogout={onLogout}
+          onLogout={() => {
+            localStorage.removeItem('mesa_de_ayuda_view_as_role');
+            onLogout();
+          }}
           onOpenProfile={() => setIsProfileOpen(true)}
         />
         <main className="main-content">
@@ -1307,7 +1318,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
               path="/analytics" 
               element={(
                 <ProtectedRoute user={effectiveUser} requiredPermission="ANALYTICS_VIEW">
-                  <Analytics />
+                  <Analytics user={effectiveUser} />
                 </ProtectedRoute>
               )} 
             />

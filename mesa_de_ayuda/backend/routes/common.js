@@ -272,7 +272,30 @@ function getCommonRoutes(prisma) {
       const userId = user.id;
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
 
-      // 1. Get global summary with fail-safes
+      const headerRole = req.headers['x-view-as-role'] || req.query.role || req.query.viewAsRole;
+      const effectiveRole = (headerRole || user.role || user.role?.name || '').trim().toUpperCase();
+      const isLevel2 = effectiveRole === 'NIVEL 2' || effectiveRole === 'LEVEL_2' || effectiveRole === 'TECNICO NIVEL 2' || effectiveRole === 'TÉCNICO NIVEL 2' || effectiveRole.includes('NIVEL 2') || effectiveRole.includes('LEVEL_2');
+      const isStandard = effectiveRole === 'USUARIO ESTANDAR' || effectiveRole === 'STANDARD_USER' || effectiveRole === 'STANDARD';
+
+      // Scope tickets for Level 2 or Standard users to their own assigned/created tickets
+      const userTicketScope = isLevel2 
+        ? {
+            OR: [
+              { assignedToId: userId },
+              { secondaryAssignedToId: userId },
+              { createdById: userId }
+            ]
+          }
+        : isStandard
+        ? { createdById: userId }
+        : {};
+
+      const ticketBaseFilter = {
+        ...orgFilter,
+        ...userTicketScope
+      };
+
+      // 1. Get summary with fail-safes
       const [
         openTickets, 
         criticalTickets, 
@@ -287,13 +310,15 @@ function getCommonRoutes(prisma) {
         slaRiskCount,
         longOfflineAssets
       ] = await Promise.all([
-        prisma.ticket.count({ where: { ...orgFilter, status: { in: ['NEW', 'OPEN', 'IN_PROGRESS'] } } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...orgFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { not: 'CLOSED' } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, status: { in: ['NEW', 'OPEN', 'IN_PROGRESS'] } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { not: 'CLOSED' } } }).catch(() => 0),
         prisma.asset.count({ where: orgFilter }).catch(() => 0),
         prisma.asset.count({ where: { ...orgFilter, status: 'ONLINE' } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...orgFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
+        isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
         prisma.ticketActivity.findMany({
-          where: req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {},
+          where: isLevel2 || isStandard
+            ? { ticket: ticketBaseFilter }
+            : (req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {}),
           take: 8,
           orderBy: { createdAt: 'desc' },
           include: { 
@@ -305,18 +330,18 @@ function getCommonRoutes(prisma) {
         prisma.ticket.groupBy({
           by: ['priority'],
           _count: { _all: true },
-          where: { ...orgFilter, status: { not: 'CLOSED' } }
+          where: { ...ticketBaseFilter, status: { not: 'CLOSED' } }
         }).catch(() => []),
         prisma.ticket.groupBy({
           by: ['status'],
           _count: { _all: true },
-          where: orgFilter
+          where: ticketBaseFilter
         }).catch(() => []),
-        // Tickets in SLA risk (e.g., Critical tickets older than 4 hours)
+        // Tickets in SLA risk
         prisma.ticket.count({
           where: {
-            ...orgFilter,
-            priority: { in: ['CRITICAL', 'CRITICA'] },
+            ...ticketBaseFilter,
+            priority: { in: ['CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'] },
             status: { not: 'CLOSED' },
             createdAt: { lt: new Date(Date.now() - 4 * 60 * 60 * 1000) }
           }
@@ -332,17 +357,16 @@ function getCommonRoutes(prisma) {
       ]);
 
       // 2. Get user-specific stats
-      const isStandard = user.role === 'USUARIO ESTANDAR';
       const [myTickets, myTasks] = await Promise.all([
         prisma.ticket.count({ 
           where: isStandard 
             ? { createdById: userId, status: { notIn: ['CLOSED', 'RESOLVED'] } }
-            : { assignedToId: userId, status: { in: ['OPEN', 'IN_PROGRESS'] } } 
+            : { OR: [{ assignedToId: userId }, { secondaryAssignedToId: userId }], status: { in: ['OPEN', 'IN_PROGRESS', 'NEW'] } } 
         }).catch(() => 0),
         prisma.ticket.count({ 
           where: isStandard
-            ? { createdById: userId, status: 'RESOLVED' } // For users, "Tasks" could be "Pending Approval" (Resolved)
-            : { assignedToId: userId, status: 'IN_PROGRESS' } 
+            ? { createdById: userId, status: 'RESOLVED' }
+            : { OR: [{ assignedToId: userId }, { secondaryAssignedToId: userId }], status: 'IN_PROGRESS' } 
         }).catch(() => 0)
       ]);
 
@@ -352,7 +376,7 @@ function getCommonRoutes(prisma) {
       
       const ticketsHistory = await prisma.ticket.findMany({
         where: {
-          ...orgFilter,
+          ...ticketBaseFilter,
           createdAt: { gte: sevenDaysAgo }
         },
         select: { createdAt: true, status: true }
@@ -409,6 +433,7 @@ function getCommonRoutes(prisma) {
           myTickets,
           myTasks
         },
+        isLevel2: Boolean(isLevel2),
         recentActivities,
         chartData
       });

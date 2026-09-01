@@ -16,6 +16,10 @@ function getAnalyticsRoutes(prisma) {
       } = req.query;
       const user = req.auth.user;
 
+      const headerRole = req.headers['x-view-as-role'] || req.query.role || req.query.viewAsRole;
+      const effectiveRole = (headerRole || user.role || user.role?.name || '').trim().toUpperCase();
+      const isLevel2 = effectiveRole === 'NIVEL 2' || effectiveRole === 'LEVEL_2' || effectiveRole === 'TECNICO NIVEL 2' || effectiveRole === 'TÉCNICO NIVEL 2' || effectiveRole.includes('NIVEL 2') || effectiveRole.includes('LEVEL_2');
+
       // 1. Calculate Date Filter
       const now = new Date();
       let startDate = new Date();
@@ -51,10 +55,11 @@ function getAnalyticsRoutes(prisma) {
         baseFilter.category = department;
       }
 
-      // 3. View Mode Filter (Global vs Personal)
-      if (viewMode === 'personal') {
+      // 3. View Mode Filter (Forced to Personal for Level 2 Technicians!)
+      if (isLevel2 || viewMode === 'personal') {
         baseFilter.OR = [
           { assignedToId: user.id },
+          { secondaryAssignedToId: user.id },
           { createdById: user.id }
         ];
       }
@@ -148,10 +153,14 @@ function getAnalyticsRoutes(prisma) {
       });
 
       // 9. Tech Workload
+      const techWorkloadFilter = isLevel2
+        ? { id: user.id }
+        : { role: { name: { in: ['LEVEL_1', 'LEVEL_2', 'LEVEL_3', 'ADMIN', 'ADMINISTRADOR', 'NIVEL 1', 'NIVEL 2', 'NIVEL 3'] } } };
+
       const techWorkload = await prisma.user.findMany({
         where: {
           ...orgFilter,
-          role: { name: { in: ['LEVEL_1', 'LEVEL_2', 'LEVEL_3', 'ADMIN', 'ADMINISTRADOR'] } } 
+          ...techWorkloadFilter
         },
         select: {
           name: true,
@@ -180,6 +189,7 @@ function getAnalyticsRoutes(prisma) {
             openTickets: sparklineArray.map(v => Math.floor(v * 0.4)),
           }
         },
+        isLevel2: Boolean(isLevel2),
         ticketsByPriority,
         ticketsByStatus,
         techWorkload: techWorkload.map(t => ({

@@ -48,8 +48,10 @@ export default function Dashboard({ user }) {
   const [loading, setLoading] = useState(true);
 
   const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'ADMINISTRADOR';
-  const isTechnician = isAdmin || user?.role?.toUpperCase() === 'TECNICO' || user?.role?.toUpperCase() === 'TECHNICIAN' || user?.role?.toUpperCase() === 'LEVEL_1' || user?.role?.toUpperCase() === 'LEVEL_2' || user?.role?.toUpperCase() === 'LEVEL_3';
-  const isStandardUser = user?.role === 'USUARIO ESTANDAR';
+  const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
+  const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || userRoleStr.includes('NIVEL 2') || userRoleStr.includes('LEVEL_2') || Boolean(data?.isLevel2);
+  const isTechnician = isAdmin || isLevel2 || userRoleStr === 'TECNICO' || userRoleStr === 'TECHNICIAN' || userRoleStr.includes('NIVEL 1') || userRoleStr.includes('NIVEL 3');
+  const isStandardUser = user?.role === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
 
   useEffect(() => {
     let ignore = false;
@@ -82,7 +84,7 @@ export default function Dashboard({ user }) {
       ignore = true;
       clearInterval(interval);
     };
-  }, []);
+  }, [user]);
 
   if (loading) {
     return (
@@ -135,16 +137,20 @@ export default function Dashboard({ user }) {
               border: '1px solid rgba(0, 209, 255, 0.4)',
               color: '#00D1FF'
             }}>
-              ITSM & RMM Operations
+              {isLevel2 ? '🔧 Service Desk · Técnico Nivel 2' : 'ITSM & RMM Operations'}
             </span>
-            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>• Centro de Monitoreo Activo</span>
+            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>
+              {isLevel2 ? '• Consola Personal Operativa' : '• Centro de Monitoreo Activo'}
+            </span>
           </div>
 
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
             Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
           </h1>
           <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '600px', lineHeight: 1.5 }}>
-            {isAdmin 
+            {isLevel2 
+              ? `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} casos en atención activa en tu flujo especializado.`
+              : isAdmin 
               ? `El parque tecnológico cuenta con ${global.totalAssets || 0} activos y ${global.openTickets || 0} incidentes en gestión.`
               : `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} tareas pendientes en tu flujo operativo.`
             }
@@ -165,7 +171,7 @@ export default function Dashboard({ user }) {
               borderRadius: '9999px'
             }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
-              RMM & Telemetría Conectado
+              {isLevel2 ? 'Métricas Personales Activas' : 'RMM & Telemetría Conectado'}
             </div>
 
             {global.criticalTickets > 0 && (
@@ -185,7 +191,7 @@ export default function Dashboard({ user }) {
                   cursor: 'pointer'
                 }}
               >
-                ⚠️ {global.criticalTickets} Tickets Críticos
+                ⚠️ {global.criticalTickets} {isLevel2 ? 'Mis Incidentes Críticos' : 'Tickets Críticos'}
               </div>
             )}
 
@@ -202,13 +208,13 @@ export default function Dashboard({ user }) {
                 padding: '0.25rem 0.65rem',
                 borderRadius: '9999px'
               }}>
-                ⏱️ {global.slaRiskCount} SLA en Riesgo
+                ⏱️ {global.slaRiskCount} {isLevel2 ? 'Mis Casos en Riesgo SLA' : 'SLA en Riesgo'}
               </div>
             )}
           </div>
         </div>
 
-        {/* Global Health Score Badge */}
+        {/* Global / Personal Health Score Badge */}
         <div style={{
           display: 'flex',
           gap: '1rem',
@@ -224,18 +230,18 @@ export default function Dashboard({ user }) {
             minWidth: '130px'
           }}>
             <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Salud Infraestructura
+              {isLevel2 ? 'Mis Tickets' : 'Salud Infraestructura'}
             </div>
             <div style={{
               fontSize: '2rem',
               fontWeight: '900',
-              color: (global.healthScore || 0) > 85 ? '#34d399' : '#fbbf24',
+              color: isLevel2 ? '#00D1FF' : ((global.healthScore || 0) > 85 ? '#34d399' : '#fbbf24'),
               marginTop: '0.25rem'
             }}>
-              {global.healthScore || 0}%
+              {isLevel2 ? (personal.myTickets || 0) : `${global.healthScore || 0}%`}
             </div>
             <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-              {global.onlineAssets} de {global.totalAssets} online
+              {isLevel2 ? `${personal.myTasks || 0} en atención` : `${global.onlineAssets} de ${global.totalAssets} online`}
             </div>
           </div>
 
@@ -330,7 +336,7 @@ export default function Dashboard({ user }) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: '700', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase' }}>
-              Tickets Críticos
+              {isLevel2 ? 'Mis Incidentes Críticos' : 'Tickets Críticos'}
             </span>
             <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               🚨
@@ -346,7 +352,7 @@ export default function Dashboard({ user }) {
 
         {/* Card 3 */}
         <div 
-          onClick={() => navigate('/tickets?assigned=none')}
+          onClick={() => navigate(isLevel2 ? '/tickets?status=IN_PROGRESS' : '/tickets?assigned=none')}
           style={{
             background: '#ffffff',
             borderRadius: '14px',
@@ -358,17 +364,17 @@ export default function Dashboard({ user }) {
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
             <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
-              Tickets Sin Asignar
+              {isLevel2 ? 'Mis Casos en Progreso' : 'Tickets Sin Asignar'}
             </span>
             <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              📥
+              {isLevel2 ? '⚡' : '📥'}
             </div>
           </div>
           <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
-            {global.unassignedTickets || 0}
+            {isLevel2 ? (personal.myTasks || 0) : (global.unassignedTickets || 0)}
           </div>
           <div style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: '600', marginTop: '0.5rem' }}>
-            Asignar a técnicos disponibles →
+            {isLevel2 ? 'Ver tickets en curso →' : 'Asignar a técnicos disponibles →'}
           </div>
         </div>
 
@@ -419,10 +425,10 @@ export default function Dashboard({ user }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-                Tendencia de Incidentes & Requerimientos
+                {isLevel2 ? 'Tendencia de Mis Incidentes & Requerimientos' : 'Tendencia de Incidentes & Requerimientos'}
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                Volumen de tickets ingresados en los últimos 7 días
+                {isLevel2 ? 'Volumen de tus tickets gestionados en los últimos 7 días' : 'Volumen de tickets ingresados en los últimos 7 días'}
               </p>
             </div>
             <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '4px', background: '#f1f5f9', color: '#475569' }}>
@@ -465,10 +471,10 @@ export default function Dashboard({ user }) {
         }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-              Distribución por Severidad
+              {isLevel2 ? 'Distribución de Mis Tickets por Severidad' : 'Distribución por Severidad'}
             </h3>
             <p style={{ margin: '0.2rem 0 1rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Proporción de tickets abiertos según nivel de impacto
+              {isLevel2 ? 'Proporción de tus tickets abiertos según nivel de impacto' : 'Proporción de tickets abiertos según nivel de impacto'}
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
@@ -524,7 +530,7 @@ export default function Dashboard({ user }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-            Actividad Reciente del Service Desk
+            {isLevel2 ? 'Mi Actividad Reciente en el Service Desk' : 'Actividad Reciente del Service Desk'}
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>

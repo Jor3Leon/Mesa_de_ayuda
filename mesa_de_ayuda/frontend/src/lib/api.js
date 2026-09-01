@@ -58,12 +58,15 @@ export async function apiRequest(path, options = {}) {
   const isObjectBody = body !== undefined && body !== null && typeof body === 'object' && !isFormData;
   const finalBody = isObjectBody ? JSON.stringify(body) : body;
 
+  const viewAsRole = typeof window !== 'undefined' ? localStorage.getItem('mesa_de_ayuda_view_as_role') : null;
+
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
     body: finalBody,
     headers: {
       ...(finalBody !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),
       ...(session?.token ? { Authorization: `Bearer ${session.token}` } : {}),
+      ...(viewAsRole ? { 'x-view-as-role': viewAsRole } : {}),
       ...(headers || {}),
     },
   });

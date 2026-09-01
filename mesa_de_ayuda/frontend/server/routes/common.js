@@ -283,21 +283,67 @@ function getCommonRoutes(prisma) {
       // Nivel 1, Nivel 3 y Admin can switch between Global and Personal views. Nivel 2 is always forced to Personal.
       const requestedViewMode = req.query.viewMode || 'global';
       const forcePersonal = isLevel2 || isStandard || (requestedViewMode === 'personal');
+      const technicianId = req.query.technicianId;
+      const ticketType = req.query.ticketType;
+      const startDateStr = req.query.startDate;
+      const endDateStr = req.query.endDate;
 
-      const userTicketScope = forcePersonal 
-        ? {
-            OR: [
-              { assignedToId: userId },
-              { secondaryAssignedToId: userId },
-              { createdById: userId }
-            ]
-          }
-        : {};
+      const userTicketScope = {};
+      if (forcePersonal) {
+        userTicketScope.OR = [
+          { assignedToId: userId },
+          { secondaryAssignedToId: userId },
+          { createdById: userId }
+        ];
+      } else if (technicianId && technicianId !== 'all') {
+        const parsedTechId = parseInt(technicianId, 10);
+        if (!isNaN(parsedTechId)) {
+          userTicketScope.OR = [
+            { assignedToId: parsedTechId },
+            { secondaryAssignedToId: parsedTechId }
+          ];
+        }
+      }
+
+      const dateFilter = {};
+      if (startDateStr && endDateStr) {
+        dateFilter.createdAt = {
+          gte: new Date(`${startDateStr}T00:00:00.000Z`),
+          lte: new Date(`${endDateStr}T23:59:59.999Z`)
+        };
+      }
+
+      const typeFilter = {};
+      if (ticketType && ticketType !== 'all') {
+        typeFilter.ticketType = ticketType;
+      }
 
       const ticketBaseFilter = {
         ...orgFilter,
-        ...userTicketScope
+        ...userTicketScope,
+        ...dateFilter,
+        ...typeFilter
       };
+
+      // Fetch technicians list for supervisor filters
+      const techniciansRaw = await prisma.user.findMany({
+        where: {
+          ...orgFilter,
+          isActive: true
+        },
+        select: {
+          id: true,
+          name: true,
+          role: { select: { name: true } }
+        },
+        orderBy: { name: 'asc' }
+      }).catch(() => []);
+
+      const technicians = techniciansRaw.map(t => ({
+        id: t.id,
+        name: t.name,
+        role: t.role?.name || 'Técnico'
+      }));
 
       const now = new Date();
       const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
@@ -339,7 +385,8 @@ function getCommonRoutes(prisma) {
         prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: 'Incidencia' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { not: 'Incidencia' } } }).catch(() => 0),
-        isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
+        isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, ...dateFilter, ...typeFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
+
         // SLA Overdue counts per priority
         prisma.ticket.count({
           where: {
@@ -654,9 +701,9 @@ function getCommonRoutes(prisma) {
         isLevel2: Boolean(isLevel2),
         isLevel1: Boolean(isLevel1),
         isLevel3: Boolean(isLevel3),
-        isAdmin: Boolean(isAdmin),
         canSwitchView: Boolean(isAdmin || isLevel1 || isLevel3),
         viewMode: forcePersonal ? 'personal' : 'global',
+        technicians,
         yearlyTrend,
         thirtyDaysTrend,
         monthlyStatusDistribution,

@@ -44,6 +44,7 @@ const initialData = {
   isAdmin: false,
   canSwitchView: true,
   viewMode: 'global',
+  technicians: [],
   yearlyTrend: [],
   thirtyDaysTrend: [],
   monthlyStatusDistribution: [],
@@ -63,7 +64,6 @@ export default function Dashboard({ user }) {
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
   const [isExporting, setIsExporting] = useState(false);
-  const [viewMode, setViewMode] = useState('global'); // 'global' | 'personal'
   const [trendRange, setTrendRange] = useState('30d'); // '30d' | '12m'
   const [yearlyMetric, setYearlyMetric] = useState('creationVsResolution'); // 'creationVsResolution' | 'incidentsVsRequests'
   const [selectedSeverity, setSelectedSeverity] = useState(null);
@@ -75,15 +75,40 @@ export default function Dashboard({ user }) {
   const isAdmin = userRoleStr === 'ADMIN' || userRoleStr === 'ADMINISTRADOR';
   const isStandardUser = userRoleStr === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
 
-  const canSwitchView = !isLevel2 && !isStandardUser;
+  const [filters, setFilters] = useState(() => {
+    const today = new Date().toISOString().split('T')[0];
+    const thirtyDaysAgo = new Date();
+    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    return {
+      viewMode: isLevel2 || isStandardUser ? 'personal' : 'global',
+      technicianId: 'all',
+      ticketType: 'all',
+      startDate: thirtyDaysAgo.toISOString().split('T')[0],
+      endDate: today
+    };
+  });
+
+  const handleFilterChange = (field, value) => {
+    setFilters(prev => ({ ...prev, [field]: value }));
+  };
 
   useEffect(() => {
     let ignore = false;
 
     const fetchData = async () => {
       try {
-        const effectiveViewMode = isLevel2 || isStandardUser ? 'personal' : viewMode;
-        const dashboardData = await apiRequest(`/dashboard/data?viewMode=${effectiveViewMode}`);
+        const params = {
+          ...filters,
+          ...(isLevel2 || isStandardUser ? { viewMode: 'personal' } : {})
+        };
+        const queryParams = new URLSearchParams();
+        if (params.viewMode) queryParams.set('viewMode', params.viewMode);
+        if (params.technicianId && params.technicianId !== 'all') queryParams.set('technicianId', params.technicianId);
+        if (params.ticketType && params.ticketType !== 'all') queryParams.set('ticketType', params.ticketType);
+        if (params.startDate) queryParams.set('startDate', params.startDate);
+        if (params.endDate) queryParams.set('endDate', params.endDate);
+
+        const dashboardData = await apiRequest(`/dashboard/data?${queryParams.toString()}`);
 
         if (!ignore) {
           setData(dashboardData);
@@ -105,13 +130,13 @@ export default function Dashboard({ user }) {
       ignore = true;
       clearInterval(interval);
     };
-  }, [user, viewMode]);
+  }, [user, filters]);
 
   const handleExportPdf = async () => {
     if (!data) return;
     setIsExporting(true);
     try {
-      generateDashboardReport(data, user, viewMode);
+      generateDashboardReport(data, user, filters.viewMode);
     } catch (err) {
       console.error(err);
     } finally {
@@ -124,7 +149,7 @@ export default function Dashboard({ user }) {
     navigate(`/tickets?priority=${priorityKey}`);
   };
 
-  if (loading) {
+  if (loading && !data.yearlyTrend.length) {
     return (
       <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
         <div style={{
@@ -144,7 +169,8 @@ export default function Dashboard({ user }) {
   }
 
   const k = data?.kpis || initialData.kpis;
-  const isPersonalScope = isLevel2 || isStandardUser || viewMode === 'personal';
+  const isPersonalScope = isLevel2 || isStandardUser || filters.viewMode === 'personal';
+  const techniciansList = data?.technicians || [];
   const yearlyTrend = data?.yearlyTrend || [];
   const thirtyDaysTrend = data?.thirtyDaysTrend || [];
   const monthlyStatus = data?.monthlyStatusDistribution || [];
@@ -159,128 +185,229 @@ export default function Dashboard({ user }) {
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO POWER BI HEADER (Midnight Blue Suite) */}
+      {/* 🌟 1. HERO HEADER (Limpio y libre de controles internos) */}
       <div style={{
         background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2rem',
-        marginBottom: '1.75rem',
+        marginBottom: '1.25rem',
         boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
         border: '1px solid rgba(0, 209, 255, 0.25)',
         color: '#ffffff',
         display: 'flex',
-        flexWrap: 'wrap',
         alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1.25rem'
+        gap: '1rem'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: '46px',
-            height: '46px',
-            borderRadius: '12px',
-            background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
-            fontSize: '1.4rem',
-            color: '#001D40'
-          }}>
-            ⚡
+        <div style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+          fontSize: '1.5rem',
+          color: '#001D40',
+          flexShrink: 0
+        }}>
+          ⚡
+        </div>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <h1 style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              {isLevel2 
+                ? 'Panel de Control de Tickets · Técnico Nivel 2' 
+                : isLevel1
+                ? 'Centro de Gestión & Coordinación de Tickets · Nivel 1'
+                : isLevel3
+                ? 'Supervisión de Casos & Acuerdos ANS · Nivel 3'
+                : 'Centro de Inteligencia & Gestión de Tickets (Power BI)'
+              }
+            </h1>
+            <span style={{ 
+              fontSize: '0.75rem', 
+              fontWeight: '800', 
+              padding: '0.2rem 0.65rem', 
+              borderRadius: '9999px', 
+              background: 'rgba(0, 209, 255, 0.18)', 
+              color: '#00D1FF', 
+              border: '1px solid rgba(0, 209, 255, 0.4)',
+              textTransform: 'uppercase'
+            }}>
+              {isPersonalScope ? '👤 Mis Tickets' : '🌐 Vista Global'}
+            </span>
+          </div>
+          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+            {isPersonalScope 
+              ? 'Control individual de tickets asignados, tiempos de respuesta y estados de atención.'
+              : 'Métricas, estadísticas, tendencias anuales, distribución de severidad y control de acuerdos ANS.'
+            }
+          </p>
+        </div>
+      </div>
+
+      {/* 🎛️ 2. BARRA DE HERRAMIENTAS & FILTROS (Ubicada aparte y debajo del Header) */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '16px',
+        padding: '1.15rem 1.5rem',
+        marginBottom: '1.75rem',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
+        gap: '12px'
+      }}>
+        {/* Rango de Fechas */}
+        <div style={{ display: 'flex', gap: '8px' }}>
+          <div>
+            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Desde
+            </span>
+            <input
+              type="date"
+              value={filters.startDate}
+              onChange={(e) => handleFilterChange('startDate', e.target.value)}
+              style={{
+                padding: '7px 10px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                {isLevel2 
-                  ? 'Panel de Control de Tickets · Técnico Nivel 2' 
-                  : isLevel1
-                  ? 'Centro de Gestión & Coordinación de Tickets · Nivel 1'
-                  : isLevel3
-                  ? 'Supervisión de Casos & Acuerdos ANS · Nivel 3'
-                  : 'Centro de Inteligencia & Gestión de Tickets (Power BI)'
-                }
-              </h1>
-              <span style={{ 
-                fontSize: '0.75rem', 
-                fontWeight: '800', 
-                padding: '0.2rem 0.6rem', 
-                borderRadius: '9999px', 
-                background: 'rgba(0, 209, 255, 0.18)', 
-                color: '#00D1FF', 
-                border: '1px solid rgba(0, 209, 255, 0.4)',
-                textTransform: 'uppercase'
-              }}>
-                {isPersonalScope ? '👤 Mis Tickets' : '🌐 Vista Global'}
-              </span>
-            </div>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              {isPersonalScope 
-                ? 'Control individual de tickets asignados, tiempos de respuesta y estados de atención.'
-                : 'Métricas, estadísticas, tendencias anuales, distribución de severidad y control de acuerdos ANS.'
-              }
-            </p>
+            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Hasta
+            </span>
+            <input
+              type="date"
+              value={filters.endDate}
+              onChange={(e) => handleFilterChange('endDate', e.target.value)}
+              style={{
+                padding: '7px 10px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
           </div>
         </div>
 
-        {/* Action Controls & Scope Switcher */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          {canSwitchView && (
-            <div style={{
-              display: 'inline-flex',
-              background: 'rgba(255, 255, 255, 0.08)',
-              padding: '3px',
-              borderRadius: '10px',
-              border: '1px solid rgba(0, 209, 255, 0.25)'
-            }}>
-              <button
-                type="button"
-                onClick={() => setViewMode('global')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  fontSize: '0.8125rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: viewMode === 'global' ? '#00D1FF' : 'transparent',
-                  color: viewMode === 'global' ? '#001D40' : '#ffffff',
-                  boxShadow: viewMode === 'global' ? '0 2px 8px rgba(0, 209, 255, 0.35)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                🌐 Global
-              </button>
-              <button
-                type="button"
-                onClick={() => setViewMode('personal')}
-                style={{
-                  padding: '7px 14px',
-                  borderRadius: '7px',
-                  border: 'none',
-                  fontSize: '0.8125rem',
-                  fontWeight: 700,
-                  cursor: 'pointer',
-                  background: viewMode === 'personal' ? '#00D1FF' : 'transparent',
-                  color: viewMode === 'personal' ? '#001D40' : '#ffffff',
-                  boxShadow: viewMode === 'personal' ? '0 2px 8px rgba(0, 209, 255, 0.35)' : 'none',
-                  transition: 'all 0.15s ease'
-                }}
-              >
-                👤 Mi Bandeja
-              </button>
-            </div>
-          )}
+        {/* Tipo de Solicitud */}
+        <div>
+          <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Tipo de Solicitud
+          </span>
+          <select
+            value={filters.ticketType}
+            onChange={(e) => handleFilterChange('ticketType', e.target.value)}
+            style={{
+              padding: '7px 12px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: 'pointer',
+              minWidth: '150px'
+            }}
+          >
+            <option value="all">Todos los Tipos</option>
+            <option value="Incidencia">Solo Incidentes (Fallas)</option>
+            <option value="Requerimiento">Solo Requerimientos (Peticiones)</option>
+          </select>
+        </div>
 
+        {/* Filtro de Alcance / Vista */}
+        <div>
+          <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Alcance / Vista
+          </span>
+          <select
+            value={isLevel2 ? 'personal' : filters.viewMode}
+            disabled={isLevel2}
+            onChange={(e) => handleFilterChange('viewMode', e.target.value)}
+            style={{
+              padding: '7px 12px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: isLevel2 ? 'not-allowed' : 'pointer',
+              minWidth: '140px',
+              opacity: isLevel2 ? 0.85 : 1
+            }}
+          >
+            {isLevel2 ? (
+              <option value="personal">👤 Mis Tickets (Nivel 2)</option>
+            ) : (
+              <>
+                <option value="global">🌐 Vista Global</option>
+                <option value="personal">👤 Mis Tickets (Personal)</option>
+              </>
+            )}
+          </select>
+        </div>
+
+        {/* Filtro por Técnico (para vista global) */}
+        {!isLevel2 && filters.viewMode !== 'personal' && (
+          <div>
+            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Técnico Asignado
+            </span>
+            <select
+              value={filters.technicianId}
+              onChange={(e) => handleFilterChange('technicianId', e.target.value)}
+              style={{
+                padding: '7px 12px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+                minWidth: '160px'
+              }}
+            >
+              <option value="all">Todos los Técnicos</option>
+              {techniciansList.map(t => (
+                <option key={t.id} value={t.id}>{t.name} ({t.role})</option>
+              ))}
+            </select>
+          </div>
+        )}
+
+        {/* Botón Exportar PDF a la derecha */}
+        <div style={{ marginLeft: 'auto' }}>
           <button
             type="button"
             onClick={handleExportPdf}
             disabled={isExporting}
             style={{
-              background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               color: '#001D40',
               border: 'none',
-              padding: '8px 16px',
+              padding: '8px 18px',
               borderRadius: '8px',
               fontSize: '0.8125rem',
               fontWeight: 800,
@@ -290,7 +417,7 @@ export default function Dashboard({ user }) {
               gap: '6px',
               boxShadow: '0 4px 12px rgba(0, 209, 255, 0.35)',
               transition: 'transform 0.15s ease',
-              height: '38px'
+              height: '36px'
             }}
             onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
             onMouseLeave={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(0)')}
@@ -300,7 +427,7 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* 📊 POWER BI KPI CARDS GRID (8 Indicadores Clave de Tickets) */}
+      {/* 📊 3. POWER BI KPI CARDS GRID (8 Indicadores Clave de Tickets) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',

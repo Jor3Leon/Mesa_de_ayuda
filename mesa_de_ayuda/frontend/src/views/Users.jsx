@@ -235,24 +235,9 @@ export default function Users() {
             </svg>
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                Gestión de Usuarios & Cuentas
-              </h1>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.15rem 0.55rem',
-                  borderRadius: '9999px',
-                  background: 'rgba(0, 209, 255, 0.18)',
-                  color: '#00D1FF',
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                }}
-              >
-                RBAC v2.2
-              </span>
-            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Gestión de Usuarios & Cuentas
+            </h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Control de acceso granular, asignación de dependencias y clasificación de niveles técnicos.
             </p>

@@ -413,245 +413,317 @@ export default function Dashboard({ user }) {
         className="dashboard-kpi-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
-          gap: '1.15rem',
-          marginBottom: '1.75rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))',
+          gap: '0.65rem',
+          marginBottom: '1.25rem'
         }}
       >
         {/* Total Tickets */}
         <div 
           onClick={() => navigate('/tickets')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #3b82f6',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #3b82f6',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(59, 130, 246, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Total Tickets
             </span>
-            <span style={{ fontSize: '1.15rem' }}>📑</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>
-            {k.totalTickets.toLocaleString()}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.totalTickets.toLocaleString()}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Inc: <strong style={{ color: '#ef4444' }}>{k.incidentCount}</strong> · Sol: <strong style={{ color: '#002D62' }}>{k.requestCount}</strong>
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Incidencias: <strong style={{ color: '#ef4444' }}>{k.incidentCount}</strong> · Solicitudes: <strong style={{ color: '#002D62' }}>{k.requestCount}</strong>
-          </p>
         </div>
 
         {/* Tickets Desfasados / Retrasados */}
         <div 
           onClick={() => navigate('/tickets?overdue=true')}
+          className="stat-card"
           style={{
             background: k.overdueTickets > 0 ? '#fff5f5' : '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: k.overdueTickets > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
-            borderLeft: '4px solid #dc2626',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #dc2626',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(220, 38, 38, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#dc2626', textTransform: 'uppercase' }}>
-              Tickets Desfasados
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Desfasados
             </span>
-            <span style={{ fontSize: '1.15rem' }}>⚠️</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#dc2626', lineHeight: 1.1 }}>
-            {k.overdueTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#dc2626', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.overdueTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              {k.overdueTickets > 0 ? 'SLA excedido' : 'Al día'}
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 600 }}>
-            {k.overdueTickets > 0 ? 'Tiempo SLA excedido' : 'Todos al día'}
-          </p>
         </div>
 
         {/* Tickets Asignados */}
         <div 
           onClick={() => navigate('/tickets')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #00D1FF',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #0284c7',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 209, 255, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(2, 132, 199, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-              Tickets Asignados
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Asignados
             </span>
-            <span style={{ fontSize: '1.15rem' }}>👤</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>👤</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#002D62', lineHeight: 1.1 }}>
-            {k.assignedTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#002D62', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.assignedTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Con técnico
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            En manos de un técnico
-          </p>
         </div>
 
         {/* Tickets Planificados / En Progreso */}
         <div 
           onClick={() => navigate('/tickets?status=IN_PROGRESS')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #8b5cf6',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #8b5cf6',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(139, 92, 246, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-              En Progreso / Planif.
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              En Progreso
             </span>
-            <span style={{ fontSize: '1.15rem' }}>⚡</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚡</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#8b5cf6', lineHeight: 1.1 }}>
-            {k.inProgressTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#8b5cf6', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.inProgressTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              En atención
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Trabajo en ejecución
-          </p>
         </div>
 
         {/* Tickets Pendientes / En Espera */}
         <div 
           onClick={() => navigate('/tickets?status=PENDING')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #f59e0b',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #f59e0b',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(245, 158, 11, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-              Pendientes / En Espera
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              En Espera
             </span>
-            <span style={{ fontSize: '1.15rem' }}>⏳</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#d97706', lineHeight: 1.1 }}>
-            {k.pendingTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.pendingTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Respuesta ext.
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Respuesta de usuario/terceros
-          </p>
         </div>
 
         {/* Tickets Resueltos */}
         <div 
           onClick={() => navigate('/tickets?status=RESOLVED')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #10b981',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #10b981',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(16, 185, 129, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-              Tickets Resueltos
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Resueltos
             </span>
-            <span style={{ fontSize: '1.15rem' }}>✅</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#10b981', lineHeight: 1.1 }}>
-            {k.resolvedTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.resolvedTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Solucionados
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Solución aplicada
-          </p>
         </div>
 
         {/* Tickets Cerrados */}
         <div 
           onClick={() => navigate('/tickets?status=CLOSED')}
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #64748b',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            borderLeft: '3.5px solid #64748b',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            transition: 'all 0.15s ease'
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
-          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 116, 139, 0.15)'; }}
-          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(100, 116, 139, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
-              Tickets Cerrados
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Cerrados
             </span>
-            <span style={{ fontSize: '1.15rem' }}>🔒</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🔒</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#475569', lineHeight: 1.1 }}>
-            {k.closedTickets}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#475569', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.closedTickets}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Conformidad
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Conformidad final
-          </p>
         </div>
 
         {/* Cumplimiento ANS */}
         <div 
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
-            borderLeft: '4px solid #059669',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            transition: 'all 0.15s ease'
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Cumplimiento ANS
             </span>
-            <span style={{ fontSize: '1.15rem' }}>🎯</span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🎯</span>
           </div>
-          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#059669', lineHeight: 1.1 }}>
-            {k.slaCompliance}%
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {k.slaCompliance}%
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#059669', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Meta: &gt;95%
+            </span>
           </div>
-          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
-            Meta institucional: &gt;95%
-          </p>
         </div>
       </div>
 

@@ -155,24 +155,9 @@ export default function StandarUserPortal() {
             </svg>
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                Centro de Atención al Funcionario
-              </h1>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.15rem 0.55rem',
-                  borderRadius: '9999px',
-                  background: 'rgba(0, 209, 255, 0.18)',
-                  color: '#00D1FF',
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                }}
-              >
-                Autoservicio TIC
-              </span>
-            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Centro de Atención al Funcionario
+            </h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Radica tus tickets de soporte tecnológico y consulta su estado en tiempo real.
             </p>
@@ -206,187 +191,151 @@ export default function StandarUserPortal() {
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}
       <div
+        className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
+          gap: '0.65rem',
+          marginBottom: '1.25rem',
         }}
       >
         {/* KPI 1: Total */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #2563eb',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              border: '1px solid #bfdbfe',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2563eb',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Mis Solicitudes
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {stats.total}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>
-              Historial de radicados
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#2563eb', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Historial total
+            </span>
           </div>
         </div>
 
         {/* KPI 2: En Proceso */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #d97706',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              border: '1px solid #fcd34d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              En Gestión
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚡</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              En Gestión Técnica
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {stats.inProgress}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
-              En diagnóstico / atención
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#d97706', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              En atención
+            </span>
           </div>
         </div>
 
         {/* KPI 3: Resueltas */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
-              border: '1px solid #6ee7b7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#059669',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Resueltas
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Resueltas & Listas
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {stats.resolved}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              Cerradas satisfactoriamente
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Solucionadas
+            </span>
           </div>
         </div>
 
         {/* KPI 4: Soporte */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #7c3aed',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)',
-              border: '1px solid #c4b5fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#7c3aed',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Canal Mesa de Ayuda
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🛡️</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Canal Prioritario
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#7c3aed', lineHeight: 1, letterSpacing: '-0.02em' }}>
               24/7
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
-              Mesa de Ayuda TIC
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#7c3aed', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Soporte TIC Activo
+            </span>
           </div>
         </div>
       </div>

@@ -198,9 +198,9 @@ export default function Analytics({ user }) {
         className="analytics-kpi-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
-          gap: '1.25rem',
-          marginBottom: '1.75rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
+          gap: '0.65rem',
+          marginBottom: '1.25rem'
         }}
       >
         <StatCard

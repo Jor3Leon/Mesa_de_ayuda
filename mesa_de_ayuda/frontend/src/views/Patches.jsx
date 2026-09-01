@@ -93,24 +93,9 @@ export default function Patches() {
             </svg>
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                Gestión de Parches & Seguridad (Hardening)
-              </h1>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.15rem 0.55rem',
-                  borderRadius: '9999px',
-                  background: 'rgba(0, 209, 255, 0.18)',
-                  color: '#00D1FF',
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                }}
-              >
-                RMM Sec v2.2
-              </span>
-            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Gestión de Parches & Seguridad (Hardening)
+            </h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Orquestación de actualizaciones críticas de seguridad, KB de Microsoft y remediación de vulnerabilidades.
             </p>
@@ -144,185 +129,151 @@ export default function Patches() {
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}
       <div
+        className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
+          gap: '0.65rem',
+          marginBottom: '1.25rem',
         }}
       >
         {/* KPI 1: Críticos */}
         <div
+          className="stat-card"
           style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
-            border: '1px solid #e2e8f0',
+            background: criticalCount > 0 ? '#fff5f5' : '#ffffff',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
+            border: criticalCount > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #dc2626',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef2f2 0%, #fee2e2 100%)',
-              border: '1px solid #fecaca',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#dc2626',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="7.86 2 16.14 2 22 7.86 22 16.14 16.14 22 7.86 22 2 16.14 2 7.86 7.86 2" />
-              <line x1="12" y1="8" x2="12" y2="12" />
-              <line x1="12" y1="16" x2="12.01" y2="16" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: criticalCount > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Críticos Pendientes
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: criticalCount > 0 ? '#dc2626' : '#059669', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: criticalCount > 0 ? '#dc2626' : '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {criticalCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: criticalCount > 0 ? '#dc2626' : '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              {criticalCount > 0 ? 'Requieren acción inmediata' : 'Sistema al día'}
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: criticalCount > 0 ? '#dc2626' : '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              {criticalCount > 0 ? 'Acción inmediata' : 'Al día'}
+            </span>
           </div>
         </div>
 
         {/* KPI 2: Total Parches */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #2563eb',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              border: '1px solid #bfdbfe',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2563eb',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Total Paquetes KB
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🛡️</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {patches.length}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>
-              Actualizaciones en cola
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#2563eb', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              En catálogo
+            </span>
           </div>
         </div>
 
         {/* KPI 3: Programados */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #d97706',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              border: '1px solid #fcd34d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Programados
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {scheduledCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
-              En ventana de mantenimiento
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#d97706', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              En ventana
+            </span>
           </div>
         </div>
 
         {/* KPI 4: Aplicados */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.6rem 0.85rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.15rem',
+            minHeight: '58px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
-              border: '1px solid #6ee7b7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#059669',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="20 6 9 17 4 12" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Desplegados
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
-              {appliedCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              Instalados exitosamente
-            </div>
+            </span>
+            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {deployedCount}
+            </strong>
+            <span style={{ fontSize: '0.67rem', color: '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Aplicados OK
+            </span>
           </div>
         </div>
       </div>

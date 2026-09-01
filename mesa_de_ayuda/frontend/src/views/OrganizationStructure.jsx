@@ -351,19 +351,8 @@ export default function OrganizationStructure() {
               </svg>
             </div>
             <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', display: 'flex', alignItems: 'center', gap: '0.5rem', color: '#ffffff' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
                 Estructura Organizacional & Ubicaciones
-                <span style={{ 
-                  fontSize: '0.75rem', 
-                  fontWeight: '700', 
-                  padding: '0.15rem 0.55rem', 
-                  borderRadius: '9999px', 
-                  background: 'rgba(0, 209, 255, 0.18)', 
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                  color: '#00D1FF'
-                }}>
-                  ITAM v2.2
-                </span>
               </h1>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
                 Jerarquía corporativa de 3 niveles: Sedes, Dependencias y Oficinas físicas para localización exacta de Activos TI.

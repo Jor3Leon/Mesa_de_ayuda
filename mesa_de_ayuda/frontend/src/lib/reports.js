@@ -179,14 +179,48 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
       margin: { left: 15, right: 15 },
     });
 
-    currentY = doc.lastAutoTable.finalY + 12;
+    // Section 3: Dependencias y Oficinas
+    const dependencias = data?.topDependencias || [];
+    const oficinas = data?.topOficinas || [];
+    if ((dependencias.length > 0 || oficinas.length > 0) && currentY < 230) {
+      doc.setFontSize(13);
+      doc.setFont('helvetica', 'bold');
+      doc.text('3. Casos por Dependencias & Oficinas', 15, currentY);
 
-    // Section 3: Severity Distribution
+      const depRows = Math.max(dependencias.length, oficinas.length, 1);
+      const depOfiData = [];
+      for (let i = 0; i < depRows; i++) {
+        const d = dependencias[i] || { name: '-', count: '-', percent: '-' };
+        const o = oficinas[i] || { name: '-', count: '-', percent: '-' };
+        depOfiData.push([
+          d.name || d.label,
+          String(d.count),
+          typeof d.percent === 'number' ? `${d.percent}%` : String(d.percent),
+          o.name || o.label,
+          String(o.count),
+          typeof o.percent === 'number' ? `${o.percent}%` : String(o.percent)
+        ]);
+      }
+
+      autoTable(doc, {
+        startY: currentY + 4,
+        head: [['Dependencia / Área', 'Tickets', '%', 'Oficina / Espacio', 'Tickets', '%']],
+        body: depOfiData,
+        theme: 'striped',
+        headStyles: { fillColor: [0, 45, 98] },
+        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        margin: { left: 15, right: 15 },
+      });
+
+      currentY = doc.lastAutoTable.finalY + 12;
+    }
+
+    // Section 4: Severity Distribution
     const sevList = data?.severityDistribution || [];
     if (sevList.length > 0 && currentY < 230) {
       doc.setFontSize(13);
       doc.setFont('helvetica', 'bold');
-      doc.text('3. Distribución por Severidad / Prioridad', 15, currentY);
+      doc.text('4. Distribución por Severidad / Prioridad', 15, currentY);
 
       const sevData = sevList.map(s => [
         s.label,
@@ -199,7 +233,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
         head: [['Severidad / Nivel', 'Tickets Activos', '% Proporción']],
         body: sevData,
         theme: 'grid',
-        headStyles: { fillColor: [0, 45, 98] },
+        headStyles: { fillColor: [51, 65, 85] },
         styles: { fontSize: 8.5, cellPadding: 2.5 },
         margin: { left: 15, right: 15 },
       });

@@ -577,22 +577,25 @@ function getCommonRoutes(prisma) {
         });
       }
 
-      // 5. Fetch Customer/Entity & Location Names for Top Rankings
-      const customerIds = ticketsByCustomerRaw.map(c => c.customerId).filter(Boolean);
-      const locationIds = ticketsByLocationRaw.map(l => l.locationId).filter(Boolean);
-
-      const [customers, locations] = await Promise.all([
-        prisma.customer.findMany({
-          where: { id: { in: customerIds } },
+      // 5. Fetch Locations, Dependencias, Oficinas and Sedes for Hierarchical Rankings
+      const [locations, dependencias, oficinas, sedes] = await Promise.all([
+        prisma.location.findMany({
+          where: orgFilter,
           select: { id: true, name: true }
         }).catch(() => []),
-        prisma.location.findMany({
-          where: { id: { in: locationIds } },
-          select: { id: true, name: true }
+        prisma.dependencia.findMany({
+          where: orgFilter,
+          include: { sede: true, oficinas: true }
+        }).catch(() => []),
+        prisma.oficina.findMany({
+          where: orgFilter,
+          include: { dependencia: true, sede: true }
+        }).catch(() => []),
+        prisma.sede.findMany({
+          where: orgFilter
         }).catch(() => [])
       ]);
 
-      const customerMap = Object.fromEntries(customers.map(c => [c.id, c.name]));
       const locationMap = Object.fromEntries(locations.map(l => [l.id, l.name]));
 
       // Format Top Categories
@@ -617,25 +620,95 @@ function getCommonRoutes(prisma) {
         }))
         .sort((a, b) => b.count - a.count);
 
-      // Format Top Entities (Customer / Location)
-      const topEntities = (ticketsByCustomerRaw || [])
-        .map(c => ({
-          label: customerMap[c.customerId] || `Entidad #${c.customerId}`,
-          count: c._count?._all || 0,
-          percent: Math.round(((c._count?._all || 0) / (totalTickets || 1)) * 100)
-        }))
-        .slice(0, 5);
+      // Calculate Dependencias & Oficinas Ticket Metrics
+      const depStatsMap = {};
+      dependencias.forEach(d => {
+        depStatsMap[d.name.toLowerCase()] = {
+          name: d.name,
+          label: d.name,
+          sedeName: d.sede?.name || 'Sede Principal',
+          count: 0
+        };
+      });
 
-      // If customer grouping is empty, use location grouping
-      if (topEntities.length === 0) {
-        (ticketsByLocationRaw || []).forEach(l => {
-          topEntities.push({
-            label: locationMap[l.locationId] || `Sede #${l.locationId}`,
-            count: l._count?._all || 0,
-            percent: Math.round(((l._count?._all || 0) / (totalTickets || 1)) * 100)
+      const ofiStatsMap = {};
+      oficinas.forEach(o => {
+        ofiStatsMap[o.name.toLowerCase()] = {
+          name: o.name,
+          label: o.name,
+          depName: o.dependencia?.name || 'General',
+          sedeName: o.sede?.name || o.dependencia?.sede?.name || 'Sede Principal',
+          count: 0
+        };
+      });
+
+      (ticketsByLocationRaw || []).forEach(l => {
+        if (l.locationId && locationMap[l.locationId]) {
+          const locName = locationMap[l.locationId];
+          const locLower = locName.toLowerCase();
+          const count = l._count?._all || 0;
+
+          let matchedDep = false;
+          let matchedOfi = false;
+
+          Object.keys(depStatsMap).forEach(key => {
+            if (locLower.includes(key)) {
+              depStatsMap[key].count += count;
+              matchedDep = true;
+            }
           });
-        });
-      }
+
+          Object.keys(ofiStatsMap).forEach(key => {
+            if (locLower.includes(key)) {
+              ofiStatsMap[key].count += count;
+              matchedOfi = true;
+            }
+          });
+
+          if (!matchedDep && !matchedOfi) {
+            const parts = locName.split(' - ').map(s => s.trim());
+            if (parts.length >= 2) {
+              const depPart = parts[1];
+              const depKey = depPart.toLowerCase();
+              if (!depStatsMap[depKey]) {
+                depStatsMap[depKey] = { name: depPart, label: depPart, sedeName: parts[0], count: 0 };
+              }
+              depStatsMap[depKey].count += count;
+
+              if (parts.length >= 3) {
+                const ofiPart = parts[2];
+                const ofiKey = ofiPart.toLowerCase();
+                if (!ofiStatsMap[ofiKey]) {
+                  ofiStatsMap[ofiKey] = { name: ofiPart, label: ofiPart, depName: depPart, sedeName: parts[0], count: 0 };
+                }
+                ofiStatsMap[ofiKey].count += count;
+              }
+            } else {
+              const depKey = locLower;
+              if (!depStatsMap[depKey]) {
+                depStatsMap[depKey] = { name: locName, label: locName, sedeName: 'Sede Principal', count: 0 };
+              }
+              depStatsMap[depKey].count += count;
+            }
+          }
+        }
+      });
+
+      const topDependencias = Object.values(depStatsMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6)
+        .map(d => ({
+          ...d,
+          percent: totalTickets > 0 ? Math.round((d.count / totalTickets) * 100) : 0
+        }));
+
+      const topOficinas = Object.values(ofiStatsMap)
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6)
+        .map(o => ({
+          ...o,
+          percent: totalTickets > 0 ? Math.round((o.count / totalTickets) * 100) : 0
+        }));
 
       // Format Severity Distribution
       const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
@@ -709,7 +782,9 @@ function getCommonRoutes(prisma) {
         monthlyStatusDistribution,
         topCategories,
         topRequestTypes,
-        topEntities,
+        topDependencias,
+        topOficinas,
+        topEntities: topDependencias,
         severityDistribution,
         ticketsByPriority,
         ticketsByStatus

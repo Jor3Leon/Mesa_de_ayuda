@@ -50,6 +50,8 @@ const initialData = {
   monthlyStatusDistribution: [],
   topCategories: [],
   topRequestTypes: [],
+  topDependencias: [],
+  topOficinas: [],
   topEntities: [],
   severityDistribution: [],
   ticketsByPriority: {},
@@ -66,6 +68,7 @@ export default function Dashboard({ user }) {
   const [isExporting, setIsExporting] = useState(false);
   const [trendRange, setTrendRange] = useState('30d'); // '30d' | '12m'
   const [yearlyMetric, setYearlyMetric] = useState('creationVsResolution'); // 'creationVsResolution' | 'incidentsVsRequests'
+  const [structureTab, setStructureTab] = useState('dependencias'); // 'dependencias' | 'oficinas'
   const [selectedSeverity, setSelectedSeverity] = useState(null);
 
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
@@ -181,11 +184,13 @@ export default function Dashboard({ user }) {
   const monthlyStatus = data?.monthlyStatusDistribution || [];
   const topCategories = data?.topCategories || [];
   const topRequestTypes = data?.topRequestTypes || [];
-  const topEntities = data?.topEntities || [];
+  const topDependencias = data?.topDependencias || [];
+  const topOficinas = data?.topOficinas || [];
   const severityList = data?.severityDistribution || [];
 
+  const currentStructureList = structureTab === 'dependencias' ? topDependencias : topOficinas;
   const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
-  const maxEntityCount = Math.max(...topEntities.map(e => e.count), 1);
+  const maxStructureCount = Math.max(...currentStructureList.map(s => s.count), 1);
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
@@ -1032,7 +1037,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* Chart 7: Principales Casos por Entidad / Organización / Cliente */}
+        {/* Chart 7: Principales Casos por Dependencias & Oficinas */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -1040,30 +1045,81 @@ export default function Dashboard({ user }) {
           border: '1px solid #e2e8f0',
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
-          <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-            Casos por Entidad & Clientes
-          </h3>
-          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-            Entidades, sedes y solicitantes con mayor demanda
-          </p>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Casos por Dependencias & Oficinas
+              </h3>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Demanda de tickets por áreas y espacios institucionales
+              </p>
+            </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-            {topEntities.length === 0 ? (
+            <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setStructureTab('dependencias')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: structureTab === 'dependencias' ? '#002D62' : 'transparent',
+                  color: structureTab === 'dependencias' ? '#ffffff' : '#475569'
+                }}
+              >
+                📁 Dependencias
+              </button>
+              <button
+                type="button"
+                onClick={() => setStructureTab('oficinas')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: structureTab === 'oficinas' ? '#002D62' : 'transparent',
+                  color: structureTab === 'oficinas' ? '#ffffff' : '#475569'
+                }}
+              >
+                🚪 Oficinas
+              </button>
+            </div>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '0.75rem' }}>
+            {currentStructureList.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                No hay entidades registradas
+                No hay {structureTab === 'dependencias' ? 'dependencias' : 'oficinas'} con tickets registrados
               </div>
             ) : (
-              topEntities.map((ent, idx) => (
+              currentStructureList.map((item, idx) => (
                 <div key={idx}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '4px' }}>
-                    <span style={{ fontWeight: 700, color: '#334155' }}>{ent.label}</span>
-                    <span style={{ fontWeight: 800, color: '#0284c7' }}>{ent.count} tickets</span>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', fontSize: '0.8125rem', marginBottom: '4px' }}>
+                    <div>
+                      <span style={{ fontWeight: 700, color: '#334155' }}>
+                        {structureTab === 'dependencias' ? '📁 ' : '🚪 '}
+                        {item.name || item.label}
+                      </span>
+                      <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>
+                        {structureTab === 'dependencias' ? (item.sedeName || 'Sede Principal') : `${item.depName || 'Área'} · ${item.sedeName || 'Sede'}`}
+                      </span>
+                    </div>
+                    <span style={{ fontWeight: 800, color: '#0284c7', whiteSpace: 'nowrap', marginLeft: '8px' }}>
+                      {item.count} {item.count === 1 ? 'ticket' : 'tickets'} ({item.percent}%)
+                    </span>
                   </div>
                   <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
                     <div style={{
-                      width: `${(ent.count / maxEntityCount) * 100}%`,
+                      width: `${(item.count / maxStructureCount) * 100}%`,
                       height: '100%',
-                      background: 'linear-gradient(90deg, #38bdf8, #0284c7)',
+                      background: structureTab === 'dependencias'
+                        ? 'linear-gradient(90deg, #38bdf8, #0284c7)'
+                        : 'linear-gradient(90deg, #a78bfa, #7c3aed)',
                       borderRadius: '4px',
                       transition: 'width 0.8s ease'
                     }} />

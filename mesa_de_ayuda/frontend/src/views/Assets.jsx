@@ -872,40 +872,12 @@ export default function Assets() {
             </svg>
           </div>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                Inventario de Activos & Dispositivos
-              </h1>
-              <span
-                style={{
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.15rem 0.55rem',
-                  borderRadius: '9999px',
-                  background: 'rgba(0, 209, 255, 0.18)',
-                  color: '#00D1FF',
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                }}
-              >
-                ITAM v2.2
-              </span>
-            </div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Inventario de Activos & Dispositivos
+            </h1>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
               Consola operativa de equipos, agentes instalados y trazabilidad técnica del parque informático.
             </p>
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-          <div style={{ display: 'flex', gap: '0.6rem' }}>
-            <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.55rem 0.95rem', color: '#ffffff', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>En Línea</span>
-              <strong style={{ fontSize: '1.1rem', color: '#00D1FF' }}>{onlineCount}</strong>
-            </div>
-            <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.55rem 0.95rem', color: '#ffffff', display: 'flex', flexDirection: 'column' }}>
-              <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Agente Antivirus</span>
-              <strong style={{ fontSize: '1.1rem', color: '#10b981' }}>{withAgentCount}</strong>
-            </div>
           </div>
         </div>
       </div>

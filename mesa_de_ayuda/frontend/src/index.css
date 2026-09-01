@@ -2498,26 +2498,29 @@ tbody tr:hover {
 }
 
 .analytics-filter-label {
-  font-size: 0.6875rem;
-  font-weight: 700;
-  color: #64748b;
+  font-size: 0.72rem;
+  font-weight: 800;
+  color: #00D1FF;
   text-transform: uppercase;
-  letter-spacing: 0.04em;
+  letter-spacing: 0.06em;
+  text-shadow: 0 1px 3px rgba(0, 0, 0, 0.7);
 }
 
 .analytics-filter-input,
 .analytics-filter-select {
   padding: 0.45rem 0.65rem;
-  border: 1px solid #e2e8f0;
+  border: 1.5px solid rgba(0, 209, 255, 0.35);
   border-radius: 8px;
   background: white;
-  color: #334155;
-  font-size: 0.8rem;
-  font-weight: 500;
+  color: #0f172a;
+  font-size: 0.8125rem;
+  font-weight: 600;
   cursor: pointer;
   outline: none;
-  height: 36px;
+  height: 38px;
   box-sizing: border-box;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+  transition: all 0.2s ease;
 }
 
 .analytics-filter-select {
@@ -3181,8 +3184,10 @@ tbody tr:hover {
   }
 
   .analytics-filter-label {
-    font-size: 0.625rem;
-    margin-bottom: 0.15rem;
+    font-size: 0.68rem;
+    font-weight: 800;
+    color: #00D1FF;
+    margin-bottom: 0.2rem;
   }
 
   .analytics-filter-input,

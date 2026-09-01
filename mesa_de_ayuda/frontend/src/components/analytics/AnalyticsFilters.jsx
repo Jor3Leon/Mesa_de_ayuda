@@ -23,11 +23,11 @@ export default function AnalyticsFilters({ filters, onChange }) {
   };
 
   const labelStyle = {
-    fontSize: '0.6875rem',
-    fontWeight: 600,
-    color: '#64748b',
+    fontSize: '0.72rem',
+    fontWeight: 800,
+    color: '#00D1FF',
     textTransform: 'uppercase',
-    letterSpacing: '0.04em',
+    letterSpacing: '0.06em',
     marginBottom: '4px',
   };
 

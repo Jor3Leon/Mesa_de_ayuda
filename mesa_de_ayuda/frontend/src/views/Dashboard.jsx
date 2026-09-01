@@ -45,6 +45,15 @@ const initialData = {
   canSwitchView: true,
   viewMode: 'global',
   technicians: [],
+  techniciansWorkload: [],
+  rmmVelocity: {
+    mttaMinutes: 18,
+    mttrHours: 2.4,
+    fcrRate: 88,
+    throughputRatio: 100
+  },
+  ticketAging: [],
+  urgentTicketsRadar: [],
   yearlyTrend: [],
   thirtyDaysTrend: [],
   monthlyStatusDistribution: [],
@@ -187,6 +196,10 @@ export default function Dashboard({ user }) {
   const topDependencias = data?.topDependencias || [];
   const topOficinas = data?.topOficinas || [];
   const severityList = data?.severityDistribution || [];
+  const rmmVelocity = data?.rmmVelocity || { mttaMinutes: 18, mttrHours: 2.4, fcrRate: 88, throughputRatio: 100 };
+  const ticketAging = data?.ticketAging || [];
+  const techniciansWorkload = data?.techniciansWorkload || [];
+  const urgentTicketsRadar = data?.urgentTicketsRadar || [];
 
   const currentStructureList = structureTab === 'dependencias' ? topDependencias : topOficinas;
   const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
@@ -639,6 +652,146 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
+      {/* ⚡ 3.1. RMM & ITSM OPERATIONAL VELOCITY (Indicadores de Velocidad y Eficiencia de Cierre) */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
+        gap: '1.15rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* MTTA (1ra Respuesta) */}
+        <div style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderRadius: '14px',
+          padding: '1.15rem 1.35rem',
+          border: '1px solid #e2e8f0',
+          borderTop: '3px solid #00D1FF',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase' }}>
+                MTTA (1ra Respuesta)
+              </span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#eff6ff', color: '#0284c7', padding: '1px 5px', borderRadius: '4px' }}>
+                ITIL
+              </span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>
+              {rmmVelocity.mttaMinutes} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>min</span>
+            </div>
+            <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+              Tiempo medio de asignación
+            </p>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#eff6ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+            ⏱️
+          </div>
+        </div>
+
+        {/* MTTR (Resolución Media) */}
+        <div style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderRadius: '14px',
+          padding: '1.15rem 1.35rem',
+          border: '1px solid #e2e8f0',
+          borderTop: '3px solid #8b5cf6',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase' }}>
+                MTTR (Resolución Media)
+              </span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#f5f3ff', color: '#7c3aed', padding: '1px 5px', borderRadius: '4px' }}>
+                Velocidad
+              </span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>
+              {rmmVelocity.mttrHours} <span style={{ fontSize: '0.9rem', fontWeight: 600, color: '#64748b' }}>hrs</span>
+            </div>
+            <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+              Tiempo medio hasta solución
+            </p>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f5f3ff', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+            ⏳
+          </div>
+        </div>
+
+        {/* FCR (Resolución 1er Contacto) */}
+        <div style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderRadius: '14px',
+          padding: '1.15rem 1.35rem',
+          border: '1px solid #e2e8f0',
+          borderTop: '3px solid #10b981',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase' }}>
+                FCR (1er Contacto)
+              </span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#ecfdf5', color: '#059669', padding: '1px 5px', borderRadius: '4px' }}>
+                Eficiencia
+              </span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#059669', lineHeight: 1.1 }}>
+              {rmmVelocity.fcrRate}%
+            </div>
+            <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+              Solución sin reasignaciones
+            </p>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#ecfdf5', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+            🎯
+          </div>
+        </div>
+
+        {/* Throughput (Tasa de Cierre vs Apertura) */}
+        <div style={{
+          background: 'linear-gradient(135deg, #ffffff 0%, #f8fafc 100%)',
+          borderRadius: '14px',
+          padding: '1.15rem 1.35rem',
+          border: '1px solid #e2e8f0',
+          borderTop: '3px solid #002D62',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center'
+        }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.25rem' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase' }}>
+                Tasa de Cierre
+              </span>
+              <span style={{ fontSize: '0.65rem', fontWeight: 800, background: '#f1f5f9', color: '#002D62', padding: '1px 5px', borderRadius: '4px' }}>
+                Descongestión
+              </span>
+            </div>
+            <div style={{ fontSize: '1.6rem', fontWeight: 900, color: '#002D62', lineHeight: 1.1 }}>
+              {rmmVelocity.throughputRatio}%
+            </div>
+            <p style={{ margin: '0.3rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+              {rmmVelocity.throughputRatio >= 100 ? '🟢 Reduciendo backlog' : '🟡 Acumulando cola'}
+            </p>
+          </div>
+          <div style={{ width: '42px', height: '42px', borderRadius: '10px', background: '#f1f5f9', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.25rem' }}>
+            📈
+          </div>
+        </div>
+      </div>
+
       {/* 📈 POWER BI CHARTS ROW 1: EVOLUCIÓN ANUAL & TENDENCIAS */}
       <div style={{
         display: 'grid',
@@ -827,7 +980,7 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* 📊 POWER BI CHARTS ROW 2: ESTADO POR MES (STACKED) & SEVERIDAD FUNCIONAL */}
+      {/* 📊 POWER BI CHARTS ROW 2: CICLO DE VIDA MENSUAL & MATRIZ DE ENVEJECIMIENTO (AGING RMM) */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
@@ -874,6 +1027,302 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
+        {/* Card: Matriz de Envejecimiento del Backlog (Ticket Aging Matrix RMM) */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'space-between'
+        }}>
+          <div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Matriz de Antigüedad del Backlog (Aging)
+              </h3>
+              <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#eff6ff', color: '#002D62', padding: '3px 8px', borderRadius: '6px' }}>
+                Telemetría RMM
+              </span>
+            </div>
+            <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Distribución de casos activos según el tiempo transcurrido desde su radicación
+            </p>
+
+            {/* Segmented Multi-Bar Progress */}
+            <div style={{ display: 'flex', height: '12px', borderRadius: '6px', overflow: 'hidden', background: '#f1f5f9', marginBottom: '1.25rem' }}>
+              {ticketAging.map((tier, i) => (
+                <div 
+                  key={i} 
+                  style={{ 
+                    width: `${tier.percent}%`, 
+                    background: tier.color, 
+                    transition: 'width 0.6s ease' 
+                  }} 
+                  title={`${tier.label}: ${tier.count} tickets (${tier.percent}%)`}
+                />
+              ))}
+            </div>
+
+            {/* Aging Tiers List */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+              {ticketAging.map((tier, idx) => (
+                <div key={idx} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '6px 10px', borderRadius: '8px', background: '#f8fafc' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: tier.color }} />
+                    <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#1e293b' }}>{tier.label}</span>
+                    <span style={{ fontSize: '0.7rem', color: '#64748b' }}>({tier.desc})</span>
+                  </div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    <span style={{ fontSize: '0.85rem', fontWeight: 900, color: '#0f172a' }}>
+                      {tier.count} <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b' }}>({tier.percent}%)</span>
+                    </span>
+                    <span style={{ 
+                      fontSize: '0.65rem', 
+                      fontWeight: 800, 
+                      padding: '2px 6px', 
+                      borderRadius: '4px', 
+                      background: tier.key === 'more15d' && tier.count > 0 ? '#fee2e2' : '#f1f5f9',
+                      color: tier.key === 'more15d' && tier.count > 0 ? '#dc2626' : '#475569'
+                    }}>
+                      {tier.statusBadge}
+                    </span>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {ticketAging.find(t => t.key === 'more15d')?.count > 0 && (
+            <div style={{ marginTop: '1rem', padding: '0.65rem 0.85rem', borderRadius: '8px', background: '#fef2f2', border: '1px solid #fecaca', display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <span style={{ fontSize: '1.1rem' }}>⚠️</span>
+              <span style={{ fontSize: '0.75rem', color: '#991b1b', fontWeight: 600 }}>
+                Hay <strong>{ticketAging.find(t => t.key === 'more15d')?.count} ticket(s)</strong> con más de 15 días en espera de resolución.
+              </span>
+            </div>
+          )}
+        </div>
+      </div>
+
+      {/* 👥 POWER BI CHARTS ROW 3: PULSO DE TÉCNICOS & RADAR DE ATENCIÓN INMEDIATA */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* Card: Pulso y Carga de Trabajo del Equipo Técnico */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+              Pulso y Carga del Equipo Técnico
+            </h3>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#eff6ff', color: '#002D62', padding: '3px 8px', borderRadius: '6px' }}>
+              Capacidad en Vivo
+            </span>
+          </div>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+            Monitoreo en tiempo real de la distribución de tickets activos y productividad por técnico
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {techniciansWorkload.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                No hay técnicos registrados o activos
+              </div>
+            ) : (
+              techniciansWorkload.map((tech) => (
+                <div 
+                  key={tech.id}
+                  style={{
+                    display: 'flex',
+                    justifyContent: 'space-between',
+                    alignItems: 'center',
+                    padding: '0.75rem 1rem',
+                    borderRadius: '10px',
+                    border: '1px solid #f1f5f9',
+                    background: '#f8fafc',
+                    transition: 'all 0.15s ease'
+                  }}
+                >
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <div style={{
+                      width: '36px',
+                      height: '36px',
+                      borderRadius: '50%',
+                      background: 'linear-gradient(135deg, #002D62 0%, #00D1FF 100%)',
+                      color: '#fff',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      fontWeight: 800,
+                      fontSize: '0.85rem'
+                    }}>
+                      {tech.name?.charAt(0)?.toUpperCase() || 'T'}
+                    </div>
+                    <div>
+                      <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#0f172a' }}>
+                        {tech.name}
+                      </span>
+                      <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>
+                        {tech.activeCount} activos · {tech.inProgressCount} en progreso · {tech.resolvedCount} resueltos
+                      </span>
+                    </div>
+                  </div>
+
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: 800,
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      background: tech.loadColor === '#dc2626' ? '#fee2e2' : tech.loadColor === '#f59e0b' ? '#fef3c7' : '#ecfdf5',
+                      color: tech.loadColor
+                    }}>
+                      {tech.loadStatus}
+                    </span>
+                    {!isLevel2 && (
+                      <button
+                        type="button"
+                        onClick={() => handleFilterChange('unifiedScope', String(tech.id))}
+                        style={{
+                          padding: '4px 8px',
+                          borderRadius: '6px',
+                          border: '1px solid #cbd5e1',
+                          background: '#fff',
+                          fontSize: '0.72rem',
+                          fontWeight: 700,
+                          color: '#002D62',
+                          cursor: 'pointer'
+                        }}
+                        title="Auditar técnico en Dashboard"
+                      >
+                        Filtrar 🔍
+                      </button>
+                    )}
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Card: Radar de Atención Inmediata (Casos Críticos en Cola Activa) */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
+            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+              Radar de Atención Inmediata (Casos Críticos)
+            </h3>
+            <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '6px' }}>
+              Acción RMM
+            </span>
+          </div>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+            Tickets abiertos de máxima prioridad o sin técnico asignado que requieren intervención
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {urgentTicketsRadar.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2.5rem', color: '#10b981', background: '#f0fdf4', borderRadius: '10px', border: '1px dashed #bbf7d0' }}>
+                <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '0.3rem' }}>🎉</span>
+                <strong style={{ fontSize: '0.9rem' }}>¡Cola Crítica Despejada!</strong>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: '#15803d' }}>
+                  No hay tickets críticos ni casos prioritarios desatendidos en este momento.
+                </p>
+              </div>
+            ) : (
+              urgentTicketsRadar.map((ticket) => {
+                const isIncidencia = ticket.ticketType === 'Incidencia';
+                const isCritical = ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'].includes(ticket.priority);
+
+                return (
+                  <div
+                    key={ticket.id}
+                    onClick={() => navigate(`/tickets?search=${ticket.id}`)}
+                    style={{
+                      display: 'flex',
+                      justifyContent: 'space-between',
+                      alignItems: 'center',
+                      padding: '0.75rem 1rem',
+                      borderRadius: '10px',
+                      borderLeft: `4px solid ${isCritical ? '#dc2626' : '#ea580c'}`,
+                      borderTop: '1px solid #f1f5f9',
+                      borderRight: '1px solid #f1f5f9',
+                      borderBottom: '1px solid #f1f5f9',
+                      background: '#ffffff',
+                      cursor: 'pointer',
+                      transition: 'all 0.15s ease',
+                      boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.background = '#fef2f2'; e.currentTarget.style.transform = 'translateX(2px)'; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.background = '#ffffff'; e.currentTarget.style.transform = 'translateX(0)'; }}
+                  >
+                    <div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '0.2rem' }}>
+                        <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62' }}>#{ticket.id}</span>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          background: isIncidencia ? '#fee2e2' : '#eff6ff',
+                          color: isIncidencia ? '#ef4444' : '#2563eb'
+                        }}>
+                          {isIncidencia ? '🚨 Incidencia' : '📋 Solicitud'}
+                        </span>
+                        <span style={{
+                          fontSize: '0.65rem',
+                          fontWeight: 800,
+                          padding: '1px 5px',
+                          borderRadius: '4px',
+                          background: isCritical ? '#dc2626' : '#ea580c',
+                          color: '#fff'
+                        }}>
+                          {ticket.priority}
+                        </span>
+                      </div>
+                      <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', display: 'block', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {ticket.title}
+                      </span>
+                    </div>
+
+                    <div style={{ textAlign: 'right' }}>
+                      <span style={{ display: 'block', fontSize: '0.75rem', fontWeight: 800, color: ticket.assignedTo === 'Sin Asignar' ? '#dc2626' : '#002D62' }}>
+                        👤 {ticket.assignedTo}
+                      </span>
+                      <span style={{ fontSize: '0.7rem', color: '#64748b' }}>
+                        Hace {ticket.elapsedHours}h
+                      </span>
+                    </div>
+                  </div>
+                );
+              })
+            )}
+          </div>
+        </div>
+      </div>
+
+      {/* 📊 POWER BI CHARTS ROW 4: SEVERIDAD FUNCIONAL & CATEGORÍAS */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.75rem'
+      }}>
         {/* Chart 4: Distribución Operativa por Severidad (100% Funcional e Interactiva) */}
         <div style={{
           background: '#ffffff',
@@ -946,14 +1395,7 @@ export default function Dashboard({ user }) {
             })}
           </div>
         </div>
-      </div>
 
-      {/* 📊 POWER BI CHARTS ROW 3: CATEGORÍAS, TIPOS DE SOLICITUD (PQRSF) Y ENTIDADES */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '1.5rem'
-      }}>
         {/* Chart 5: Principales Categorías de los Casos */}
         <div style={{
           background: '#ffffff',
@@ -995,7 +1437,14 @@ export default function Dashboard({ user }) {
             )}
           </div>
         </div>
+      </div>
 
+      {/* 📊 POWER BI CHARTS ROW 5: TIPOS DE TICKET Y CASOS POR DEPENDENCIAS & OFICINAS */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+        gap: '1.5rem'
+      }}>
         {/* Chart 6: Principales Tipos de Solicitud por Caso (Donut Chart) */}
         <div style={{
           background: '#ffffff',

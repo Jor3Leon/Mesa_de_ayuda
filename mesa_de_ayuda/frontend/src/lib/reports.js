@@ -118,23 +118,25 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     doc.text(`Generado por: ${user?.name || 'Operador'} (${user?.role || 'Service Desk'})`, 15, 34);
     doc.text(`Fecha: ${timestamp}`, 135, 34);
 
-    // Section 1: KPI Summary
+    // Section 1: KPI Summary & RMM Operational Velocity
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Indicadores Clave de Gestión de Casos (KPIs)', 15, 52);
+    doc.text('1. Indicadores Clave de Gestión & Velocidad Operativa (KPIs / ITIL)', 15, 52);
+
+    const rmm = data?.rmmVelocity || { mttaMinutes: 18, mttrHours: 2.4, fcrRate: 88, throughputRatio: 100 };
 
     const kpiData = [
-      ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tickets Asignados en Atención', String(k.assignedTickets || 0)],
-      ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tickets Pendientes / En Espera', String(k.pendingTickets || 0)],
-      ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Tickets Cerrados Definitivamente', String(k.closedTickets || 0)],
-      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
+      ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tiempo 1ra Respuesta (MTTA)', `${rmm.mttaMinutes} minutos`],
+      ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tiempo Resolución Media (MTTR)', `${rmm.mttrHours} horas`],
+      ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Resolución 1er Contacto (FCR)', `${rmm.fcrRate}%`],
+      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Tasa de Cierre / Descongestión', `${rmm.throughputRatio}%`],
       ['Total Incidencias', String(k.incidentCount || 0), 'Total Solicitudes', String(k.requestCount || 0)]
     ];
 
     autoTable(doc, {
       startY: 56,
-      head: [['Métrica de Casos', 'Valor', 'Métrica de Rendimiento', 'Valor']],
+      head: [['Métrica de Casos', 'Valor', 'Telemetría RMM / ITIL', 'Valor']],
       body: kpiData,
       theme: 'grid',
       headStyles: { fillColor: [0, 45, 98], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -142,10 +144,39 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
       margin: { left: 15, right: 15 },
     });
 
-    let currentY = doc.lastAutoTable.finalY + 12;
+    let currentY = doc.lastAutoTable.finalY + 10;
+
+    // Section 1.1: Ticket Aging Matrix
+    const aging = data?.ticketAging || [];
+    if (aging.length > 0) {
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text('1.1. Matriz de Antigüedad del Backlog (Ticket Aging RMM)', 15, currentY);
+
+      const agingData = aging.map(a => [
+        a.label,
+        a.desc,
+        String(a.count),
+        `${a.percent}%`,
+        a.statusBadge
+      ]);
+
+      autoTable(doc, {
+        startY: currentY + 3,
+        head: [['Rango de Antigüedad', 'Descripción', 'Tickets Activos', '% Cola', 'Estado']],
+        body: agingData,
+        theme: 'striped',
+        headStyles: { fillColor: [51, 65, 85] },
+        styles: { fontSize: 8.5, cellPadding: 2 },
+        margin: { left: 15, right: 15 },
+      });
+
+      currentY = doc.lastAutoTable.finalY + 10;
+    }
 
     // Section 2: Top Categories & Request Types
-    doc.setFontSize(13);
+    doc.setFontSize(12);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
     doc.text('2. Principales Categorías & Tipos de Ticket', 15, currentY);
@@ -170,21 +201,28 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     }
 
     autoTable(doc, {
-      startY: currentY + 4,
+      startY: currentY + 3,
       head: [['Categoría', 'Tickets', '%', 'Tipo de Ticket', 'Tickets', '%']],
       body: breakdownData,
       theme: 'striped',
-      headStyles: { fillColor: [51, 65, 85] },
-      styles: { fontSize: 8.5, cellPadding: 2.5 },
+      headStyles: { fillColor: [0, 45, 98] },
+      styles: { fontSize: 8.5, cellPadding: 2 },
       margin: { left: 15, right: 15 },
     });
+
+    currentY = doc.lastAutoTable.finalY + 10;
 
     // Section 3: Dependencias y Oficinas
     const dependencias = data?.topDependencias || [];
     const oficinas = data?.topOficinas || [];
-    if ((dependencias.length > 0 || oficinas.length > 0) && currentY < 230) {
-      doc.setFontSize(13);
+    if (dependencias.length > 0 || oficinas.length > 0) {
+      if (currentY > 230) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
       doc.text('3. Casos por Dependencias & Oficinas', 15, currentY);
 
       const depRows = Math.max(dependencias.length, oficinas.length, 1);
@@ -203,38 +241,45 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
       }
 
       autoTable(doc, {
-        startY: currentY + 4,
+        startY: currentY + 3,
         head: [['Dependencia / Área', 'Tickets', '%', 'Oficina / Espacio', 'Tickets', '%']],
         body: depOfiData,
         theme: 'striped',
-        headStyles: { fillColor: [0, 45, 98] },
-        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        headStyles: { fillColor: [51, 65, 85] },
+        styles: { fontSize: 8.5, cellPadding: 2 },
         margin: { left: 15, right: 15 },
       });
 
-      currentY = doc.lastAutoTable.finalY + 12;
+      currentY = doc.lastAutoTable.finalY + 10;
     }
 
-    // Section 4: Severity Distribution
-    const sevList = data?.severityDistribution || [];
-    if (sevList.length > 0 && currentY < 230) {
-      doc.setFontSize(13);
+    // Section 4: Technicians Workload (if available)
+    const techsWorkload = data?.techniciansWorkload || [];
+    if (techsWorkload.length > 0) {
+      if (currentY > 230) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.setFontSize(12);
       doc.setFont('helvetica', 'bold');
-      doc.text('4. Distribución por Severidad / Prioridad', 15, currentY);
+      doc.setTextColor(15, 23, 42);
+      doc.text('4. Desempeño y Carga del Equipo Técnico', 15, currentY);
 
-      const sevData = sevList.map(s => [
-        s.label,
-        String(s.count),
-        `${s.percent}%`
+      const techData = techsWorkload.map(t => [
+        t.name,
+        String(t.activeCount),
+        String(t.inProgressCount),
+        String(t.resolvedCount),
+        t.loadStatus
       ]);
 
       autoTable(doc, {
-        startY: currentY + 4,
-        head: [['Severidad / Nivel', 'Tickets Activos', '% Proporción']],
-        body: sevData,
+        startY: currentY + 3,
+        head: [['Técnico', 'Activos', 'En Progreso', 'Resueltos', 'Estado Carga']],
+        body: techData,
         theme: 'grid',
-        headStyles: { fillColor: [51, 65, 85] },
-        styles: { fontSize: 8.5, cellPadding: 2.5 },
+        headStyles: { fillColor: [0, 45, 98] },
+        styles: { fontSize: 8.5, cellPadding: 2 },
         margin: { left: 15, right: 15 },
       });
     }

@@ -500,10 +500,45 @@ function getTicketRoutes(prisma) {
   router.get('/:id/activities', async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const activities = await prisma.ticketActivity.findMany({
+      const ticket = await prisma.ticket.findUnique({
+        where: { id },
+        include: { 
+          asset: true, 
+          createdBy: true 
+        }
+      });
+
+      if (!ticket) {
+        throw createHttpError(404, 'Ticket no encontrado.');
+      }
+
+      let activities = await prisma.ticketActivity.findMany({
         where: { ticketId: id },
         orderBy: { createdAt: 'desc' },
       });
+
+      // 🔄 Auto-reconciliación: Si el ticket tiene un asset pero no tiene actividad registrada
+      if (ticket.assetId && !activities.some(a => a.field === 'Elemento Asociado')) {
+        const brandModel = ticket.asset ? [ticket.asset.brand, ticket.asset.model].filter(Boolean).join(' ') : '';
+        const assetDisplay = ticket.asset ? (ticket.asset.hostname + (brandModel ? ` (${brandModel})` : '')) : `Activo #${ticket.assetId}`;
+
+        const createdAssetAct = await prisma.ticketActivity.create({
+          data: {
+            ticketId: id,
+            user: ticket.createdBy?.name || req.auth.user?.name || 'Administrador',
+            action: 'UPDATED',
+            field: 'Elemento Asociado',
+            oldValue: 'Sin elemento asociado',
+            newValue: assetDisplay,
+            createdAt: ticket.updatedAt || ticket.createdAt || new Date(),
+          }
+        }).catch(() => null);
+
+        if (createdAssetAct) {
+          activities.unshift(createdAssetAct);
+        }
+      }
+
       res.json(activities);
     } catch (error) {
       next(error);

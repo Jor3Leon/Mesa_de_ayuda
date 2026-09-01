@@ -32,6 +32,90 @@ function getDeviceTypeLabel(type) {
   return type || 'Dispositivo de Red';
 }
 
+function getPrinterModelSpecs(brand, model) {
+  const b = (brand || '').trim();
+  const m = (model || '').trim();
+  const combined = `${b} ${m}`.toLowerCase();
+
+  let isColor = false;
+  if (/lexmark\s+(cx|cs|mc|c\d)/i.test(combined)) {
+    isColor = true;
+  } else if (/lexmark\s+(mx|ms|mb|m\d|optra)/i.test(combined)) {
+    isColor = false;
+  } else if (/color\s*laserjet|pagewide|officejet|deskjet|ecotank|pixma|maxify|designjet/i.test(combined)) {
+    isColor = true;
+  } else if (/laserjet/i.test(combined)) {
+    isColor = false;
+  } else if (/taskalfa\s+\d+ci|ecosys\s+[mp]5/i.test(combined)) {
+    isColor = true;
+  } else if (/taskalfa\s+\d+0\d*i|ecosys\s+[mp][23]\d+/i.test(combined)) {
+    isColor = false;
+  } else if (/mfc-l\d+cdw|hl-l\d+cdw/i.test(combined)) {
+    isColor = true;
+  } else if (/(mfc|hl|dcp)-l\d+/i.test(combined)) {
+    isColor = false;
+  } else if (/versalink\s+c|altalink\s+c/i.test(combined)) {
+    isColor = true;
+  } else if (/versalink\s+b|workcentre\s+3|phaser\s+3/i.test(combined)) {
+    isColor = false;
+  } else if (/ricoh.*(mp\s+c|im\s+c)/i.test(combined)) {
+    isColor = true;
+  } else if (/ricoh.*(mp|im)\s+\d+/i.test(combined)) {
+    isColor = false;
+  } else if (/imagerunner\s+advance\s+c/i.test(combined)) {
+    isColor = true;
+  }
+
+  let consumables = [];
+  let printTech = isColor ? 'Láser / Inyección Color' : 'Láser Monocromo (Solo Negro)';
+
+  if (/e731/i.test(combined) || (/hp/i.test(combined) && /laserjet/i.test(combined) && !isColor)) {
+    printTech = 'Láser Monocromo (Solo Negro)';
+    consumables = [
+      { name: 'Tóner Negro (Black Cartridge W9004MC)', levelPercent: 78, status: 'NORMAL', color: '#0f172a' },
+      { name: 'Unidad de Tambor / Imagen (Black Drum W9005MC)', levelPercent: 92, status: 'OPTIMAL', color: '#10b981' }
+    ];
+  } else if (/mx722|mx720|mx622|mx522|mx421|ms823|ms725/i.test(combined) || (/lexmark/i.test(combined) && !isColor)) {
+    printTech = 'Láser Monocromo (Solo Negro)';
+    consumables = [
+      { name: 'Tóner Negro (Black Toner Unison 58D0U00)', levelPercent: 82, status: 'NORMAL', color: '#0f172a' },
+      { name: 'Unidad de Imagen Negra (58D0Z00 Imaging Unit)', levelPercent: 94, status: 'OPTIMAL', color: '#10b981' }
+    ];
+  } else if (/ecotank|l3150|l3250|l4150|l4260|l5190/i.test(combined)) {
+    printTech = 'Tanque de Tinta Color (EcoTank)';
+    consumables = [
+      { name: 'Tinta Negra (Black T544/T664)', levelPercent: 85, status: 'NORMAL', color: '#0f172a' },
+      { name: 'Tinta Cyan (Cyan T544/T664)', levelPercent: 68, status: 'NORMAL', color: '#0ea5e9' },
+      { name: 'Tinta Magenta (Magenta T544/T664)', levelPercent: 55, status: 'NORMAL', color: '#ec4899' },
+      { name: 'Tinta Amarilla (Yellow T544/T664)', levelPercent: 74, status: 'NORMAL', color: '#eab308' },
+      { name: 'Caja de Mantenimiento', levelPercent: 91, status: 'OPTIMAL', color: '#10b981' }
+    ];
+  } else if (isColor) {
+    consumables = [
+      { name: 'Tóner Negro (Black Toner)', levelPercent: 78, status: 'NORMAL', color: '#0f172a' },
+      { name: 'Tóner Cyan (Cyan Toner)', levelPercent: 62, status: 'NORMAL', color: '#0ea5e9' },
+      { name: 'Tóner Magenta (Magenta Toner)', levelPercent: 45, status: 'NORMAL', color: '#ec4899' },
+      { name: 'Tóner Amarillo (Yellow Toner)', levelPercent: 88, status: 'NORMAL', color: '#eab308' },
+      { name: 'Unidad de Tambor / Imagen', levelPercent: 92, status: 'OPTIMAL', color: '#10b981' }
+    ];
+  } else {
+    printTech = 'Láser Monocromo (Solo Negro)';
+    consumables = [
+      { name: 'Tóner Negro (Black Cartridge)', levelPercent: 80, status: 'NORMAL', color: '#0f172a' },
+      { name: 'Unidad de Tambor / Imagen (Drum Unit)', levelPercent: 90, status: 'OPTIMAL', color: '#10b981' }
+    ];
+  }
+
+  const counters = {
+    totalPages: 42890,
+    monochromePages: isColor ? 24470 : 42890,
+    colorPages: isColor ? 18420 : null,
+    scans: 12150
+  };
+
+  return { isColor, printTech, consumables, counters };
+}
+
 function generateSimulatedDiscovery(ip) {
   const ipParts = ip.split('.');
   const lastOctet = Number(ipParts[3]) || 56;
@@ -48,19 +132,21 @@ function generateSimulatedDiscovery(ip) {
 
   if (ip === '10.0.22.28' || lastOctet === 28) {
     brand = 'Lexmark';
-    model = 'MX722ade MFP';
-    hostname = 'LEXMARK-MX722-28';
-    serialNumber = '7464190828A';
-    mac = '00:21:B7:22:28:FE';
+    model = 'MX722adhe';
+    hostname = 'STIC24183';
+    serialNumber = '7464832020G9P';
+    mac = '00:21:B7:77:36:A9';
     firmware = 'LW74.SB4.P045';
   } else if (ip === '10.0.5.80' || lastOctet === 80) {
-    brand = 'Epson';
-    model = 'EcoTank L3150 Series';
-    hostname = 'EPSON-L3150-80';
-    serialNumber = 'X54K099880';
-    mac = 'AC:18:26:05:80:12';
-    firmware = '20.55.FA18K9';
+    brand = 'HP';
+    model = 'LaserJet Managed MFP E731';
+    hostname = 'HP-LASERJET-MANAGED-MFP-E731';
+    serialNumber = 'CNB580K3960';
+    mac = '00:1E:0B:05:8F:50';
+    firmware = '2504104_000234 (FutureSmart 5.4)';
   }
+
+  const specs = getPrinterModelSpecs(brand, model);
 
   return {
     ip,
@@ -74,21 +160,12 @@ function generateSimulatedDiscovery(ip) {
     mac,
     deviceType,
     firmware,
+    isColor: specs.isColor,
+    printTech: specs.printTech,
     webUrl: `http://${ip}`,
     capabilities: { printing: true, scanning: true, copying: true, fax: false },
-    consumables: [
-      { name: 'Tóner Negro (Black)', levelPercent: 78, color: '#0f172a' },
-      { name: 'Tóner Cyan', levelPercent: 64, color: '#0284c7' },
-      { name: 'Tóner Magenta', levelPercent: 52, color: '#ec4899' },
-      { name: 'Tóner Yellow', levelPercent: 81, color: '#eab308' },
-      { name: 'Unidad de Tambor (Drum)', levelPercent: 90, color: '#10b981' }
-    ],
-    counters: {
-      totalPages: 14250 + lastOctet * 120,
-      colorPages: 5120 + lastOctet * 45,
-      monochromePages: 9130 + lastOctet * 75,
-      scans: 3410 + lastOctet * 30
-    },
+    consumables: specs.consumables,
+    counters: specs.counters,
     isExistingAsset: false,
     ipChangeDetected: false
   };
@@ -567,6 +644,9 @@ export default function Discovery() {
                         ★ Nuevo Dispositivo
                       </span>
                     )}
+                    <span className="badge" style={{ fontSize: '0.72rem', background: scanResult.isColor ? '#eff6ff' : '#f8fafc', color: scanResult.isColor ? '#1d4ed8' : '#334155', border: '1px solid #cbd5e1', fontWeight: 700 }}>
+                      🖨️ {scanResult.printTech || (scanResult.isColor ? 'Láser / Inyección Color' : 'Láser Monocromo (Solo Negro)')}
+                    </span>
                   </div>
                   <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', wordBreak: 'break-word' }}>
                     {scanResult.brand} {scanResult.model}
@@ -658,7 +738,7 @@ export default function Discovery() {
                 <div style={{ marginBottom: '1.15rem', background: '#f8fafc', padding: '0.85rem', borderRadius: '10px', border: '1px solid #e2e8f0' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.6rem', flexWrap: 'wrap', gap: '0.3rem' }}>
                     <small style={{ color: '#334155', fontSize: '0.75rem', fontWeight: 800, textTransform: 'uppercase' }}>
-                      Niveles de Consumibles
+                      Niveles de Consumibles ({scanResult.isColor ? 'Color' : 'Monocromo'})
                     </small>
                     <small style={{ color: '#64748b', fontSize: '0.7rem' }}>{scanResult.consumables.length} suministros</small>
                   </div>
@@ -666,7 +746,7 @@ export default function Discovery() {
                     {scanResult.consumables.map((c, idx) => (
                       <div key={idx} style={{ background: '#fff', padding: '0.5rem 0.65rem', borderRadius: '7px', border: '1px solid #e2e8f0' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.72rem', marginBottom: '3px' }}>
-                          <span style={{ fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '85px' }}>{c.name}</span>
+                          <span style={{ fontWeight: 700, color: '#1e293b', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '120px' }}>{c.name}</span>
                           <strong style={{ color: c.levelPercent < 20 ? '#ef4444' : '#0f172a' }}>{c.levelPercent}%</strong>
                         </div>
                         <div style={{ height: '6px', background: '#e2e8f0', borderRadius: '3px', overflow: 'hidden' }}>
@@ -695,12 +775,21 @@ export default function Discovery() {
                       {scanResult.counters.totalPages ? scanResult.counters.totalPages.toLocaleString() : 'N/A'}
                     </div>
                   </div>
-                  <div className="discovery-counter-card">
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Páginas Color</small>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
-                      {scanResult.counters.colorPages ? scanResult.counters.colorPages.toLocaleString() : 'N/A'}
+                  {scanResult.counters.colorPages !== null && scanResult.counters.colorPages !== undefined ? (
+                    <div className="discovery-counter-card">
+                      <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Páginas Color</small>
+                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                        {typeof scanResult.counters.colorPages === 'number' ? scanResult.counters.colorPages.toLocaleString() : scanResult.counters.colorPages}
+                      </div>
                     </div>
-                  </div>
+                  ) : (
+                    <div className="discovery-counter-card" style={{ background: '#f8fafc' }}>
+                      <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Tecnología Color</small>
+                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginTop: '4px' }}>
+                        No aplica (Monocromo)
+                      </div>
+                    </div>
+                  )}
                   <div className="discovery-counter-card">
                     <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Monocromo</small>
                     <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#334155', marginTop: '2px' }}>

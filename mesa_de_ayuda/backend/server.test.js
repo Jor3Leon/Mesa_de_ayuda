@@ -378,3 +378,94 @@ test('GET /api/organization-structure returns hierarchical tree of sedes, depend
     });
   }
 });
+
+test('PUT /api/tickets/:id records audit activity when asset is associated', async () => {
+  const authUser = buildUser({
+    role: {
+      id: 1,
+      name: 'ADMIN',
+      permissions: [
+        { permission: { code: 'TICKETS_VIEW' } },
+        { permission: { code: 'TICKETS_EDIT' } },
+      ],
+    },
+  });
+
+  const existingTicket = {
+    id: 2,
+    title: 'ACCESO A DOCUMENT',
+    description: 'Solicitud de acceso',
+    priority: 'MEDIA',
+    status: 'IN_PROGRESS',
+    ticketType: 'Solicitud',
+    category: 'General',
+    locationId: 1,
+    assetId: null,
+    responsibleUserIds: '[]',
+    assignedToId: null,
+    secondaryAssignedToId: null,
+    createdById: authUser.id,
+    organizationId: authUser.organizationId,
+    resolvedAt: null,
+    closedAt: null,
+  };
+
+  const createdActivities = [];
+
+  const app = buildApp({
+    user: {
+      findUnique: async () => authUser,
+      findMany: async () => [authUser],
+    },
+    ticket: {
+      findUnique: async () => existingTicket,
+      findMany: async () => [existingTicket],
+      update: async ({ data }) => ({ ...existingTicket, ...data, customer: null, assignedTo: null, secondaryAssignedTo: null, createdBy: null }),
+    },
+    asset: {
+      findMany: async () => [
+        { id: 14, hostname: 'STIC22206', brand: 'HP', model: 'Compaq Elite 8300' }
+      ],
+    },
+    location: {
+      findMany: async () => [],
+    },
+    ticketActivity: {
+      findFirst: async () => null,
+      findMany: async () => createdActivities,
+      createMany: async ({ data }) => {
+        createdActivities.push(...data);
+        return { count: data.length };
+      },
+    },
+  });
+
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/tickets/2`, {
+      method: 'PUT',
+      headers: {
+        'Content-Type': 'application/json',
+        Authorization: `Bearer ${createToken(authUser)}`,
+      },
+      body: JSON.stringify({
+        title: 'ACCESO A DOCUMENT',
+        assetId: 14,
+      }),
+    });
+
+    assert.equal(res.status, 200);
+    assert.equal(createdActivities.length >= 1, true);
+    const assetActivity = createdActivities.find(a => a.field === 'Elemento Asociado');
+    assert.ok(assetActivity, 'Should create activity for Elemento Asociado');
+    assert.equal(assetActivity.oldValue, 'Sin elemento asociado');
+    assert.equal(assetActivity.newValue.includes('STIC22206'), true);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+

@@ -23,13 +23,16 @@ except ImportError:
 
 def get_smbios_hardware_info():
     """
-    Retrieve real hardware Serial Number and UUID from SMBIOS via GetSystemFirmwareTable.
+    Retrieve real hardware Serial Number, UUID, Baseboard and Chassis Type from SMBIOS via GetSystemFirmwareTable.
     100% native kernel32 call, avoids WMI/PowerShell subprocesses.
     """
     info = {
         "serialNumber": "",
         "uuid": "",
-        "baseboardSerial": ""
+        "baseboardSerial": "",
+        "chassisType": 0,
+        "systemFamily": "",
+        "skuNumber": ""
     }
 
     try:
@@ -67,7 +70,7 @@ def get_smbios_hardware_info():
                     cur_str += bytes([data[p]])
                 p += 1
 
-            # Type 1: System Information (Manufacturer, Product, Serial, UUID)
+            # Type 1: System Information (Manufacturer, Product, Serial, UUID, SKU, Family)
             if table_type == 1:
                 if length > 7:
                     sn_idx = data[idx + 7]
@@ -79,6 +82,14 @@ def get_smbios_hardware_info():
                     raw_uuid = data[idx + 8:idx + 24]
                     if any(raw_uuid):
                         info["uuid"] = raw_uuid.hex().upper()
+                if length > 25:
+                    sku_idx = data[idx + 25]
+                    if 0 < sku_idx <= len(strings):
+                        info["skuNumber"] = strings[sku_idx - 1].strip()
+                if length > 26:
+                    fam_idx = data[idx + 26]
+                    if 0 < fam_idx <= len(strings):
+                        info["systemFamily"] = strings[fam_idx - 1].strip()
 
             # Type 2: Baseboard Information
             if table_type == 2:
@@ -86,6 +97,11 @@ def get_smbios_hardware_info():
                     sn_idx = data[idx + 7]
                     if 0 < sn_idx <= len(strings):
                         info["baseboardSerial"] = strings[sn_idx - 1].strip()
+
+            # Type 3: System Enclosure / Chassis
+            if table_type == 3:
+                if length > 5:
+                    info["chassisType"] = data[idx + 5] & 0x7F
 
             next_idx = p + 2
             if next_idx <= idx:
@@ -96,6 +112,107 @@ def get_smbios_hardware_info():
         pass
 
     return info
+
+
+def check_battery_present():
+    """
+    Check if an internal battery is physically present via Win32 GetSystemPowerStatus.
+    Returns True for Laptops / Tablets, False for Desktops / AIOs.
+    """
+    class SYSTEM_POWER_STATUS(ctypes.Structure):
+        _fields_ = [
+            ("ACLineStatus", wintypes.BYTE),
+            ("BatteryFlag", wintypes.BYTE),
+            ("BatteryLifePercent", wintypes.BYTE),
+            ("SystemStatusFlag", wintypes.BYTE),
+            ("BatteryLifeTime", wintypes.DWORD),
+            ("BatteryFullLifeTime", wintypes.DWORD),
+        ]
+
+    try:
+        status = SYSTEM_POWER_STATUS()
+        if ctypes.windll.kernel32.GetSystemPowerStatus(ctypes.byref(status)):
+            # BatteryFlag: 128 = No system battery, 255 = Unknown status
+            if status.BatteryFlag not in (128, 255):
+                return True
+            if status.BatteryLifePercent <= 100 and status.BatteryFlag != 128:
+                return True
+    except Exception:
+        pass
+    return False
+
+
+def detect_device_type(bios_info, smbios_info=None):
+    """
+    Accurately classifies computer hardware into:
+    - 'Todo en Uno (AIO)'
+    - 'Portátil (Laptop)'
+    - 'PC de Escritorio (Desktop)'
+
+    Using a multi-factor hierarchical analysis:
+    1. SMBIOS Chassis Type (Type 3)
+    2. Comprehensive Model, Brand, Family, SKU, and Motherboard keyword matching
+    3. Hardware battery subsystem inspection (GetSystemPowerStatus)
+    """
+    smbios = smbios_info or {}
+    chassis_type = smbios.get("chassisType", 0)
+
+    brand = (bios_info.get("brand") or "").lower()
+    model = (bios_info.get("model") or "").lower()
+    motherboard = (bios_info.get("motherboard") or "").lower()
+    family = (smbios.get("systemFamily") or "").lower()
+    sku = (smbios.get("skuNumber") or "").lower()
+
+    combined_str = f"{brand} {model} {motherboard} {family} {sku}".lower()
+
+    # 1. 🖥️ All-in-One (AIO) Detection
+    # SMBIOS Chassis Type 13 = All-in-One
+    if chassis_type == 13:
+        return "Todo en Uno (AIO)"
+
+    aio_keywords = [
+        "all in one", "all-in-one", "all_in_one", "aio", "todo en uno",
+        "touchsmart", "proone", "zen aio", "vivo aio", "expertcenter aio",
+        "ideacentre aio", "thinkcentre aio", "optiplex aio", "vostro aio",
+        "inspiron aio", "pavilion all-in-one", "pavilion aio", "imac",
+        "surface studio"
+    ]
+    if any(kw in combined_str for kw in aio_keywords):
+        return "Todo en Uno (AIO)"
+
+    # Specific AIO model series (e.g., Dell OptiPlex 74xx, 77xx, 54xx, 52xx, 32xx, 30xx AIO)
+    if "optiplex" in combined_str and any(p in combined_str for p in ["74", "77", "54", "52", "32", "30"]) and ("aio" in combined_str or "all" in combined_str):
+        return "Todo en Uno (AIO)"
+
+    if "proone" in combined_str or "ideacentre aio" in combined_str:
+        return "Todo en Uno (AIO)"
+
+    # 2. 💻 Laptop / Portable Detection
+    # SMBIOS Chassis Types: 8=Portable, 9=Laptop, 10=Notebook, 11=Handheld, 14=SubNotebook, 30=Tablet, 31=Convertible, 32=Detachable
+    if chassis_type in (8, 9, 10, 11, 14, 30, 31, 32):
+        return "Portátil (Laptop)"
+
+    laptop_keywords = [
+        "laptop", "notebook", "thinkpad", "latitude", "elitebook", "probook",
+        "surface book", "surface laptop", "surface pro", "surface go",
+        "zenbook", "vivobook", "expertbook", "ideapad", "thinkbook", "yoga",
+        "legion", "macbook", "pavilion x360", "envy x360", "spectre", "swift",
+        "aspire", "travelmate", "predator", "nitro", "tuf gaming", "rog zephyrus",
+        "rog strix", "alienware", "omen", "victus", "chromebook", "galaxy book",
+        "vostro 13", "vostro 14", "vostro 15", "vostro 16",
+        "inspiron 13", "inspiron 14", "inspiron 15", "inspiron 16",
+        "pavilion 14", "pavilion 15"
+    ]
+    if any(kw in combined_str for kw in laptop_keywords):
+        return "Portátil (Laptop)"
+
+    # Hardware battery check: Laptops and convertibles have an internal battery installed
+    if check_battery_present():
+        return "Portátil (Laptop)"
+
+    # 3. 🖥️ Desktop Detection (Default)
+    # SMBIOS Chassis Types: 3=Desktop, 4=Low Profile Desktop, 5=Pizza Box, 6=Mini Tower, 7=Tower, 15=Space Saving, 24=Sealed PC, 34=Embedded, 35=Mini PC, 36=Stick PC
+    return "PC de Escritorio (Desktop)"
 
 
 def get_memory_info():
@@ -143,7 +260,8 @@ def get_bios_info():
         "brand": "Desconocida",
         "model": "Desconocido",
         "serialNumber": smbios.get("serialNumber") or "",
-        "motherboard": "Desconocida"
+        "motherboard": "Desconocida",
+        "smbios": smbios
     }
 
     if not winreg:
@@ -399,18 +517,13 @@ def collect_system_data(organization_slug="stic"):
     gpu = get_gpu_info()
     software = get_installed_software()
     antivirus = detect_antivirus(software)
+    device_type = detect_device_type(bios, bios.get("smbios"))
 
     username = os.environ.get("USERNAME") or os.environ.get("USER") or "Usuario Local"
     assigned_user = username
 
     os_type = "Windows"
     os_version = f"{platform.system()} {platform.release()} (Build {platform.version()})"
-
-    device_type = "PC de Escritorio (Desktop)"
-    brand_lower = bios["brand"].lower()
-    model_lower = bios["model"].lower()
-    if any(k in model_lower or k in brand_lower for k in ["laptop", "notebook", "thinkpad", "latitude", "elitebook", "surface", "zenbook"]):
-        device_type = "Portatil (Laptop)"
 
     payload = {
         "hostname": hostname,
@@ -443,6 +556,7 @@ if __name__ == "__main__":
     data = collect_system_data()
     print("\n--- RESUMEN RECOLECTADO ---")
     print(f"Equipo:        {data['hostname']}")
+    print(f"Tipo Device:   {data['deviceType']}")
     print(f"ID Device / SN:{data['serialNumber']}")
     print(f"Antivirus:     {data['agentVersion']}")
     print(f"IP:            {data['ipAddress']}")

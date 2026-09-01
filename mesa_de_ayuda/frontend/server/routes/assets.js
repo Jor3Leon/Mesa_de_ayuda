@@ -110,7 +110,9 @@ function getAssetRoutes(prisma) {
         status: 'ONLINE',
         brand: asset?.brand || brand || undefined,
         model: asset?.model || model || undefined,
-        deviceType: asset?.deviceType || deviceType || 'Unknown',
+        deviceType: (asset?.deviceType && asset.deviceType !== 'Unknown' && asset.deviceType !== 'Equipo de Cómputo' && asset.deviceType !== 'Dispositivo') 
+          ? asset.deviceType 
+          : (deviceType || 'PC de Escritorio (Desktop)'),
         cpuModel: cpuModel || asset?.cpuModel || undefined,
         ramSummary: ramSummary || asset?.ramSummary || undefined,
         storageSummary: storageSummary || asset?.storageSummary || undefined,

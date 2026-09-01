@@ -182,11 +182,19 @@ def detect_security(software_list):
 
 
 def detect_device_type(model_name):
-    """Determine if Mac is Laptop or Desktop."""
-    model_lower = model_name.lower()
-    if any(k in model_lower for k in ["macbook", "air", "pro", "portable"]):
-        return "Portatil (Laptop)"
+    """
+    Accurately classifies Apple Mac hardware into:
+    - 'Todo en Uno (AIO)' (iMac)
+    - 'Portátil (Laptop)' (MacBook / Air / Pro)
+    - 'PC de Escritorio (Desktop)' (Mac mini / Mac Studio / Mac Pro)
+    """
+    model_lower = (model_name or "").lower()
+    if "imac" in model_lower:
+        return "Todo en Uno (AIO)"
+    if any(k in model_lower for k in ["macbook", "air", "pro", "portable", "powerbook", "ibook"]):
+        return "Portátil (Laptop)"
     return "PC de Escritorio (Desktop)"
+
 
 
 def collect_system_data(organization_slug="stic"):

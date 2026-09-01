@@ -265,29 +265,78 @@ def detect_security(software_list):
 
 
 def detect_device_type(dmi_info):
-    """Determine if server, laptop, or desktop."""
-    chassis = dmi_info.get("chassisType", "")
-    # SMBIOS Chassis types: 8, 9, 10, 14, 30, 31, 32 -> Laptop / Notebook / Subnotebook
-    if chassis in ("8", "9", "10", "14", "30", "31", "32"):
-        return "Portatil (Laptop)"
-    
+    """
+    Accurately classifies Linux computer hardware into:
+    - 'Todo en Uno (AIO)'
+    - 'Portátil (Laptop)'
+    - 'PC de Escritorio (Desktop)'
+    - 'Servidor (Server)'
+    """
+    chassis = str(dmi_info.get("chassisType", "")).strip()
+    brand = (dmi_info.get("brand") or "").lower()
+    model = (dmi_info.get("model") or "").lower()
+    board = (dmi_info.get("motherboard") or "").lower()
+    combined_str = f"{brand} {model} {board}".lower()
+
+    # 1. 🖥️ All-in-One (AIO) Check
+    # SMBIOS Chassis Type 13 = All-in-One
+    if chassis == "13":
+        return "Todo en Uno (AIO)"
+
+    aio_keywords = [
+        "all in one", "all-in-one", "all_in_one", "aio", "todo en uno",
+        "touchsmart", "proone", "zen aio", "vivo aio", "expertcenter aio",
+        "ideacentre aio", "thinkcentre aio", "optiplex aio", "vostro aio",
+        "inspiron aio", "pavilion all-in-one", "pavilion aio", "imac",
+        "surface studio"
+    ]
+    if any(kw in combined_str for kw in aio_keywords):
+        return "Todo en Uno (AIO)"
+
+    # Specific AIO model series
+    if "optiplex" in combined_str and any(p in combined_str for p in ["74", "77", "54", "52", "32", "30"]) and ("aio" in combined_str or "all" in combined_str):
+        return "Todo en Uno (AIO)"
+
+    if "proone" in combined_str or "ideacentre aio" in combined_str:
+        return "Todo en Uno (AIO)"
+
+    # 2. 💻 Laptop / Portable Check
+    # SMBIOS Chassis types: 8, 9, 10, 11, 14, 30, 31, 32 -> Laptop / Notebook / Subnotebook / Tablet
+    if chassis in ("8", "9", "10", "11", "14", "30", "31", "32"):
+        return "Portátil (Laptop)"
+
+    laptop_keywords = [
+        "laptop", "notebook", "thinkpad", "latitude", "elitebook", "probook",
+        "surface book", "surface laptop", "surface pro", "surface go",
+        "zenbook", "vivobook", "expertbook", "ideapad", "thinkbook", "yoga",
+        "legion", "macbook", "pavilion x360", "envy x360", "spectre", "swift",
+        "aspire", "travelmate", "predator", "nitro", "tuf gaming", "rog zephyrus",
+        "rog strix", "alienware", "omen", "victus", "chromebook", "galaxy book",
+        "vostro 13", "vostro 14", "vostro 15", "vostro 16",
+        "inspiron 13", "inspiron 14", "inspiron 15", "inspiron 16"
+    ]
+    if any(kw in combined_str for kw in laptop_keywords):
+        return "Portátil (Laptop)"
+
     # Check battery presence in /sys/class/power_supply
     if os.path.exists("/sys/class/power_supply"):
         try:
             supplies = os.listdir("/sys/class/power_supply")
             if any(s.startswith("BAT") for s in supplies):
-                return "Portatil (Laptop)"
+                return "Portátil (Laptop)"
         except Exception:
             pass
 
+    # 3. 🗄️ Server Check
     if chassis in ("17", "23", "28", "29"):
         return "Servidor (Server)"
 
-    model_lower = dmi_info.get("model", "").lower()
-    if any(k in model_lower for k in ["server", "proliant", "poweredge", "ucs"]):
+    if any(k in combined_str for k in ["server", "proliant", "poweredge", "ucs", "primergy"]):
         return "Servidor (Server)"
 
+    # 4. 🖥️ Default Desktop
     return "PC de Escritorio (Desktop)"
+
 
 
 def collect_system_data(organization_slug="stic"):

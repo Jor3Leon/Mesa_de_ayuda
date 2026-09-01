@@ -118,25 +118,23 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     doc.text(`Generado por: ${user?.name || 'Operador'} (${user?.role || 'Service Desk'})`, 15, 34);
     doc.text(`Fecha: ${timestamp}`, 135, 34);
 
-    // Section 1: KPI Summary & RMM Operational Velocity
+    // Section 1: KPI Summary
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Indicadores Clave de Gestión & Velocidad Operativa (KPIs / ITIL)', 15, 52);
-
-    const rmm = data?.rmmVelocity || { mttaMinutes: 18, mttrHours: 2.4, fcrRate: 88, throughputRatio: 100 };
+    doc.text('1. Indicadores Clave de Gestión de Casos (KPIs)', 15, 52);
 
     const kpiData = [
-      ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tiempo 1ra Respuesta (MTTA)', `${rmm.mttaMinutes} minutos`],
-      ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tiempo Resolución Media (MTTR)', `${rmm.mttrHours} horas`],
-      ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Resolución 1er Contacto (FCR)', `${rmm.fcrRate}%`],
-      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Tasa de Cierre / Descongestión', `${rmm.throughputRatio}%`],
+      ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tickets Asignados en Atención', String(k.assignedTickets || 0)],
+      ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tickets Pendientes / En Espera', String(k.pendingTickets || 0)],
+      ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Tickets Cerrados Definitivamente', String(k.closedTickets || 0)],
+      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
       ['Total Incidencias', String(k.incidentCount || 0), 'Total Solicitudes', String(k.requestCount || 0)]
     ];
 
     autoTable(doc, {
       startY: 56,
-      head: [['Métrica de Casos', 'Valor', 'Telemetría RMM / ITIL', 'Valor']],
+      head: [['Métrica de Casos', 'Valor', 'Métrica de Rendimiento', 'Valor']],
       body: kpiData,
       theme: 'grid',
       headStyles: { fillColor: [0, 45, 98], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -342,7 +340,8 @@ export const generateAnalyticsExecutiveReport = (data, filters, user) => {
       ['Total Tickets Gestionados', String(s.totalTickets || 0), 'Cumplimiento Global ANS (SLA)', `${s.slaCompliance || 98}% (Meta: >95%)`],
       ['Total Incidencias', String(s.incidentCount || 0), 'Tiempo Promedio de Primera Respuesta (MTTA)', `${s.mttaMinutes || 18} minutos`],
       ['Total Solicitudes', String(s.requestCount || 0), 'Tiempo Promedio de Resolución (MTTR)', `${s.mttrHours || 2.4} horas`],
-      ['Tickets Vencidos / Fuera de ANS', String(s.overdueCount || 0), 'Resolución al Primer Contacto (FCR)', `${s.fcrRate || 88}%`]
+      ['Tickets Vencidos / Fuera de ANS', String(s.overdueCount || 0), 'Resolución al Primer Contacto (FCR)', `${s.fcrRate || 88}%`],
+      ['Tasa de Cierre / Throughput', `${s.throughputRatio || 100}%`, 'Estado General de Cola', (s.throughputRatio || 100) >= 100 ? 'Reduciendo Backlog' : 'Acumulando Cola']
     ];
 
     autoTable(doc, {

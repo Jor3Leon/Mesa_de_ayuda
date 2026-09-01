@@ -257,6 +257,16 @@ export default function Analytics({ user }) {
           iconType="alert"
           color={s.overdueCount > 0 ? "#dc2626" : "#64748b"}
         />
+
+        <StatCard
+          title="Tasa de Cierre"
+          value={`${s.throughputRatio || 100}%`}
+          subtitle={s.throughputRatio >= 100 ? "Reduciendo backlog" : "Acumulando cola"}
+          badge="Throughput"
+          trend={0}
+          iconType="tickets"
+          color="#002D62"
+        />
       </div>
 
       {/* 📈 SECTION 1: TEMPORAL EVOLUTION (Interactive Recharts) */}

@@ -343,6 +343,7 @@ function getAnalyticsRoutes(prisma) {
           mttaMinutes: avgMttaMinutes,
           mttrHours: avgMttrHours,
           fcrRate,
+          throughputRatio: totalTickets > 0 ? Math.round(((resolvedTickets + closedTickets) / totalTickets) * 100) : 100,
           totalAssets,
           onlineAssets,
           trends: {

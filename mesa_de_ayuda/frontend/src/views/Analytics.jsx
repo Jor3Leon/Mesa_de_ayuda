@@ -203,7 +203,7 @@ export default function Analytics({ user }) {
         <StatCard
           title={isPersonal ? "Mis Tickets Gestionados" : "Total Tickets Gestionados"}
           value={(s.totalTickets || 0).toLocaleString()}
-          subtitle={`Incidentes: ${s.incidentCount || 0} · Requerimientos: ${s.requestCount || 0}`}
+          subtitle={`Incidencias: ${s.incidentCount || 0} · Solicitudes: ${s.requestCount || 0}`}
           trend={trends.totalTickets || 0}
           sparkline={sparklines.totalTickets || []}
           iconType="tickets"
@@ -213,7 +213,7 @@ export default function Analytics({ user }) {
         <StatCard
           title={isPersonal ? "Mi Cumplimiento ANS" : "Cumplimiento Global ANS (SLA)"}
           value={`${s.slaCompliance || 100}%`}
-          subtitle="Meta institucional: &gt;95%"
+          subtitle="Meta institucional: >95%"
           badge={s.slaCompliance >= 95 ? "Óptimo" : "En Riesgo"}
           trend={0}
           iconType="check"
@@ -274,7 +274,7 @@ export default function Analytics({ user }) {
               Evolución Temporal del Servicio TI (Creación vs Resolución)
             </h3>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-              Comportamiento del flujo de entrada de incidentes y requerimientos frente a la capacidad de cierre
+              Comportamiento del flujo de entrada de incidencias y solicitudes frente a la capacidad de cierre
             </p>
           </div>
           <div style={{ display: 'flex', gap: '8px' }}>
@@ -309,8 +309,8 @@ export default function Analytics({ user }) {
                 labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
               />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-              <Area type="monotone" name="Incidentes" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
-              <Area type="monotone" name="Requerimientos" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />
+              <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
+              <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />
               <Area type="monotone" name="Tickets Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#anResGrad)" />
             </AreaChart>
           </ResponsiveContainer>

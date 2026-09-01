@@ -383,8 +383,8 @@ function getCommonRoutes(prisma) {
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'RESOLVED' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'CLOSED' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: 'Incidencia' } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { not: 'Incidencia' } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { in: ['Incidencia', 'Incidente', 'Falla'] } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { notIn: ['Incidencia', 'Incidente', 'Falla'] } } }).catch(() => 0),
         isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, ...dateFilter, ...typeFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
 
         // SLA Overdue counts per priority
@@ -610,15 +610,30 @@ function getCommonRoutes(prisma) {
         .sort((a, b) => b.count - a.count)
         .slice(0, 6);
 
-      // Format Top Request Types (PQRSF / ITIL)
-      const totalByType = (ticketsByTypeRaw || []).reduce((sum, t) => sum + (t._count?._all || 0), 0) || 1;
-      const topRequestTypes = (ticketsByTypeRaw || [])
-        .map(t => ({
-          label: t.ticketType || 'Incidencia',
-          count: t._count?._all || 0,
-          percent: Math.round(((t._count?._all || 0) / totalByType) * 100)
-        }))
-        .sort((a, b) => b.count - a.count);
+      // Format Top Request Types (Standardized to Incidencia and Solicitud)
+      const typeCounts = { 'Incidencia': 0, 'Solicitud': 0 };
+      (ticketsByTypeRaw || []).forEach(t => {
+        const rawType = (t.ticketType || '').trim();
+        const count = t._count?._all || 0;
+        if (rawType.toLowerCase().includes('inciden') || rawType.toLowerCase().includes('falla')) {
+          typeCounts['Incidencia'] += count;
+        } else {
+          typeCounts['Solicitud'] += count;
+        }
+      });
+      const totalByType = (typeCounts['Incidencia'] + typeCounts['Solicitud']) || 1;
+      const topRequestTypes = [
+        {
+          label: 'Incidencias',
+          count: typeCounts['Incidencia'],
+          percent: Math.round((typeCounts['Incidencia'] / totalByType) * 100)
+        },
+        {
+          label: 'Solicitudes',
+          count: typeCounts['Solicitud'],
+          percent: Math.round((typeCounts['Solicitud'] / totalByType) * 100)
+        }
+      ];
 
       // Calculate Dependencias & Oficinas Ticket Metrics
       const depStatsMap = {};

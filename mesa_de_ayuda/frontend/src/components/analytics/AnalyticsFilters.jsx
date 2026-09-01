@@ -42,9 +42,9 @@ export default function AnalyticsFilters({
           value={filters.ticketType || 'all'}
           onChange={(e) => handleChange('ticketType', e.target.value)}
         >
-          <option value="all">Todos (Incidentes & Requerimientos)</option>
-          <option value="Incidencia">Solo Incidentes (Fallas)</option>
-          <option value="Requerimiento">Solo Requerimientos (Peticiones)</option>
+          <option value="all">Todos (Incidencias & Solicitudes)</option>
+          <option value="Incidencia">Solo Incidencias</option>
+          <option value="Solicitud">Solo Solicitudes</option>
         </select>
       </div>
 

@@ -174,7 +174,7 @@ export default function StandarUserPortal() {
               </span>
             </div>
             <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              Radica solicitudes de soporte tecnológico y consulta el estado de tus requerimientos en tiempo real.
+              Radica tus tickets de soporte tecnológico y consulta su estado en tiempo real.
             </p>
           </div>
         </div>
@@ -526,9 +526,9 @@ export default function StandarUserPortal() {
         ) : filteredTickets.length === 0 ? (
           <div style={{ padding: '3.5rem 1.5rem', textAlign: 'center', background: '#f8fafc', borderRadius: '12px', border: '1px dashed #cbd5e1' }}>
             <div style={{ fontSize: '2rem', marginBottom: '0.5rem' }}>📋</div>
-            <h4 style={{ margin: '0 0 0.25rem 0', color: '#1e293b' }}>No tienes solicitudes registradas</h4>
+            <h4 style={{ margin: '0 0 0.25rem 0', color: '#1e293b' }}>No tienes tickets registrados</h4>
             <p style={{ color: '#64748b', margin: '0 0 1.25rem 0', fontSize: '0.875rem' }}>
-              Si tienes algún inconveniente tecnológico o necesitas un requerimiento, crea una solicitud.
+              Si tienes una incidencia técnica o deseas radicar una solicitud, crea un ticket de atención.
             </p>
             <button
               onClick={() => setShowModal(true)}
@@ -542,79 +542,95 @@ export default function StandarUserPortal() {
                 fontWeight: '600',
               }}
             >
-              + Radicar Solicitud
+              + Radicar Ticket
             </button>
           </div>
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-            {filteredTickets.map((t) => (
-              <div
-                key={t.id}
-                style={{
-                  padding: '1.25rem 1.5rem',
-                  borderRadius: '12px',
-                  border: '1px solid #e2e8f0',
-                  background: '#ffffff',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  flexWrap: 'wrap',
-                  gap: '1rem',
-                  boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
-                  transition: 'background 0.15s ease',
-                }}
-              >
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.35rem' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(320px, 1fr))', gap: '1rem' }}>
+            {filteredTickets.map((t) => {
+              const statusInfo = STATUS_MAP[t.status] || { label: t.status, bg: '#f1f5f9', color: '#475569' };
+              const priorityInfo = PRIORITY_MAP[t.priority] || { label: t.priority, color: '#64748b' };
+              const isIncidencia = t.ticketType === 'Incidencia';
+
+              return (
+                <div
+                  key={t.id}
+                  onClick={() => setSelectedTicket(t)}
+                  style={{
+                    background: '#fff',
+                    borderRadius: '12px',
+                    padding: '1.25rem',
+                    border: '1px solid #e2e8f0',
+                    cursor: 'pointer',
+                    transition: 'all 0.2s ease',
+                    boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateY(-2px)';
+                    e.currentTarget.style.boxShadow = '0 4px 6px -1px rgba(0, 0, 0, 0.1)';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateY(0)';
+                    e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.05)';
+                  }}
+                >
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
+                    <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>#{t.id}</span>
                     <span
                       style={{
-                        fontWeight: '800',
-                        color: '#2563eb',
-                        fontSize: '0.82rem',
-                        background: '#eff6ff',
-                        padding: '0.15rem 0.5rem',
+                        fontSize: '0.7rem',
+                        fontWeight: '700',
+                        padding: '0.2rem 0.5rem',
                         borderRadius: '6px',
-                        border: '1px solid #bfdbfe',
+                        background: isIncidencia ? '#fef2f2' : '#eff6ff',
+                        color: isIncidencia ? '#ef4444' : '#2563eb',
                       }}
                     >
-                      #{t.id}
+                      {isIncidencia ? '🚨 Incidencia' : '📋 Solicitud'}
                     </span>
-                    <strong style={{ fontSize: '0.98rem', color: '#0f172a' }}>
-                      {t.subject || t.title}
-                    </strong>
-                    {t.ticketType && (
-                      <span
-                        style={{
-                          fontSize: '0.72rem',
-                          fontWeight: '700',
-                          padding: '0.1rem 0.45rem',
-                          borderRadius: '6px',
-                          background: '#f1f5f9',
-                          color: '#475569',
-                        }}
-                      >
-                        {t.ticketType}
-                      </span>
-                    )}
                   </div>
-                  <p style={{ margin: 0, fontSize: '0.86rem', color: '#64748b', maxWidth: '720px', lineHeight: 1.5 }}>
+
+                  <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: '#0f172a', lineHeight: '1.3' }}>
+                    {t.title}
+                  </h4>
+
+                  <p style={{
+                    margin: '0 0 1rem 0',
+                    fontSize: '0.8rem',
+                    color: '#64748b',
+                    display: '-webkit-box',
+                    WebkitLineClamp: 2,
+                    WebkitBoxOrient: 'vertical',
+                    overflow: 'hidden',
+                  }}>
                     {t.description}
                   </p>
-                  <div style={{ fontSize: '0.75rem', color: '#94a3b8', marginTop: '0.5rem', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    <span>📅 Radicado el {new Date(t.createdAt).toLocaleDateString()} a las {new Date(t.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}</span>
+
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingTop: '0.75rem', borderTop: '1px solid #f1f5f9' }}>
+                    <span
+                      style={{
+                        fontSize: '0.75rem',
+                        fontWeight: '600',
+                        padding: '0.2rem 0.5rem',
+                        borderRadius: '6px',
+                        background: statusInfo.bg,
+                        color: statusInfo.color,
+                      }}
+                    >
+                      {statusInfo.label}
+                    </span>
+                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
+                      {new Date(t.createdAt).toLocaleDateString()}
+                    </span>
                   </div>
                 </div>
-
-                <div>
-                  {getStatusBadge(t.status)}
-                </div>
-              </div>
-            ))}
+              );
+            })}
           </div>
         )}
       </div>
 
-      {/* 🪟 FLOATING MODAL WITH BACKDROP BLUR */}
+      {/* 🚀 MODAL DE CREACIÓN DE TICKET */}
       {showModal && (
         <div
           style={{
@@ -625,46 +641,28 @@ export default function StandarUserPortal() {
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
+            zIndex: 50,
             padding: '1rem',
-            zIndex: 9999,
           }}
-          onClick={() => setShowModal(false)}
         >
           <div
             style={{
-              background: '#ffffff',
-              borderRadius: '20px',
-              maxWidth: '520px',
+              background: '#fff',
+              borderRadius: '16px',
+              maxWidth: '550px',
               width: '100%',
-              padding: '2rem',
-              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
-              border: '1px solid #e2e8f0',
-              boxSizing: 'border-box',
+              padding: '1.75rem',
+              boxShadow: '0 20px 25px -5px rgba(0, 0, 0, 0.1)',
             }}
-            onClick={(e) => e.stopPropagation()}
           >
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                <div
-                  style={{
-                    width: '38px',
-                    height: '38px',
-                    borderRadius: '10px',
-                    background: '#eff6ff',
-                    color: '#2563eb',
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'center',
-                  }}
-                >
-                  🙋
-                </div>
-                <div>
-                  <h3 style={{ margin: 0, fontSize: '1.15rem', color: '#0f172a', fontWeight: '800' }}>
-                    Radicar Solicitud al Soporte TIC
-                  </h3>
-                  <small style={{ color: '#64748b' }}>Atención ágil para tu puesto de trabajo</small>
-                </div>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: '800', color: '#0f172a' }}>
+                  Radicar Nuevo Ticket
+                </h3>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.82rem', color: '#64748b' }}>
+                  Selecciona si reportas una Incidencia o una Solicitud técnica
+                </p>
               </div>
               <button
                 onClick={() => setShowModal(false)}
@@ -689,7 +687,7 @@ export default function StandarUserPortal() {
             <form onSubmit={handleCreateTicket} style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
               <div>
                 <label style={{ display: 'block', fontSize: '0.82rem', fontWeight: '600', color: '#334155', marginBottom: '0.4rem' }}>
-                  Tipo de Requerimiento *
+                  Tipo de Ticket *
                 </label>
                 <select
                   value={form.ticketType}
@@ -705,8 +703,8 @@ export default function StandarUserPortal() {
                     outline: 'none',
                   }}
                 >
-                  <option value="Incidencia">🚨 Incidencia (Falla, equipo dañado, sin internet, impresora)</option>
-                  <option value="Solicitud">📋 Solicitud (Instalación de software, accesos, peticiones)</option>
+                  <option value="Incidencia">🚨 Incidencia</option>
+                  <option value="Solicitud">📋 Solicitud</option>
                 </select>
               </div>
 

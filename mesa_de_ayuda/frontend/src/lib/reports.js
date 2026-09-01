@@ -129,7 +129,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
       ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tickets Pendientes / En Espera', String(k.pendingTickets || 0)],
       ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Tickets Cerrados Definitivamente', String(k.closedTickets || 0)],
       ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
-      ['Total Incidentes (Fallas/Averías)', String(k.incidentCount || 0), 'Total Requerimientos (Peticiones)', String(k.requestCount || 0)]
+      ['Total Incidencias', String(k.incidentCount || 0), 'Total Solicitudes', String(k.requestCount || 0)]
     ];
 
     autoTable(doc, {
@@ -148,7 +148,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.text('2. Principales Categorías & Tipos de Solicitud', 15, currentY);
+    doc.text('2. Principales Categorías & Tipos de Ticket', 15, currentY);
 
     const categories = data?.topCategories || [];
     const requestTypes = data?.topRequestTypes || [];
@@ -171,7 +171,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
 
     autoTable(doc, {
       startY: currentY + 4,
-      head: [['Categoría', 'Casos', '%', 'Tipo de Solicitud (PQRSF)', 'Casos', '%']],
+      head: [['Categoría', 'Tickets', '%', 'Tipo de Ticket', 'Tickets', '%']],
       body: breakdownData,
       theme: 'striped',
       headStyles: { fillColor: [51, 65, 85] },
@@ -295,8 +295,8 @@ export const generateAnalyticsExecutiveReport = (data, filters, user) => {
 
     const itilKpiData = [
       ['Total Tickets Gestionados', String(s.totalTickets || 0), 'Cumplimiento Global ANS (SLA)', `${s.slaCompliance || 98}% (Meta: >95%)`],
-      ['Total Incidentes (Fallas)', String(s.incidentCount || 0), 'Tiempo Promedio de Primera Respuesta (MTTA)', `${s.mttaMinutes || 18} minutos`],
-      ['Total Requerimientos (Solicitudes)', String(s.requestCount || 0), 'Tiempo Promedio de Resolución (MTTR)', `${s.mttrHours || 2.4} horas`],
+      ['Total Incidencias', String(s.incidentCount || 0), 'Tiempo Promedio de Primera Respuesta (MTTA)', `${s.mttaMinutes || 18} minutos`],
+      ['Total Solicitudes', String(s.requestCount || 0), 'Tiempo Promedio de Resolución (MTTR)', `${s.mttrHours || 2.4} horas`],
       ['Tickets Vencidos / Fuera de ANS', String(s.overdueCount || 0), 'Resolución al Primer Contacto (FCR)', `${s.fcrRate || 88}%`]
     ];
 

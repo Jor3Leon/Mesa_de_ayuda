@@ -428,7 +428,7 @@ export default function Dashboard({ user }) {
             {k.totalTickets.toLocaleString()}
           </div>
           <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
-            Inc: <strong style={{ color: '#ef4444' }}>{k.incidentCount}</strong> · Req: <strong style={{ color: '#002D62' }}>{k.requestCount}</strong>
+            Incidencias: <strong style={{ color: '#ef4444' }}>{k.incidentCount}</strong> · Solicitudes: <strong style={{ color: '#002D62' }}>{k.requestCount}</strong>
           </p>
         </div>
 
@@ -695,7 +695,7 @@ export default function Dashboard({ user }) {
                   color: yearlyMetric === 'incidentsVsRequests' ? '#ffffff' : '#475569'
                 }}
               >
-                Incidencias vs Req.
+                Incidencias vs Solicitudes
               </button>
             </div>
           </div>
@@ -732,8 +732,8 @@ export default function Dashboard({ user }) {
                   </>
                 ) : (
                   <>
-                    <Area type="monotone" name="Incidentes (Fallas)" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#yearIncGrad)" />
-                    <Area type="monotone" name="Requerimientos (Peticiones)" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
+                    <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#yearIncGrad)" />
+                    <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
                   </>
                 )}
               </AreaChart>
@@ -741,7 +741,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* Chart 2: Tendencia Operativa (Incidentes vs Requerimientos con Selector 30d vs 12m) */}
+        {/* Chart 2: Tendencia Operativa (Incidencias vs Solicitudes con Selector 30d vs 12m) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -752,10 +752,10 @@ export default function Dashboard({ user }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-                Tendencia Operativa: Incidentes vs Requerimientos
+                Tendencia Operativa: Incidencias vs Solicitudes
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                Flujo comparativo según el tipo de solicitud de los usuarios
+                Flujo comparativo según el tipo de ticket (Incidencia o Solicitud)
               </p>
             </div>
 
@@ -819,8 +819,8 @@ export default function Dashboard({ user }) {
                   labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Area type="monotone" name="Incidentes (Averías)" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
-                <Area type="monotone" name="Requerimientos (Servicios)" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
+                <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
+                <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -1005,10 +1005,10 @@ export default function Dashboard({ user }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
           <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-            Tipos de Solicitud (PQRSF / ITIL)
+            Tipos de Ticket (Incidencias vs Solicitudes)
           </h3>
           <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-            Clasificación de incidentes, peticiones y requerimientos
+            Distribución de casos según su clasificación institucional
           </p>
 
           <div style={{ height: '230px', width: '100%' }}>

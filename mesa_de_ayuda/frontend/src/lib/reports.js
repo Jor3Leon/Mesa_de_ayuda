@@ -96,8 +96,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
   try {
     const doc = new jsPDF();
     const timestamp = new Date().toLocaleString('es-CO');
-    const g = data?.global || {};
-    const p = data?.personal || {};
+    const k = data?.kpis || data?.global || {};
     const isPersonal = viewMode === 'personal' || Boolean(data?.isLevel2);
 
     // Hero banner
@@ -107,11 +106,11 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     doc.setTextColor(0, 209, 255);
     doc.setFontSize(11);
     doc.setFont('helvetica', 'bold');
-    doc.text(isPersonal ? 'MESA DE AYUDA · REPORTE OPERACIONAL INDIVIDUAL' : 'MESA DE AYUDA · CENTRO DE COMANDO OPERATIVO', 15, 16);
+    doc.text(isPersonal ? 'MESA DE AYUDA · REPORTE INDIVIDUAL DE TICKETS' : 'MESA DE AYUDA · CENTRO DE COMANDO & GESTIÓN DE TICKETS', 15, 16);
 
     doc.setTextColor(255, 255, 255);
     doc.setFontSize(18);
-    doc.text('RESUMEN DE TURNO OPERACIONAL', 15, 26);
+    doc.text('INFORME EJECUTIVO DE GESTIÓN DE CASOS (PQRSF / ITSM)', 15, 26);
 
     doc.setFontSize(9);
     doc.setFont('helvetica', 'normal');
@@ -123,18 +122,19 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Indicadores Operacionales Clave (ITIL / ITSM)', 15, 52);
+    doc.text('1. Indicadores Clave de Gestión de Casos (KPIs)', 15, 52);
 
     const kpiData = [
-      ['Tickets Abiertos / En Gestión', String(g.openTickets || 0), 'Incidentes Activos (Fallas)', String(g.incidentCount || 0)],
-      ['Requerimientos Activos (Peticiones)', String(g.requestCount || 0), 'Incidentes Críticos / Emergencias', String(g.criticalTickets || 0)],
-      ['Tickets Vencidos / SLA en Riesgo', String(g.overdueTickets || g.slaRiskCount || 0), 'Cumplimiento ANS Estimado', `${g.slaCompliance || 98}%`],
-      ['Total Activos RMM', String(g.totalAssets || 0), 'Equipos Online / Salud RMM', `${g.onlineAssets || 0} (${g.healthScore || 100}%)`]
+      ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tickets Asignados en Atención', String(k.assignedTickets || 0)],
+      ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tickets Pendientes / En Espera', String(k.pendingTickets || 0)],
+      ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Tickets Cerrados Definitivamente', String(k.closedTickets || 0)],
+      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
+      ['Total Incidentes (Fallas/Averías)', String(k.incidentCount || 0), 'Total Requerimientos (Peticiones)', String(k.requestCount || 0)]
     ];
 
     autoTable(doc, {
       startY: 56,
-      head: [['Métrica Operativa', 'Valor', 'Métrica de Servicio', 'Valor']],
+      head: [['Métrica de Casos', 'Valor', 'Métrica de Rendimiento', 'Valor']],
       body: kpiData,
       theme: 'grid',
       headStyles: { fillColor: [0, 45, 98], textColor: [255, 255, 255], fontStyle: 'bold' },
@@ -144,79 +144,88 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
 
     let currentY = doc.lastAutoTable.finalY + 12;
 
-    // Section 2: Severity and Status
+    // Section 2: Top Categories & Request Types
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
     doc.setTextColor(15, 23, 42);
-    doc.text('2. Distribución de Carga por Severidad & Estado', 15, currentY);
+    doc.text('2. Principales Categorías & Tipos de Solicitud', 15, currentY);
 
-    const prio = g.ticketsByPriority || {};
-    const stats = g.ticketsByStatus || {};
+    const categories = data?.topCategories || [];
+    const requestTypes = data?.topRequestTypes || [];
 
-    const distributionData = [
-      ['Crítico / Emergencia', String(prio.CRITICAL || prio.CRITICA || 0), 'Nuevos / Ingresados', String(stats.NEW || 0)],
-      ['Alta Prioridad', String(prio.HIGH || prio.ALTA || 0), 'En Progreso / Atención', String(stats.IN_PROGRESS || g.inProgressTickets || 0)],
-      ['Media Prioridad', String(prio.MEDIUM || prio.MEDIA || 0), 'En Espera / Terceros', String(stats.PENDING || 0)],
-      ['Baja Prioridad', String(prio.LOW || prio.BAJA || 0), 'Resueltos / Cerrados', String((stats.RESOLVED || 0) + (stats.CLOSED || 0))]
-    ];
+    const maxRows = Math.max(categories.length, requestTypes.length, 1);
+    const breakdownData = [];
+
+    for (let i = 0; i < maxRows; i++) {
+      const cat = categories[i] || { label: '-', count: '-', percent: '-' };
+      const req = requestTypes[i] || { label: '-', count: '-', percent: '-' };
+      breakdownData.push([
+        cat.label,
+        String(cat.count),
+        typeof cat.percent === 'number' ? `${cat.percent}%` : String(cat.percent),
+        req.label,
+        String(req.count),
+        typeof req.percent === 'number' ? `${req.percent}%` : String(req.percent)
+      ]);
+    }
 
     autoTable(doc, {
       startY: currentY + 4,
-      head: [['Nivel de Prioridad', 'Cantidad', 'Estado Operacional', 'Cantidad']],
-      body: distributionData,
+      head: [['Categoría', 'Casos', '%', 'Tipo de Solicitud (PQRSF)', 'Casos', '%']],
+      body: breakdownData,
       theme: 'striped',
       headStyles: { fillColor: [51, 65, 85] },
-      styles: { fontSize: 9, cellPadding: 3 },
+      styles: { fontSize: 8.5, cellPadding: 2.5 },
       margin: { left: 15, right: 15 },
     });
 
     currentY = doc.lastAutoTable.finalY + 12;
 
-    // Section 3: Recent Activity
-    const activities = data?.recentActivities || [];
-    if (activities.length > 0 && currentY < 230) {
+    // Section 3: Severity Distribution
+    const sevList = data?.severityDistribution || [];
+    if (sevList.length > 0 && currentY < 230) {
       doc.setFontSize(13);
       doc.setFont('helvetica', 'bold');
-      doc.text('3. Registro Reciente de Intervenciones y Eventos', 15, currentY);
+      doc.text('3. Distribución por Severidad / Prioridad', 15, currentY);
 
-      const actData = activities.slice(0, 8).map(a => [
-        new Date(a.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }),
-        a.user || 'Sistema',
-        a.action || 'Actualización',
-        a.ticket?.title || `Ticket #${a.ticketId || '---'}`
+      const sevData = sevList.map(s => [
+        s.label,
+        String(s.count),
+        `${s.percent}%`
       ]);
 
       autoTable(doc, {
         startY: currentY + 4,
-        head: [['Hora', 'Usuario / Técnico', 'Acción Realizada', 'Ticket / Asunto']],
-        body: actData,
-        theme: 'plain',
-        headStyles: { fillColor: [0, 45, 98], textColor: [255, 255, 255] },
-        styles: { fontSize: 8, cellPadding: 2.5 },
+        head: [['Severidad / Nivel', 'Tickets Activos', '% Proporción']],
+        body: sevData,
+        theme: 'grid',
+        headStyles: { fillColor: [0, 45, 98] },
+        styles: { fontSize: 8.5, cellPadding: 2.5 },
         margin: { left: 15, right: 15 },
       });
     }
 
-    // Footers
+    // Page numbering
     const pageCount = doc.internal.getNumberOfPages();
     for (let i = 1; i <= pageCount; i++) {
       doc.setPage(i);
       doc.setFontSize(8);
-      doc.setTextColor(140);
+      doc.setTextColor(148, 163, 184);
       doc.text(
-        `Página ${i} de ${pageCount} · Mesa de Ayuda Enterprise · Resumen de Turno Operacional`,
+        `Página ${i} de ${pageCount} · Mesa de Ayuda Enterprise · ITIL Service Desk`,
         105,
         285,
         { align: 'center' }
       );
     }
 
-    doc.save(`Resumen_Turno_${isPersonal ? 'Personal' : 'Global'}_${Date.now()}.pdf`);
+    doc.save(`Informe_Dashboard_Tickets_${isPersonal ? 'Personal' : 'Global'}_${Date.now()}.pdf`);
   } catch (error) {
-    console.error('Error generando reporte de turno:', error);
-    alert('Hubo un error al generar el PDF de resumen operacional.');
+    console.error('Error generando reporte de Dashboard:', error);
+    alert('Hubo un error al generar el PDF del Dashboard.');
   }
 };
+
 
 export const generateAnalyticsExecutiveReport = (data, filters, user) => {
   try {

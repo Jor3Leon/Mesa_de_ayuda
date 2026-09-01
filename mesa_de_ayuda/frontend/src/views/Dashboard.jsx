@@ -5,6 +5,11 @@ import { generateDashboardReport } from '../lib/reports';
 import { 
   AreaChart, 
   Area, 
+  BarChart,
+  Bar,
+  PieChart,
+  Pie,
+  Cell,
   XAxis, 
   YAxis, 
   CartesianGrid, 
@@ -14,28 +19,20 @@ import {
 } from 'recharts';
 
 const initialData = {
-  global: {
+  kpis: {
     totalTickets: 0,
+    assignedTickets: 0,
     openTickets: 0,
     inProgressTickets: 0,
+    pendingTickets: 0,
     resolvedTickets: 0,
     closedTickets: 0,
     criticalTickets: 0,
     incidentCount: 0,
     requestCount: 0,
     overdueTickets: 0,
-    slaRiskCount: 0,
-    slaCompliance: 100,
-    totalAssets: 0,
-    onlineAssets: 0,
-    offlineAssets: 0,
-    warningAssets: 0,
-    criticalAssetsCount: 0,
     unassignedTickets: 0,
-    healthScore: 100,
-    ticketsByPriority: {},
-    ticketsByStatus: {},
-    topProblemAssets: []
+    slaCompliance: 100
   },
   personal: {
     myTickets: 0,
@@ -47,23 +44,29 @@ const initialData = {
   isAdmin: false,
   canSwitchView: true,
   viewMode: 'global',
-  recentActivities: [],
-  chartData: [],
+  yearlyTrend: [],
+  thirtyDaysTrend: [],
+  monthlyStatusDistribution: [],
+  topCategories: [],
+  topRequestTypes: [],
+  topEntities: [],
+  severityDistribution: [],
+  ticketsByPriority: {},
+  ticketsByStatus: {}
 };
 
-const formatTime = (dateStr) => {
-  if (!dateStr) return '--:--';
-  const date = new Date(dateStr);
-  return date.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
-};
+const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
   const [data, setData] = useState(initialData);
-  const [recentAssets, setRecentAssets] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [isExporting, setIsExporting] = useState(false);
   const [viewMode, setViewMode] = useState('global'); // 'global' | 'personal'
+  const [trendRange, setTrendRange] = useState('30d'); // '30d' | '12m'
+  const [yearlyMetric, setYearlyMetric] = useState('creationVsResolution'); // 'creationVsResolution' | 'incidentsVsRequests'
+  const [selectedSeverity, setSelectedSeverity] = useState(null);
 
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
   const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || (userRoleStr.includes('NIVEL 2') && !userRoleStr.includes('NIVEL 1') && !userRoleStr.includes('NIVEL 3'));
@@ -80,14 +83,10 @@ export default function Dashboard({ user }) {
     const fetchData = async () => {
       try {
         const effectiveViewMode = isLevel2 || isStandardUser ? 'personal' : viewMode;
-        const [dashboardData, assetsData] = await Promise.all([
-          apiRequest(`/dashboard/data?viewMode=${effectiveViewMode}`),
-          apiRequest('/assets/recent').catch(() => [])
-        ]);
+        const dashboardData = await apiRequest(`/dashboard/data?viewMode=${effectiveViewMode}`);
 
         if (!ignore) {
           setData(dashboardData);
-          setRecentAssets(Array.isArray(assetsData) ? assetsData : []);
           setLoading(false);
           setError('');
         }
@@ -108,33 +107,59 @@ export default function Dashboard({ user }) {
     };
   }, [user, viewMode]);
 
+  const handleExportPdf = async () => {
+    if (!data) return;
+    setIsExporting(true);
+    try {
+      generateDashboardReport(data, user, viewMode);
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setIsExporting(false);
+    }
+  };
+
+  const handleSeverityClick = (priorityKey) => {
+    setSelectedSeverity(prev => prev === priorityKey ? null : priorityKey);
+    navigate(`/tickets?priority=${priorityKey}`);
+  };
+
   if (loading) {
     return (
-      <div style={{ padding: '3rem', textAlign: 'center', color: '#64748b' }}>
+      <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
         <div style={{
-          width: '40px',
-          height: '40px',
+          width: '42px',
+          height: '42px',
           border: '3px solid #e2e8f0',
           borderTopColor: '#00D1FF',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 1rem auto'
         }} />
-        <p style={{ fontWeight: '600', fontSize: '0.95rem' }}>Cargando consola de comando ITIL/ITSM y telemetría...</p>
+        <p style={{ fontWeight: '700', fontSize: '1rem', color: '#001D40' }}>
+          Cargando Power BI Business Intelligence de Tickets & PQRSF...
+        </p>
       </div>
     );
   }
 
-  const global = data?.global || initialData.global;
-  const personal = data?.personal || initialData.personal;
-  const activities = data?.recentActivities || [];
-  const chart = data?.chartData || [];
+  const k = data?.kpis || initialData.kpis;
   const isPersonalScope = isLevel2 || isStandardUser || viewMode === 'personal';
+  const yearlyTrend = data?.yearlyTrend || [];
+  const thirtyDaysTrend = data?.thirtyDaysTrend || [];
+  const monthlyStatus = data?.monthlyStatusDistribution || [];
+  const topCategories = data?.topCategories || [];
+  const topRequestTypes = data?.topRequestTypes || [];
+  const topEntities = data?.topEntities || [];
+  const severityList = data?.severityDistribution || [];
+
+  const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
+  const maxEntityCount = Math.max(...topEntities.map(e => e.count), 1);
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO OPERATIONAL PANEL (Midnight Blue Suite) */}
+      {/* 🌟 HERO POWER BI HEADER (Midnight Blue Suite) */}
       <div style={{
         background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
@@ -147,136 +172,81 @@ export default function Dashboard({ user }) {
         flexWrap: 'wrap',
         alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '1.5rem'
+        gap: '1.25rem'
       }}>
-        <div style={{ flex: '1', minWidth: '280px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
-            <span style={{
-              fontSize: '0.75rem',
-              fontWeight: '800',
-              padding: '0.2rem 0.65rem',
-              borderRadius: '9999px',
-              background: 'rgba(0, 209, 255, 0.18)',
-              border: '1px solid rgba(0, 209, 255, 0.4)',
-              color: '#00D1FF',
-              letterSpacing: '0.02em',
-              textTransform: 'uppercase'
-            }}>
-              {isLevel2 
-                ? '🔧 Service Desk · Técnico Nivel 2' 
-                : isLevel1
-                ? '📋 Coordinación Service Desk · Nivel 1'
-                : isLevel3
-                ? '🛡️ Supervisión Service Desk · Nivel 3'
-                : 'Centro de Comando ITSM & RMM'
-              }
-            </span>
-            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>
-              {isPersonalScope ? '• Consola Personal Operativa' : '• Monitoreo Operacional Global 360°'}
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
+          <div style={{
+            width: '46px',
+            height: '46px',
+            borderRadius: '12px',
+            background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+            fontSize: '1.4rem',
+            color: '#001D40'
+          }}>
+            ⚡
           </div>
-
-          <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
-            Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
-          </h1>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '650px', lineHeight: 1.5 }}>
-            {isPersonalScope
-              ? `Tienes ${personal.myTickets || global.openTickets || 0} tickets asignados y ${personal.myTasks || global.inProgressTickets || 0} casos en progreso en tu bandeja individual.`
-              : `Operación global en tiempo real: ${global.openTickets || 0} tickets en gestión, ${global.criticalTickets || 0} críticos y ${global.onlineAssets || 0} activos RMM monitoreados.`
-            }
-          </p>
-
-          {/* Quick status chips */}
-          <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.5rem', marginTop: '1rem' }}>
-            <div style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
-              background: 'rgba(16, 185, 129, 0.15)',
-              border: '1px solid rgba(16, 185, 129, 0.3)',
-              color: '#34d399',
-              fontSize: '0.75rem',
-              fontWeight: '600',
-              padding: '0.25rem 0.65rem',
-              borderRadius: '9999px'
-            }}>
-              <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
-              {isPersonalScope ? 'Métricas Personales Activas' : 'RMM & Service Desk en Vivo'}
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.6rem', flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+                {isLevel2 
+                  ? 'Panel de Control de Tickets · Técnico Nivel 2' 
+                  : isLevel1
+                  ? 'Centro de Gestión & Coordinación de Tickets · Nivel 1'
+                  : isLevel3
+                  ? 'Supervisión de Casos & Acuerdos ANS · Nivel 3'
+                  : 'Centro de Inteligencia & Gestión de Tickets (Power BI)'
+                }
+              </h1>
+              <span style={{ 
+                fontSize: '0.75rem', 
+                fontWeight: '800', 
+                padding: '0.2rem 0.6rem', 
+                borderRadius: '9999px', 
+                background: 'rgba(0, 209, 255, 0.18)', 
+                color: '#00D1FF', 
+                border: '1px solid rgba(0, 209, 255, 0.4)',
+                textTransform: 'uppercase'
+              }}>
+                {isPersonalScope ? '👤 Mis Tickets' : '🌐 Vista Global'}
+              </span>
             </div>
-
-            {global.criticalTickets > 0 && (
-              <div 
-                onClick={() => navigate('/tickets?priority=CRITICAL')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: 'rgba(239, 68, 68, 0.2)',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  color: '#f87171',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.25rem 0.65rem',
-                  borderRadius: '9999px',
-                  cursor: 'pointer'
-                }}
-              >
-                🚨 {global.criticalTickets} {isPersonalScope ? 'Mis Incidentes Críticos' : 'Incidentes Críticos'}
-              </div>
-            )}
-
-            {global.overdueTickets > 0 && (
-              <div 
-                onClick={() => navigate('/tickets')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.4rem',
-                  background: 'rgba(245, 158, 11, 0.2)',
-                  border: '1px solid rgba(245, 158, 11, 0.4)',
-                  color: '#fbbf24',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
-                  padding: '0.25rem 0.65rem',
-                  borderRadius: '9999px',
-                  cursor: 'pointer'
-                }}
-              >
-                ⏱️ {global.overdueTickets} {isPersonalScope ? 'Mis Tickets Vencidos' : 'Fuera de ANS / Vencidos'}
-              </div>
-            )}
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+              {isPersonalScope 
+                ? 'Control individual de tickets asignados, tiempos de respuesta y estados de atención.'
+                : 'Métricas, estadísticas, tendencias anuales, distribución de severidad y control de acuerdos ANS.'
+              }
+            </p>
           </div>
         </div>
 
-        {/* Global/Personal Controls & Health Badge */}
-        <div style={{
-          display: 'flex',
-          gap: '1rem',
-          alignItems: 'center',
-          flexWrap: 'wrap'
-        }}>
-          {/* Switcher View (for Admin, N1, N3) */}
+        {/* Action Controls & Scope Switcher */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
           {canSwitchView && (
             <div style={{
+              display: 'inline-flex',
               background: 'rgba(255, 255, 255, 0.08)',
-              padding: '4px',
+              padding: '3px',
               borderRadius: '10px',
-              display: 'flex',
-              border: '1px solid rgba(255, 255, 255, 0.15)'
+              border: '1px solid rgba(0, 209, 255, 0.25)'
             }}>
               <button
                 type="button"
                 onClick={() => setViewMode('global')}
                 style={{
-                  padding: '0.4rem 0.75rem',
+                  padding: '7px 14px',
                   borderRadius: '7px',
                   border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
                   background: viewMode === 'global' ? '#00D1FF' : 'transparent',
-                  color: viewMode === 'global' ? '#001D40' : '#cbd5e1'
+                  color: viewMode === 'global' ? '#001D40' : '#ffffff',
+                  boxShadow: viewMode === 'global' ? '0 2px 8px rgba(0, 209, 255, 0.35)' : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 🌐 Global
@@ -285,15 +255,16 @@ export default function Dashboard({ user }) {
                 type="button"
                 onClick={() => setViewMode('personal')}
                 style={{
-                  padding: '0.4rem 0.75rem',
+                  padding: '7px 14px',
                   borderRadius: '7px',
                   border: 'none',
-                  fontSize: '0.75rem',
-                  fontWeight: '700',
+                  fontSize: '0.8125rem',
+                  fontWeight: 700,
                   cursor: 'pointer',
-                  transition: 'all 0.2s',
                   background: viewMode === 'personal' ? '#00D1FF' : 'transparent',
-                  color: viewMode === 'personal' ? '#001D40' : '#cbd5e1'
+                  color: viewMode === 'personal' ? '#001D40' : '#ffffff',
+                  boxShadow: viewMode === 'personal' ? '0 2px 8px rgba(0, 209, 255, 0.35)' : 'none',
+                  transition: 'all 0.15s ease'
                 }}
               >
                 👤 Mi Bandeja
@@ -301,270 +272,286 @@ export default function Dashboard({ user }) {
             </div>
           )}
 
-          {/* Export Shift Report Button */}
           <button
             type="button"
-            onClick={() => generateDashboardReport(data, user, viewMode)}
+            onClick={handleExportPdf}
+            disabled={isExporting}
             style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.4rem',
               background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
               color: '#001D40',
               border: 'none',
-              padding: '0.65rem 1rem',
-              borderRadius: '10px',
-              fontSize: '0.8rem',
-              fontWeight: '800',
-              cursor: 'pointer',
-              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.3)',
-              transition: 'transform 0.15s ease'
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '0.8125rem',
+              fontWeight: 800,
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.35)',
+              transition: 'transform 0.15s ease',
+              height: '38px'
             }}
-            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
-            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+            onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
+            onMouseLeave={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(0)')}
           >
-            📄 Exportar Turno (PDF)
+            {isExporting ? 'Generando PDF...' : '📄 Exportar Informe (PDF)'}
           </button>
-
-          {/* SLA Badge */}
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.12)',
-            borderRadius: '14px',
-            padding: '0.85rem 1.25rem',
-            textAlign: 'center',
-            backdropFilter: 'blur(8px)',
-            minWidth: '120px'
-          }}>
-            <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#00D1FF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Cumplimiento ANS
-            </div>
-            <div style={{
-              fontSize: '1.75rem',
-              fontWeight: '900',
-              color: (global.slaCompliance || 100) >= 90 ? '#34d399' : '#fbbf24',
-              marginTop: '0.15rem'
-            }}>
-              {global.slaCompliance || 100}%
-            </div>
-            <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
-              Meta institucional: &gt;95%
-            </div>
-          </div>
         </div>
       </div>
 
-      {error && (
-        <div style={{
-          background: '#fef2f2',
-          border: '1px solid #fecaca',
-          color: '#991b1b',
-          borderRadius: '10px',
-          padding: '0.85rem 1.25rem',
-          marginBottom: '1.25rem',
-          fontSize: '0.875rem'
-        }}>
-          {error}
-        </div>
-      )}
-
-      {/* 📊 BENTO KPI GRID (6 Cards Clave ITIL/ITSM) */}
+      {/* 📊 POWER BI KPI CARDS GRID (8 Indicadores Clave de Tickets) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '1.25rem',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
+        gap: '1.15rem',
         marginBottom: '1.75rem'
       }}>
-        {/* Card 1: Active Workload */}
+        {/* Total Tickets */}
         <div 
           onClick={() => navigate('/tickets')}
           style={{
             background: '#ffffff',
             borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
+            padding: '1.25rem',
             border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer',
             borderLeft: '4px solid #3b82f6',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
-              {isPersonalScope ? 'Mis Tickets Activos' : 'Tickets Activos en Gestión'}
-            </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              📥
-            </div>
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', lineHeight: 1.2 }}>
-            {global.openTickets || 0}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.4rem', display: 'flex', justifyContent: 'space-between' }}>
-            <span>⚡ {global.inProgressTickets || 0} en atención activa</span>
-            <span>Ver todos →</span>
-          </div>
-        </div>
-
-        {/* Card 2: Incidents (Fallas) */}
-        <div 
-          onClick={() => navigate('/tickets')}
-          style={{
-            background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            border: '1px solid #e2e8f0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            borderLeft: '4px solid #ef4444',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+            transition: 'all 0.15s ease'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(59, 130, 246, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#ef4444', textTransform: 'uppercase' }}>
-              {isPersonalScope ? 'Mis Incidentes (Fallas)' : 'Incidentes (Averías)'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Total Tickets
             </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              🔥
-            </div>
+            <span style={{ fontSize: '1.15rem' }}>📑</span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#ef4444', lineHeight: 1.2 }}>
-            {global.incidentCount || 0}
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#0f172a', lineHeight: 1.1 }}>
+            {k.totalTickets.toLocaleString()}
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginTop: '0.4rem' }}>
-            Afectación a la continuidad operativa
-          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            Inc: <strong style={{ color: '#ef4444' }}>{k.incidentCount}</strong> · Req: <strong style={{ color: '#002D62' }}>{k.requestCount}</strong>
+          </p>
         </div>
 
-        {/* Card 3: Requests (Requerimientos) */}
+        {/* Tickets Desfasados / Retrasados */}
         <div 
-          onClick={() => navigate('/tickets')}
+          onClick={() => navigate('/tickets?overdue=true')}
           style={{
-            background: '#ffffff',
+            background: k.overdueTickets > 0 ? '#fff5f5' : '#ffffff',
             borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            border: '1px solid #e2e8f0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer',
-            borderLeft: '4px solid #00D1FF',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
-          }}
-        >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#0284c7', textTransform: 'uppercase' }}>
-              {isPersonalScope ? 'Mis Requerimientos' : 'Requerimientos (Peticiones)'}
-            </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              📋
-            </div>
-          </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0369a1', lineHeight: 1.2 }}>
-            {global.requestCount || 0}
-          </div>
-          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginTop: '0.4rem' }}>
-            Solicitudes de servicio y accesos
-          </div>
-        </div>
-
-        {/* Card 4: Critical & Emergencies */}
-        <div 
-          onClick={() => navigate('/tickets?priority=CRITICAL')}
-          style={{
-            background: (global.criticalTickets || 0) > 0 ? '#fff5f5' : '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            border: (global.criticalTickets || 0) > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
-            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer',
+            padding: '1.25rem',
+            border: k.overdueTickets > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
             borderLeft: '4px solid #dc2626',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(220, 38, 38, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase' }}>
-              {isPersonalScope ? 'Mis Casos Críticos' : 'Incidentes Críticos'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#dc2626', textTransform: 'uppercase' }}>
+              Tickets Desfasados
             </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              🚨
-            </div>
+            <span style={{ fontSize: '1.15rem' }}>⚠️</span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#0f172a', lineHeight: 1.2 }}>
-            {global.criticalTickets || 0}
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#dc2626', lineHeight: 1.1 }}>
+            {k.overdueTickets}
           </div>
-          <div style={{ fontSize: '0.75rem', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: '700', marginTop: '0.4rem' }}>
-            {(global.criticalTickets || 0) > 0 ? 'Prioridad P1 Inmediata →' : 'Sin emergencias críticas activas'}
-          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 600 }}>
+            {k.overdueTickets > 0 ? 'Tiempo SLA excedido' : 'Todos al día'}
+          </p>
         </div>
 
-        {/* Card 5: SLA Overdue / In Risk */}
+        {/* Tickets Asignados */}
         <div 
           onClick={() => navigate('/tickets')}
           style={{
-            background: (global.overdueTickets || 0) > 0 ? '#fffbeb' : '#ffffff',
+            background: '#ffffff',
             borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            border: (global.overdueTickets || 0) > 0 ? '1px solid #fde68a' : '1px solid #e2e8f0',
+            padding: '1.25rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #00D1FF',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             cursor: 'pointer',
-            borderLeft: '4px solid #f59e0b',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+            transition: 'all 0.15s ease'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(0, 209, 255, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#64748b', textTransform: 'uppercase' }}>
-              {isPersonalScope ? 'Mis Tickets Fuera de SLA' : 'Tickets Vencidos (SLA)'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Tickets Asignados
             </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              ⏱️
-            </div>
+            <span style={{ fontSize: '1.15rem' }}>👤</span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#0f172a', lineHeight: 1.2 }}>
-            {global.overdueTickets || 0}
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#002D62', lineHeight: 1.1 }}>
+            {k.assignedTickets}
           </div>
-          <div style={{ fontSize: '0.75rem', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#64748b', fontWeight: '700', marginTop: '0.4rem' }}>
-            {(global.overdueTickets || 0) > 0 ? 'Tiempo límite excedido →' : 'Todos en tiempo objetivo'}
-          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            En manos de un técnico
+          </p>
         </div>
 
-        {/* Card 6: RMM Assets & Health */}
+        {/* Tickets Planificados / En Progreso */}
         <div 
-          onClick={() => navigate('/assets')}
+          onClick={() => navigate('/tickets?status=IN_PROGRESS')}
           style={{
             background: '#ffffff',
             borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
+            padding: '1.25rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #8b5cf6',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(139, 92, 246, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              En Progreso / Planif.
+            </span>
+            <span style={{ fontSize: '1.15rem' }}>⚡</span>
+          </div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#8b5cf6', lineHeight: 1.1 }}>
+            {k.inProgressTickets}
+          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            Trabajo en ejecución
+          </p>
+        </div>
+
+        {/* Tickets Pendientes / En Espera */}
+        <div 
+          onClick={() => navigate('/tickets?status=PENDING')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #f59e0b',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Pendientes / En Espera
+            </span>
+            <span style={{ fontSize: '1.15rem' }}>⏳</span>
+          </div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#d97706', lineHeight: 1.1 }}>
+            {k.pendingTickets}
+          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            Respuesta de usuario/terceros
+          </p>
+        </div>
+
+        {/* Tickets Resueltos */}
+        <div 
+          onClick={() => navigate('/tickets?status=RESOLVED')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            border: '1px solid #e2e8f0',
             borderLeft: '4px solid #10b981',
-            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(16, 185, 129, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Tickets Resueltos
+            </span>
+            <span style={{ fontSize: '1.15rem' }}>✅</span>
+          </div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#10b981', lineHeight: 1.1 }}>
+            {k.resolvedTickets}
+          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            Solución aplicada
+          </p>
+        </div>
+
+        {/* Tickets Cerrados */}
+        <div 
+          onClick={() => navigate('/tickets?status=CLOSED')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #64748b',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            transition: 'all 0.15s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(100, 116, 139, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Tickets Cerrados
+            </span>
+            <span style={{ fontSize: '1.15rem' }}>🔒</span>
+          </div>
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#475569', lineHeight: 1.1 }}>
+            {k.closedTickets}
+          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#64748b', fontWeight: 600 }}>
+            Conformidad final
+          </p>
+        </div>
+
+        {/* Cumplimiento ANS */}
+        <div 
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #059669',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            transition: 'all 0.15s ease'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#059669', textTransform: 'uppercase' }}>
-              Salud Parque RMM
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#64748b', textTransform: 'uppercase' }}>
+              Cumplimiento ANS
             </span>
-            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
-              💻
-            </div>
+            <span style={{ fontSize: '1.15rem' }}>🎯</span>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', lineHeight: 1.2 }}>
-            {global.onlineAssets || 0} <span style={{ fontSize: '1.1rem', color: '#94a3b8', fontWeight: '600' }}>/ {global.totalAssets || 0}</span>
+          <div style={{ fontSize: '1.85rem', fontWeight: 900, color: '#059669', lineHeight: 1.1 }}>
+            {k.slaCompliance}%
           </div>
-          <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.4rem' }}>
-            {global.healthScore || 100}% de disponibilidad en red →
-          </div>
+          <p style={{ margin: '0.4rem 0 0 0', fontSize: '0.75rem', color: '#059669', fontWeight: 700 }}>
+            Meta institucional: &gt;95%
+          </p>
         </div>
       </div>
 
-      {/* 📈 SECTION 2: INTERACTIVE CHARTS & SEVERITY MATRIX */}
+      {/* 📈 POWER BI CHARTS ROW 1: EVOLUCIÓN ANUAL & TENDENCIAS */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
         gap: '1.5rem',
         marginBottom: '1.75rem'
       }}>
-        {/* CHART: TICKET TREND (Incidents vs Requests vs Resolved) */}
+        {/* Chart 1: Evolución de Casos en el Último Año (12 Meses) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -572,117 +559,94 @@ export default function Dashboard({ user }) {
           border: '1px solid #e2e8f0',
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
-              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-                {isPersonalScope ? 'Evolución de Mis Casos (Últimos 14 Días)' : 'Tendencia Operativa: Incidentes vs Requerimientos (14 Días)'}
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Evolución de Casos en el Último Año (12 Meses)
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                Comparativa diaria de volumen ingresado frente a tickets resueltos
+                Comparativo mensual del volumen de tickets ingresados y resueltos
               </p>
             </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#f1f5f9', color: '#002D62' }}>
-              En tiempo real
-            </span>
+            
+            <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setYearlyMetric('creationVsResolution')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: yearlyMetric === 'creationVsResolution' ? '#002D62' : 'transparent',
+                  color: yearlyMetric === 'creationVsResolution' ? '#ffffff' : '#475569'
+                }}
+              >
+                Creados vs Resueltos
+              </button>
+              <button
+                type="button"
+                onClick={() => setYearlyMetric('incidentsVsRequests')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: yearlyMetric === 'incidentsVsRequests' ? '#002D62' : 'transparent',
+                  color: yearlyMetric === 'incidentsVsRequests' ? '#ffffff' : '#475569'
+                }}
+              >
+                Incidencias vs Req.
+              </button>
+            </div>
           </div>
 
-          <div style={{ height: '260px', width: '100%' }}>
+          <div style={{ height: '280px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
-              <AreaChart data={chart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+              <AreaChart data={yearlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="incidentGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
-                  </linearGradient>
-                  <linearGradient id="requestGrad" x1="0" y1="0" x2="0" y2="1">
+                  <linearGradient id="yearCreatedGrad" x1="0" y1="0" x2="0" y2="1">
                     <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.4}/>
                     <stop offset="95%" stopColor="#00D1FF" stopOpacity={0.0}/>
                   </linearGradient>
-                  <linearGradient id="resolvedGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35}/>
+                  <linearGradient id="yearResolvedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
                     <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="yearIncGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Area type="monotone" name="Incidentes" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#incidentGrad)" />
-                <Area type="monotone" name="Requerimientos" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#requestGrad)" />
-                <Area type="monotone" name="Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#resolvedGrad)" />
+                {yearlyMetric === 'creationVsResolution' ? (
+                  <>
+                    <Area type="monotone" name="Casos Creados" dataKey="created" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
+                    <Area type="monotone" name="Casos Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#yearResolvedGrad)" />
+                  </>
+                ) : (
+                  <>
+                    <Area type="monotone" name="Incidentes (Fallas)" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#yearIncGrad)" />
+                    <Area type="monotone" name="Requerimientos (Peticiones)" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
+                  </>
+                )}
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* SEVERITY & STATUS MATRIX */}
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          padding: '1.5rem',
-          border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-          display: 'flex',
-          flexDirection: 'column',
-          justifyContent: 'space-between'
-        }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-              {isPersonalScope ? 'Distribución de Mis Tickets por Severidad' : 'Distribución Operativa por Severidad'}
-            </h3>
-            <p style={{ margin: '0.2rem 0 1rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Volumen y porcentaje según nivel de impacto técnico
-            </p>
-
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
-              {[
-                { key: 'CRITICAL', label: 'Crítico / Emergencia', color: '#dc2626' },
-                { key: 'HIGH', label: 'Alta Prioridad', color: '#ea580c' },
-                { key: 'MEDIUM', label: 'Media Prioridad', color: '#2563eb' },
-                { key: 'LOW', label: 'Baja Prioridad', color: '#059669' },
-              ].map(({ key, label, color }) => {
-                const count = global.ticketsByPriority?.[key] || 0;
-                const total = global.openTickets || 1;
-                const pct = Math.round((count / total) * 100);
-
-                return (
-                  <div key={key}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.25rem' }}>
-                      <span style={{ color: '#334155' }}>{label}</span>
-                      <span style={{ color }}>{count} ({pct}%)</span>
-                    </div>
-                    <div style={{ height: '8px', width: '100%', background: '#f1f5f9', borderRadius: '9999px', overflow: 'hidden' }}>
-                      <div style={{ height: '100%', width: `${pct}%`, background: color, borderRadius: '9999px', transition: 'width 0.5s ease' }} />
-                    </div>
-                  </div>
-                );
-              })}
-            </div>
-          </div>
-
-          <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>¿Deseas auditoría detallada de ANS?</span>
-            <button
-              onClick={() => navigate('/analytics')}
-              style={{ background: '#002D62', border: 'none', color: '#ffffff', padding: '0.45rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
-            >
-              Ver Módulo de Analítica →
-            </button>
-          </div>
-        </div>
-      </div>
-
-      {/* 🕒 SECTION 3: RECENT ACTIVITIES & PROBLEM ASSETS */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
-        gap: '1.5rem'
-      }}>
-        {/* RECENT ACTIVITIES */}
+        {/* Chart 2: Tendencia Operativa (Incidentes vs Requerimientos con Selector 30d vs 12m) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -690,38 +654,92 @@ export default function Dashboard({ user }) {
           border: '1px solid #e2e8f0',
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
-          <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-            {isPersonalScope ? 'Mi Actividad Reciente en el Service Desk' : 'Timeline Operativo en Tiempo Real'}
-          </h3>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Tendencia Operativa: Incidentes vs Requerimientos
+              </h3>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Flujo comparativo según el tipo de solicitud de los usuarios
+              </p>
+            </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {activities.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-                No hay actividades registradas recientemente.
-              </div>
-            ) : (
-              activities.slice(0, 6).map((act, index) => (
-                <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid #f8fafc' }}>
-                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '800', flexShrink: 0 }}>
-                    {act.user?.charAt(0) || 'S'}
-                  </div>
-                  <div style={{ flex: '1', fontSize: '0.85rem' }}>
-                    <div>
-                      <strong style={{ color: '#0f172a' }}>{act.user}</strong>{' '}
-                      <span style={{ color: '#64748b' }}>{act.action} en</span>{' '}
-                      <strong style={{ color: '#2563eb' }}>{act.ticket?.title || `Ticket #${act.ticketId}`}</strong>
-                    </div>
-                    <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
-                      {formatTime(act.createdAt)}
-                    </span>
-                  </div>
-                </div>
-              ))
-            )}
+            <div style={{ display: 'flex', gap: '4px', background: '#f1f5f9', padding: '3px', borderRadius: '8px' }}>
+              <button
+                type="button"
+                onClick={() => setTrendRange('30d')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: trendRange === '30d' ? '#00D1FF' : 'transparent',
+                  color: trendRange === '30d' ? '#001D40' : '#475569'
+                }}
+              >
+                Últimos 30 Días
+              </button>
+              <button
+                type="button"
+                onClick={() => setTrendRange('12m')}
+                style={{
+                  padding: '4px 8px',
+                  borderRadius: '6px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  cursor: 'pointer',
+                  background: trendRange === '12m' ? '#00D1FF' : 'transparent',
+                  color: trendRange === '12m' ? '#001D40' : '#475569'
+                }}
+              >
+                Mes a Mes (12M)
+              </button>
+            </div>
+          </div>
+
+          <div style={{ height: '280px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <AreaChart 
+                data={trendRange === '30d' ? thirtyDaysTrend : yearlyTrend} 
+                margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
+              >
+                <defs>
+                  <linearGradient id="trendIncGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.45}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="trendReqGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#002D62" stopOpacity={0.45}/>
+                    <stop offset="95%" stopColor="#002D62" stopOpacity={0.0}/>
+                  </linearGradient>
+                </defs>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey={trendRange === '30d' ? 'name' : 'shortMonth'} stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Area type="monotone" name="Incidentes (Averías)" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
+                <Area type="monotone" name="Requerimientos (Servicios)" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
+              </AreaChart>
+            </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* TOP PROBLEM ASSETS & TELEMETRY */}
+      {/* 📊 POWER BI CHARTS ROW 2: ESTADO POR MES (STACKED) & SEVERIDAD FUNCIONAL */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
+        gap: '1.5rem',
+        marginBottom: '1.75rem'
+      }}>
+        {/* Chart 3: Estado de Casos por Mes (Stacked Bar Chart) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -730,64 +748,235 @@ export default function Dashboard({ user }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-              Activos con Mayor Frecuencia de Incidentes
-            </h3>
-            <button
-              onClick={() => navigate('/assets')}
-              style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
-            >
-              Ver Inventario ({global.totalAssets}) →
-            </button>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Estado de Casos por Mes (Distribución del Ciclo de Vida)
+              </h3>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Composición mensual de tickets nuevos, en progreso, pendientes y cerrados
+              </p>
+            </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {(!global.topProblemAssets || global.topProblemAssets.length === 0) ? (
-              <div style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-                No hay activos con incidentes críticos acumulados.
-              </div>
-            ) : (
-              global.topProblemAssets.map((asset) => (
+          <div style={{ height: '280px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <BarChart data={monthlyStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
+                <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
+                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
+                <Tooltip 
+                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Bar dataKey="new" name="Nuevos / Abiertos" stackId="a" fill="#00D1FF" radius={[0, 0, 0, 0]} />
+                <Bar dataKey="inProgress" name="En Progreso" stackId="a" fill="#8b5cf6" />
+                <Bar dataKey="pending" name="En Espera" stackId="a" fill="#f59e0b" />
+                <Bar dataKey="resolved" name="Resueltos" stackId="a" fill="#10b981" />
+                <Bar dataKey="closed" name="Cerrados" stackId="a" fill="#64748b" radius={[4, 4, 0, 0]} />
+              </BarChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 4: Distribución Operativa por Severidad (100% Funcional e Interactiva) */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+            <div>
+              <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+                Distribución Operativa por Severidad
+              </h3>
+              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                Haz clic en cualquier nivel para filtrar tickets activos en la plataforma
+              </p>
+            </div>
+            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#002D62', background: '#eff6ff', padding: '3px 8px', borderRadius: '6px' }}>
+              Interactiva ⚡
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px', marginTop: '1rem' }}>
+            {severityList.map((sev) => {
+              const isSelected = selectedSeverity === sev.priority;
+              return (
                 <div
-                  key={asset.id}
-                  onClick={() => navigate(`/assets?search=${asset.hostname}`)}
+                  key={sev.priority}
+                  onClick={() => handleSeverityClick(sev.priority)}
                   style={{
-                    display: 'flex',
-                    alignItems: 'center',
-                    justifyContent: 'space-between',
-                    padding: '0.65rem 0.85rem',
-                    background: '#f8fafc',
+                    padding: '10px 14px',
                     borderRadius: '10px',
+                    border: isSelected ? `2px solid ${sev.color}` : '1px solid #e2e8f0',
+                    background: isSelected ? `${sev.color}10` : '#f8fafc',
                     cursor: 'pointer',
-                    transition: 'background 0.2s ease',
-                    border: '1px solid #e2e8f0'
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.transform = 'translateX(4px)';
+                    e.currentTarget.style.borderColor = sev.color;
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.transform = 'translateX(0)';
+                    e.currentTarget.style.borderColor = isSelected ? sev.color : '#e2e8f0';
                   }}
                 >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <span style={{ fontSize: '1.2rem' }}>
-                      {asset.deviceType?.includes('Impresora') ? '🖨️' : asset.deviceType?.includes('Portátil') ? '💻' : '🖥️'}
-                    </span>
-                    <div>
-                      <div style={{ fontWeight: '800', fontSize: '0.875rem', color: '#0f172a' }}>
-                        {asset.hostname}
-                      </div>
-                      <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
-                        📍 {asset.location || 'Sede Principal'} {asset.ipAddress && `• ${asset.ipAddress}`}
-                      </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: sev.color }} />
+                      <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#0f172a' }}>
+                        {sev.label}
+                      </span>
+                    </div>
+                    <div style={{ fontSize: '0.85rem', fontWeight: 900, color: sev.color }}>
+                      {sev.count} casos ({sev.percent}%)
                     </div>
                   </div>
 
-                  <div style={{ textAlign: 'right' }}>
-                    <span style={{
-                      fontSize: '0.7rem',
-                      fontWeight: '800',
-                      padding: '0.2rem 0.5rem',
+                  <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${sev.percent}%`,
+                      height: '100%',
+                      background: sev.color,
                       borderRadius: '4px',
-                      background: asset.activeTickets > 0 ? '#fee2e2' : '#ecfdf5',
-                      color: asset.activeTickets > 0 ? '#b91c1c' : '#047857'
-                    }}>
-                      {asset.activeTickets > 0 ? `⚠️ ${asset.activeTickets} tickets` : '🟢 Estable'}
-                    </span>
+                      transition: 'width 0.6s ease'
+                    }} />
+                  </div>
+                </div>
+              );
+            })}
+          </div>
+        </div>
+      </div>
+
+      {/* 📊 POWER BI CHARTS ROW 3: CATEGORÍAS, TIPOS DE SOLICITUD (PQRSF) Y ENTIDADES */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gap: '1.5rem'
+      }}>
+        {/* Chart 5: Principales Categorías de los Casos */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+            Principales Categorías de Casos
+          </h3>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+            Áreas de mayor demanda y recurrencia técnica
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {topCategories.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                No hay categorías registradas
+              </div>
+            ) : (
+              topCategories.map((cat, idx) => (
+                <div key={idx}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: 700, color: '#334155' }}>{cat.label}</span>
+                    <span style={{ fontWeight: 800, color: '#002D62' }}>{cat.count} ({cat.percent}%)</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${(cat.count / maxCategoryCount) * 100}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #00D1FF, #002D62)',
+                      borderRadius: '4px',
+                      transition: 'width 0.8s ease'
+                    }} />
+                  </div>
+                </div>
+              ))
+            )}
+          </div>
+        </div>
+
+        {/* Chart 6: Principales Tipos de Solicitud por Caso (Donut Chart) */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+            Tipos de Solicitud (PQRSF / ITIL)
+          </h3>
+          <p style={{ margin: '0 0 0.5rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+            Clasificación de incidentes, peticiones y requerimientos
+          </p>
+
+          <div style={{ height: '230px', width: '100%' }}>
+            <ResponsiveContainer width="100%" height="100%">
+              <PieChart>
+                <Pie
+                  data={topRequestTypes}
+                  dataKey="count"
+                  nameKey="label"
+                  cx="50%"
+                  cy="50%"
+                  innerRadius={50}
+                  outerRadius={80}
+                  paddingAngle={4}
+                >
+                  {topRequestTypes.map((entry, index) => (
+                    <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                  ))}
+                </Pie>
+                <Tooltip 
+                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
+                />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '4px' }} />
+              </PieChart>
+            </ResponsiveContainer>
+          </div>
+        </div>
+
+        {/* Chart 7: Principales Casos por Entidad / Organización / Cliente */}
+        <div style={{
+          background: '#ffffff',
+          borderRadius: '16px',
+          padding: '1.5rem',
+          border: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 0.2rem 0', fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+            Casos por Entidad & Clientes
+          </h3>
+          <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
+            Entidades, sedes y solicitantes con mayor demanda
+          </p>
+
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+            {topEntities.length === 0 ? (
+              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+                No hay entidades registradas
+              </div>
+            ) : (
+              topEntities.map((ent, idx) => (
+                <div key={idx}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8125rem', marginBottom: '4px' }}>
+                    <span style={{ fontWeight: 700, color: '#334155' }}>{ent.label}</span>
+                    <span style={{ fontWeight: 800, color: '#0284c7' }}>{ent.count} tickets</span>
+                  </div>
+                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                    <div style={{
+                      width: `${(ent.count / maxEntityCount) * 100}%`,
+                      height: '100%',
+                      background: 'linear-gradient(90deg, #38bdf8, #0284c7)',
+                      borderRadius: '4px',
+                      transition: 'width 0.8s ease'
+                    }} />
                   </div>
                 </div>
               ))
@@ -795,6 +984,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
       </div>
+
     </div>
   );
 }

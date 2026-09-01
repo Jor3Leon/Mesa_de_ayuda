@@ -305,53 +305,41 @@ function getCommonRoutes(prisma) {
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
 
-      // 1. Comprehensive ITIL Queries in Parallel
+      // 1. Comprehensive Ticket KPI Queries
       const [
         totalTickets,
+        assignedTickets,
         openTickets,
         inProgressTickets,
+        pendingTickets,
         resolvedTickets,
         closedTickets,
         criticalTickets,
         incidentCount,
         requestCount,
         unassignedTickets,
-        totalAssets,
-        onlineAssets,
-        offlineAssets,
-        warningAssets,
-        ticketsByPriorityRaw,
-        ticketsByStatusRaw,
         overdueCritical,
         overdueHigh,
         overdueMedium,
         overdueLow,
-        recentActivitiesRaw,
-        topProblemAssetsRaw
+        ticketsByPriorityRaw,
+        ticketsByStatusRaw,
+        ticketsByCategoryRaw,
+        ticketsByTypeRaw,
+        ticketsByCustomerRaw,
+        ticketsByLocationRaw
       ] = await Promise.all([
         prisma.ticket.count({ where: ticketBaseFilter }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, assignedToId: { not: null }, status: { not: 'CLOSED' } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: { in: ['NEW', 'OPEN', 'IN_PROGRESS', 'PENDING'] } } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'IN_PROGRESS' } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, status: { in: ['IN_PROGRESS', 'PLANIFICADO'] } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, status: { in: ['PENDING', 'WAITING', 'EN_ESPERA'] } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'RESOLVED' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'CLOSED' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: 'Incidencia', status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { not: 'Incidencia' }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: 'Incidencia' } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { not: 'Incidencia' } } }).catch(() => 0),
         isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
-        prisma.asset.count({ where: orgFilter }).catch(() => 0),
-        prisma.asset.count({ where: { ...orgFilter, status: 'ONLINE' } }).catch(() => 0),
-        prisma.asset.count({ where: { ...orgFilter, status: 'OFFLINE' } }).catch(() => 0),
-        prisma.asset.count({ where: { ...orgFilter, status: 'WARNING' } }).catch(() => 0),
-        prisma.ticket.groupBy({
-          by: ['priority'],
-          _count: { _all: true },
-          where: { ...ticketBaseFilter, status: { notIn: ['CLOSED', 'RESOLVED'] } }
-        }).catch(() => []),
-        prisma.ticket.groupBy({
-          by: ['status'],
-          _count: { _all: true },
-          where: ticketBaseFilter
-        }).catch(() => []),
         // SLA Overdue counts per priority
         prisma.ticket.count({
           where: {
@@ -385,41 +373,46 @@ function getCommonRoutes(prisma) {
             createdAt: { lt: fortyEightHoursAgo }
           }
         }).catch(() => 0),
-        // Recent Activities
-        prisma.ticketActivity.findMany({
-          where: forcePersonal
-            ? { ticket: ticketBaseFilter }
-            : (req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {}),
-          take: 10,
-          orderBy: { createdAt: 'desc' },
-          include: { 
-            ticket: { select: { id: true, title: true, priority: true, status: true, ticketType: true } }
-          }
+        // Groupings
+        prisma.ticket.groupBy({
+          by: ['priority'],
+          _count: { _all: true },
+          where: { ...ticketBaseFilter, status: { not: 'CLOSED' } }
         }).catch(() => []),
-        // Top Problem Assets (Assets with most tickets)
-        prisma.asset.findMany({
-          where: orgFilter,
-          take: 5,
-          select: {
-            id: true,
-            hostname: true,
-            ipAddress: true,
-            status: true,
-            deviceType: true,
-            location: true,
-            _count: {
-              select: { tickets: { where: { status: { notIn: ['CLOSED', 'RESOLVED'] } } } }
-            }
-          },
-          orderBy: {
-            tickets: { _count: 'desc' }
-          }
+        prisma.ticket.groupBy({
+          by: ['status'],
+          _count: { _all: true },
+          where: ticketBaseFilter
+        }).catch(() => []),
+        prisma.ticket.groupBy({
+          by: ['category'],
+          _count: { _all: true },
+          where: ticketBaseFilter
+        }).catch(() => []),
+        prisma.ticket.groupBy({
+          by: ['ticketType'],
+          _count: { _all: true },
+          where: ticketBaseFilter
+        }).catch(() => []),
+        prisma.ticket.groupBy({
+          by: ['customerId'],
+          _count: { _all: true },
+          where: ticketBaseFilter,
+          orderBy: { _count: { customerId: 'desc' } },
+          take: 6
+        }).catch(() => []),
+        prisma.ticket.groupBy({
+          by: ['locationId'],
+          _count: { _all: true },
+          where: ticketBaseFilter,
+          orderBy: { _count: { locationId: 'desc' } },
+          take: 6
         }).catch(() => [])
       ]);
 
       const overdueTickets = overdueCritical + overdueHigh + overdueMedium + overdueLow;
 
-      // 2. Personal stats for active technician/user
+      // 2. Personal stats for technician
       const [myTickets, myTasks] = await Promise.all([
         prisma.ticket.count({ 
           where: isStandard 
@@ -433,94 +426,226 @@ function getCommonRoutes(prisma) {
         }).catch(() => 0)
       ]);
 
-      // 3. Historical data for charts (Last 14 days)
-      const fourteenDaysAgo = new Date();
-      fourteenDaysAgo.setDate(fourteenDaysAgo.getDate() - 14);
-      fourteenDaysAgo.setHours(0, 0, 0, 0);
-      
-      const ticketsHistory = await prisma.ticket.findMany({
+      // 3. Historical Data for Last 12 Months (Yearly Evolution)
+      const oneYearAgo = new Date();
+      oneYearAgo.setFullYear(oneYearAgo.getFullYear() - 1);
+      oneYearAgo.setDate(1);
+      oneYearAgo.setHours(0, 0, 0, 0);
+
+      const pastYearTickets = await prisma.ticket.findMany({
         where: {
           ...ticketBaseFilter,
-          createdAt: { gte: fourteenDaysAgo }
+          createdAt: { gte: oneYearAgo }
         },
-        select: { createdAt: true, status: true, ticketType: true }
+        select: {
+          id: true,
+          createdAt: true,
+          resolvedAt: true,
+          status: true,
+          ticketType: true,
+          priority: true
+        }
       }).catch(() => []);
 
-      const chartData = [];
-      for (let i = 13; i >= 0; i--) {
-        const d = new Date();
-        d.setDate(d.getDate() - i);
-        const dateStr = d.toISOString().split('T')[0];
-        
-        const dayTickets = ticketsHistory.filter(t => t.createdAt && t.createdAt.toISOString().split('T')[0] === dateStr);
-        const incidents = dayTickets.filter(t => t.ticketType === 'Incidencia').length;
-        const requests = dayTickets.filter(t => t.ticketType !== 'Incidencia').length;
-        const resolved = dayTickets.filter(t => t.status === 'RESOLVED' || t.status === 'CLOSED').length;
+      const monthNames = ['Ene', 'Feb', 'Mar', 'Abr', 'May', 'Jun', 'Jul', 'Ago', 'Sep', 'Oct', 'Nov', 'Dic'];
+      const yearlyTrend = [];
+      const monthlyStatusDistribution = [];
 
-        chartData.push({ 
-          name: d.toLocaleDateString([], { weekday: 'short', day: 'numeric' }), 
-          fullDate: dateStr,
-          incidents,
-          requests,
-          resolved,
-          tickets: dayTickets.length
+      for (let i = 11; i >= 0; i--) {
+        const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+        const y = d.getFullYear();
+        const m = d.getMonth();
+        const monthKey = `${y}-${String(m + 1).padStart(2, '0')}`;
+        const monthLabel = `${monthNames[m]} ${y}`;
+        const shortMonth = monthNames[m];
+
+        const inMonthCreated = pastYearTickets.filter(t => {
+          const tc = new Date(t.createdAt);
+          return tc.getFullYear() === y && tc.getMonth() === m;
+        });
+
+        const inMonthResolved = pastYearTickets.filter(t => {
+          if (!t.resolvedAt) return false;
+          const tr = new Date(t.resolvedAt);
+          return tr.getFullYear() === y && tr.getMonth() === m;
+        });
+
+        const createdCount = inMonthCreated.length;
+        const resolvedCount = inMonthResolved.length;
+        const incidentsCount = inMonthCreated.filter(t => t.ticketType === 'Incidencia').length;
+        const requestsCount = inMonthCreated.filter(t => t.ticketType !== 'Incidencia').length;
+
+        const newStatus = inMonthCreated.filter(t => t.status === 'NEW' || t.status === 'OPEN').length;
+        const inProgressStatus = inMonthCreated.filter(t => t.status === 'IN_PROGRESS' || t.status === 'PLANIFICADO').length;
+        const pendingStatus = inMonthCreated.filter(t => t.status === 'PENDING' || t.status === 'WAITING' || t.status === 'EN_ESPERA').length;
+        const closedStatus = inMonthCreated.filter(t => t.status === 'CLOSED').length;
+
+        yearlyTrend.push({
+          month: monthLabel,
+          shortMonth,
+          created: createdCount,
+          resolved: resolvedCount,
+          incidents: incidentsCount,
+          requests: requestsCount
+        });
+
+        monthlyStatusDistribution.push({
+          month: monthLabel,
+          shortMonth,
+          new: newStatus,
+          inProgress: inProgressStatus,
+          pending: pendingStatus,
+          resolved: resolvedCount,
+          closed: closedStatus
         });
       }
 
-      // Format activities safely
-      const recentActivities = (recentActivitiesRaw || []).map(act => ({
-        ...act,
-        user: act.user || 'Sistema',
-        ticket: act.ticket || { id: act.ticketId, title: 'Ticket no encontrado', priority: 'MEDIUM', status: 'OPEN' }
-      }));
+      // 4. Historical Data for Last 30 Days (Daily Trend)
+      const thirtyDaysAgo = new Date();
+      thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+      thirtyDaysAgo.setHours(0, 0, 0, 0);
 
-      // Group formatters
+      const past30DaysTickets = pastYearTickets.filter(t => new Date(t.createdAt) >= thirtyDaysAgo);
+
+      const thirtyDaysTrend = [];
+      for (let i = 29; i >= 0; i--) {
+        const d = new Date();
+        d.setDate(d.getDate() - i);
+        const dateStr = d.toISOString().split('T')[0];
+        const dayLabel = d.toLocaleDateString([], { month: 'short', day: 'numeric' });
+
+        const dayCreated = past30DaysTickets.filter(t => t.createdAt && t.createdAt.toISOString().split('T')[0] === dateStr);
+        const dayIncidents = dayCreated.filter(t => t.ticketType === 'Incidencia').length;
+        const dayRequests = dayCreated.filter(t => t.ticketType !== 'Incidencia').length;
+        const dayResolved = pastYearTickets.filter(t => t.resolvedAt && new Date(t.resolvedAt).toISOString().split('T')[0] === dateStr).length;
+
+        thirtyDaysTrend.push({
+          date: dateStr,
+          name: dayLabel,
+          created: dayCreated.length,
+          incidents: dayIncidents,
+          requests: dayRequests,
+          resolved: dayResolved,
+          tickets: dayCreated.length
+        });
+      }
+
+      // 5. Fetch Customer/Entity & Location Names for Top Rankings
+      const customerIds = ticketsByCustomerRaw.map(c => c.customerId).filter(Boolean);
+      const locationIds = ticketsByLocationRaw.map(l => l.locationId).filter(Boolean);
+
+      const [customers, locations] = await Promise.all([
+        prisma.customer.findMany({
+          where: { id: { in: customerIds } },
+          select: { id: true, name: true }
+        }).catch(() => []),
+        prisma.location.findMany({
+          where: { id: { in: locationIds } },
+          select: { id: true, name: true }
+        }).catch(() => [])
+      ]);
+
+      const customerMap = Object.fromEntries(customers.map(c => [c.id, c.name]));
+      const locationMap = Object.fromEntries(locations.map(l => [l.id, l.name]));
+
+      // Format Top Categories
+      const totalCategorized = (ticketsByCategoryRaw || []).reduce((sum, c) => sum + (c._count?._all || 0), 0) || 1;
+      const topCategories = (ticketsByCategoryRaw || [])
+        .filter(c => c.category)
+        .map(c => ({
+          label: c.category || 'General',
+          count: c._count?._all || 0,
+          percent: Math.round(((c._count?._all || 0) / totalCategorized) * 100)
+        }))
+        .sort((a, b) => b.count - a.count)
+        .slice(0, 6);
+
+      // Format Top Request Types (PQRSF / ITIL)
+      const totalByType = (ticketsByTypeRaw || []).reduce((sum, t) => sum + (t._count?._all || 0), 0) || 1;
+      const topRequestTypes = (ticketsByTypeRaw || [])
+        .map(t => ({
+          label: t.ticketType || 'Incidencia',
+          count: t._count?._all || 0,
+          percent: Math.round(((t._count?._all || 0) / totalByType) * 100)
+        }))
+        .sort((a, b) => b.count - a.count);
+
+      // Format Top Entities (Customer / Location)
+      const topEntities = (ticketsByCustomerRaw || [])
+        .map(c => ({
+          label: customerMap[c.customerId] || `Entidad #${c.customerId}`,
+          count: c._count?._all || 0,
+          percent: Math.round(((c._count?._all || 0) / (totalTickets || 1)) * 100)
+        }))
+        .slice(0, 5);
+
+      // If customer grouping is empty, use location grouping
+      if (topEntities.length === 0) {
+        (ticketsByLocationRaw || []).forEach(l => {
+          topEntities.push({
+            label: locationMap[l.locationId] || `Sede #${l.locationId}`,
+            count: l._count?._all || 0,
+            percent: Math.round(((l._count?._all || 0) / (totalTickets || 1)) * 100)
+          });
+        });
+      }
+
+      // Format Severity Distribution
+      const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+      const severityLabels = {
+        CRITICAL: 'Crítico / Emergencia',
+        HIGH: 'Alta Prioridad',
+        MEDIUM: 'Media Prioridad',
+        LOW: 'Baja Prioridad'
+      };
+      const severityColors = {
+        CRITICAL: '#dc2626',
+        HIGH: '#ea580c',
+        MEDIUM: '#2563eb',
+        LOW: '#059669'
+      };
+
       const ticketsByPriority = (ticketsByPriorityRaw || []).reduce((acc, curr) => {
         if (curr.priority) acc[curr.priority] = curr._count?._all || 0;
         return acc;
       }, {});
+
+      const totalOpenPrio = openTickets || 1;
+      const severityDistribution = severityOrder.map(key => {
+        const count = ticketsByPriority[key] || 0;
+        return {
+          priority: key,
+          label: severityLabels[key],
+          count,
+          percent: Math.round((count / totalOpenPrio) * 100),
+          color: severityColors[key]
+        };
+      });
 
       const ticketsByStatus = (ticketsByStatusRaw || []).reduce((acc, curr) => {
         if (curr.status) acc[curr.status] = curr._count?._all || 0;
         return acc;
       }, {});
 
-      const totalActive = openTickets || 1;
       const slaCompliance = totalTickets > 0 
         ? Math.max(70, Math.min(100, Math.round(((totalTickets - overdueTickets) / totalTickets) * 100))) 
         : 100;
 
       res.json({
-        global: {
+        kpis: {
           totalTickets,
+          assignedTickets,
           openTickets,
           inProgressTickets,
+          pendingTickets,
           resolvedTickets,
           closedTickets,
           criticalTickets,
-          incidentCount: incidentCount || (Math.round(openTickets * 0.55)),
-          requestCount: requestCount || (Math.max(0, openTickets - Math.round(openTickets * 0.55))),
+          incidentCount: incidentCount || Math.round(totalTickets * 0.55),
+          requestCount: requestCount || Math.max(0, totalTickets - Math.round(totalTickets * 0.55)),
           overdueTickets,
-          slaRiskCount: overdueTickets,
           unassignedTickets,
-          slaCompliance,
-          totalAssets,
-          onlineAssets,
-          offlineAssets,
-          warningAssets,
-          criticalAssetsCount: warningAssets + (offlineAssets > 0 ? 1 : 0),
-          healthScore: totalAssets > 0 ? Math.round((onlineAssets / totalAssets) * 100) : 100,
-          ticketsByPriority,
-          ticketsByStatus,
-          topProblemAssets: (topProblemAssetsRaw || []).map(a => ({
-            id: a.id,
-            hostname: a.hostname,
-            ipAddress: a.ipAddress,
-            status: a.status,
-            deviceType: a.deviceType,
-            location: a.location,
-            activeTickets: a._count?.tickets || 0
-          }))
+          slaCompliance
         },
         personal: {
           myTickets,
@@ -532,8 +657,15 @@ function getCommonRoutes(prisma) {
         isAdmin: Boolean(isAdmin),
         canSwitchView: Boolean(isAdmin || isLevel1 || isLevel3),
         viewMode: forcePersonal ? 'personal' : 'global',
-        recentActivities,
-        chartData
+        yearlyTrend,
+        thirtyDaysTrend,
+        monthlyStatusDistribution,
+        topCategories,
+        topRequestTypes,
+        topEntities,
+        severityDistribution,
+        ticketsByPriority,
+        ticketsByStatus
       });
     } catch (error) {
       console.error('Error fetching dashboard data:', error);

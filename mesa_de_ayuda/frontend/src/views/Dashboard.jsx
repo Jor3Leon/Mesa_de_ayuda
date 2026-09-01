@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
+import { generateDashboardReport } from '../lib/reports';
 import { 
   AreaChart, 
   Area, 
@@ -8,28 +9,44 @@ import {
   YAxis, 
   CartesianGrid, 
   Tooltip, 
-  ResponsiveContainer 
+  ResponsiveContainer,
+  Legend
 } from 'recharts';
 
 const initialData = {
   global: {
+    totalTickets: 0,
     openTickets: 0,
+    inProgressTickets: 0,
+    resolvedTickets: 0,
+    closedTickets: 0,
     criticalTickets: 0,
+    incidentCount: 0,
+    requestCount: 0,
+    overdueTickets: 0,
+    slaRiskCount: 0,
+    slaCompliance: 100,
     totalAssets: 0,
     onlineAssets: 0,
     offlineAssets: 0,
     warningAssets: 0,
+    criticalAssetsCount: 0,
     unassignedTickets: 0,
     healthScore: 100,
     ticketsByPriority: {},
     ticketsByStatus: {},
-    slaRiskCount: 0,
-    longOfflineAssets: 0,
+    topProblemAssets: []
   },
   personal: {
     myTickets: 0,
     myTasks: 0,
   },
+  isLevel2: false,
+  isLevel1: false,
+  isLevel3: false,
+  isAdmin: false,
+  canSwitchView: true,
+  viewMode: 'global',
   recentActivities: [],
   chartData: [],
 };
@@ -46,20 +63,25 @@ export default function Dashboard({ user }) {
   const [recentAssets, setRecentAssets] = useState([]);
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(true);
+  const [viewMode, setViewMode] = useState('global'); // 'global' | 'personal'
 
-  const isAdmin = user?.role?.toUpperCase() === 'ADMIN' || user?.role?.toUpperCase() === 'ADMINISTRADOR';
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
-  const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || userRoleStr.includes('NIVEL 2') || userRoleStr.includes('LEVEL_2') || Boolean(data?.isLevel2);
-  const isTechnician = isAdmin || isLevel2 || userRoleStr === 'TECNICO' || userRoleStr === 'TECHNICIAN' || userRoleStr.includes('NIVEL 1') || userRoleStr.includes('NIVEL 3');
-  const isStandardUser = user?.role === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
+  const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || (userRoleStr.includes('NIVEL 2') && !userRoleStr.includes('NIVEL 1') && !userRoleStr.includes('NIVEL 3'));
+  const isLevel1 = userRoleStr === 'NIVEL 1' || userRoleStr === 'LEVEL_1' || userRoleStr.includes('NIVEL 1');
+  const isLevel3 = userRoleStr === 'NIVEL 3' || userRoleStr === 'LEVEL_3' || userRoleStr.includes('NIVEL 3') || userRoleStr.includes('SUPERVISOR');
+  const isAdmin = userRoleStr === 'ADMIN' || userRoleStr === 'ADMINISTRADOR';
+  const isStandardUser = userRoleStr === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
+
+  const canSwitchView = !isLevel2 && !isStandardUser;
 
   useEffect(() => {
     let ignore = false;
 
     const fetchData = async () => {
       try {
+        const effectiveViewMode = isLevel2 || isStandardUser ? 'personal' : viewMode;
         const [dashboardData, assetsData] = await Promise.all([
-          apiRequest('/dashboard/data'),
+          apiRequest(`/dashboard/data?viewMode=${effectiveViewMode}`),
           apiRequest('/assets/recent').catch(() => [])
         ]);
 
@@ -84,7 +106,7 @@ export default function Dashboard({ user }) {
       ignore = true;
       clearInterval(interval);
     };
-  }, [user]);
+  }, [user, viewMode]);
 
   if (loading) {
     return (
@@ -93,12 +115,12 @@ export default function Dashboard({ user }) {
           width: '40px',
           height: '40px',
           border: '3px solid #e2e8f0',
-          borderTopColor: '#2563eb',
+          borderTopColor: '#00D1FF',
           borderRadius: '50%',
           animation: 'spin 1s linear infinite',
           margin: '0 auto 1rem auto'
         }} />
-        <p style={{ fontWeight: '600', fontSize: '0.95rem' }}>Cargando consola de control y telemetría...</p>
+        <p style={{ fontWeight: '600', fontSize: '0.95rem' }}>Cargando consola de comando ITIL/ITSM y telemetría...</p>
       </div>
     );
   }
@@ -107,11 +129,12 @@ export default function Dashboard({ user }) {
   const personal = data?.personal || initialData.personal;
   const activities = data?.recentActivities || [];
   const chart = data?.chartData || [];
+  const isPersonalScope = isLevel2 || isStandardUser || viewMode === 'personal';
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO OPERATIONAL PANEL */}
+      {/* 🌟 HERO OPERATIONAL PANEL (Midnight Blue Suite) */}
       <div style={{
         background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
@@ -127,32 +150,39 @@ export default function Dashboard({ user }) {
         gap: '1.5rem'
       }}>
         <div style={{ flex: '1', minWidth: '280px' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '0.4rem', flexWrap: 'wrap' }}>
             <span style={{
               fontSize: '0.75rem',
-              fontWeight: '700',
-              padding: '0.2rem 0.6rem',
+              fontWeight: '800',
+              padding: '0.2rem 0.65rem',
               borderRadius: '9999px',
               background: 'rgba(0, 209, 255, 0.18)',
               border: '1px solid rgba(0, 209, 255, 0.4)',
-              color: '#00D1FF'
+              color: '#00D1FF',
+              letterSpacing: '0.02em',
+              textTransform: 'uppercase'
             }}>
-              {isLevel2 ? '🔧 Service Desk · Técnico Nivel 2' : 'ITSM & RMM Operations'}
+              {isLevel2 
+                ? '🔧 Service Desk · Técnico Nivel 2' 
+                : isLevel1
+                ? '📋 Coordinación Service Desk · Nivel 1'
+                : isLevel3
+                ? '🛡️ Supervisión Service Desk · Nivel 3'
+                : 'Centro de Comando ITSM & RMM'
+              }
             </span>
             <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>
-              {isLevel2 ? '• Consola Personal Operativa' : '• Centro de Monitoreo Activo'}
+              {isPersonalScope ? '• Consola Personal Operativa' : '• Monitoreo Operacional Global 360°'}
             </span>
           </div>
 
           <h1 style={{ fontSize: '1.75rem', fontWeight: '800', margin: '0 0 0.4rem 0', letterSpacing: '-0.02em', color: '#ffffff' }}>
             Hola, {user?.name?.split(' ')[0] || 'Usuario'} 👋
           </h1>
-          <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '600px', lineHeight: 1.5 }}>
-            {isLevel2 
-              ? `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} casos en atención activa en tu flujo especializado.`
-              : isAdmin 
-              ? `El parque tecnológico cuenta con ${global.totalAssets || 0} activos y ${global.openTickets || 0} incidentes en gestión.`
-              : `Tienes ${personal.myTickets || 0} tickets asignados y ${personal.myTasks || 0} tareas pendientes en tu flujo operativo.`
+          <p style={{ margin: 0, fontSize: '0.9rem', color: '#94a3b8', maxWidth: '650px', lineHeight: 1.5 }}>
+            {isPersonalScope
+              ? `Tienes ${personal.myTickets || global.openTickets || 0} tickets asignados y ${personal.myTasks || global.inProgressTickets || 0} casos en progreso en tu bandeja individual.`
+              : `Operación global en tiempo real: ${global.openTickets || 0} tickets en gestión, ${global.criticalTickets || 0} críticos y ${global.onlineAssets || 0} activos RMM monitoreados.`
             }
           </p>
 
@@ -171,7 +201,7 @@ export default function Dashboard({ user }) {
               borderRadius: '9999px'
             }}>
               <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#34d399' }} />
-              {isLevel2 ? 'Métricas Personales Activas' : 'RMM & Telemetría Conectado'}
+              {isPersonalScope ? 'Métricas Personales Activas' : 'RMM & Service Desk en Vivo'}
             </div>
 
             {global.criticalTickets > 0 && (
@@ -191,82 +221,134 @@ export default function Dashboard({ user }) {
                   cursor: 'pointer'
                 }}
               >
-                ⚠️ {global.criticalTickets} {isLevel2 ? 'Mis Incidentes Críticos' : 'Tickets Críticos'}
+                🚨 {global.criticalTickets} {isPersonalScope ? 'Mis Incidentes Críticos' : 'Incidentes Críticos'}
               </div>
             )}
 
-            {global.slaRiskCount > 0 && (
-              <div style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                gap: '0.4rem',
-                background: 'rgba(245, 158, 11, 0.2)',
-                border: '1px solid rgba(245, 158, 11, 0.4)',
-                color: '#fbbf24',
-                fontSize: '0.75rem',
-                fontWeight: '700',
-                padding: '0.25rem 0.65rem',
-                borderRadius: '9999px'
-              }}>
-                ⏱️ {global.slaRiskCount} {isLevel2 ? 'Mis Casos en Riesgo SLA' : 'SLA en Riesgo'}
+            {global.overdueTickets > 0 && (
+              <div 
+                onClick={() => navigate('/tickets')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                  background: 'rgba(245, 158, 11, 0.2)',
+                  border: '1px solid rgba(245, 158, 11, 0.4)',
+                  color: '#fbbf24',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  padding: '0.25rem 0.65rem',
+                  borderRadius: '9999px',
+                  cursor: 'pointer'
+                }}
+              >
+                ⏱️ {global.overdueTickets} {isPersonalScope ? 'Mis Tickets Vencidos' : 'Fuera de ANS / Vencidos'}
               </div>
             )}
           </div>
         </div>
 
-        {/* Global / Personal Health Score Badge */}
+        {/* Global/Personal Controls & Health Badge */}
         <div style={{
           display: 'flex',
           gap: '1rem',
-          alignItems: 'center'
+          alignItems: 'center',
+          flexWrap: 'wrap'
         }}>
-          <div style={{
-            background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
-            borderRadius: '14px',
-            padding: '1rem 1.5rem',
-            textAlign: 'center',
-            backdropFilter: 'blur(8px)',
-            minWidth: '130px'
-          }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              {isLevel2 ? 'Mis Tickets' : 'Salud Infraestructura'}
-            </div>
+          {/* Switcher View (for Admin, N1, N3) */}
+          {canSwitchView && (
             <div style={{
-              fontSize: '2rem',
-              fontWeight: '900',
-              color: isLevel2 ? '#00D1FF' : ((global.healthScore || 0) > 85 ? '#34d399' : '#fbbf24'),
-              marginTop: '0.25rem'
+              background: 'rgba(255, 255, 255, 0.08)',
+              padding: '4px',
+              borderRadius: '10px',
+              display: 'flex',
+              border: '1px solid rgba(255, 255, 255, 0.15)'
             }}>
-              {isLevel2 ? (personal.myTickets || 0) : `${global.healthScore || 0}%`}
+              <button
+                type="button"
+                onClick={() => setViewMode('global')}
+                style={{
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: viewMode === 'global' ? '#00D1FF' : 'transparent',
+                  color: viewMode === 'global' ? '#001D40' : '#cbd5e1'
+                }}
+              >
+                🌐 Global
+              </button>
+              <button
+                type="button"
+                onClick={() => setViewMode('personal')}
+                style={{
+                  padding: '0.4rem 0.75rem',
+                  borderRadius: '7px',
+                  border: 'none',
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  cursor: 'pointer',
+                  transition: 'all 0.2s',
+                  background: viewMode === 'personal' ? '#00D1FF' : 'transparent',
+                  color: viewMode === 'personal' ? '#001D40' : '#cbd5e1'
+                }}
+              >
+                👤 Mi Bandeja
+              </button>
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-              {isLevel2 ? `${personal.myTasks || 0} en atención` : `${global.onlineAssets} de ${global.totalAssets} online`}
-            </div>
-          </div>
+          )}
 
+          {/* Export Shift Report Button */}
+          <button
+            type="button"
+            onClick={() => generateDashboardReport(data, user, viewMode)}
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.4rem',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
+              color: '#001D40',
+              border: 'none',
+              padding: '0.65rem 1rem',
+              borderRadius: '10px',
+              fontSize: '0.8rem',
+              fontWeight: '800',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.3)',
+              transition: 'transform 0.15s ease'
+            }}
+            onMouseEnter={(e) => e.currentTarget.style.transform = 'translateY(-1px)'}
+            onMouseLeave={(e) => e.currentTarget.style.transform = 'translateY(0)'}
+          >
+            📄 Exportar Turno (PDF)
+          </button>
+
+          {/* SLA Badge */}
           <div style={{
             background: 'rgba(255, 255, 255, 0.05)',
-            border: '1px solid rgba(255, 255, 255, 0.1)',
+            border: '1px solid rgba(255, 255, 255, 0.12)',
             borderRadius: '14px',
-            padding: '1rem 1.5rem',
+            padding: '0.85rem 1.25rem',
             textAlign: 'center',
             backdropFilter: 'blur(8px)',
-            minWidth: '130px'
+            minWidth: '120px'
           }}>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+            <div style={{ fontSize: '0.7rem', fontWeight: '800', color: '#00D1FF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
               Cumplimiento ANS
             </div>
             <div style={{
-              fontSize: '2rem',
+              fontSize: '1.75rem',
               fontWeight: '900',
-              color: '#60a5fa',
-              marginTop: '0.25rem'
+              color: (global.slaCompliance || 100) >= 90 ? '#34d399' : '#fbbf24',
+              marginTop: '0.15rem'
             }}>
-              98.4%
+              {global.slaCompliance || 100}%
             </div>
-            <div style={{ fontSize: '0.7rem', color: '#94a3b8' }}>
-              Tiempo promedio: 1.2h
+            <div style={{ fontSize: '0.65rem', color: '#94a3b8' }}>
+              Meta institucional: &gt;95%
             </div>
           </div>
         </div>
@@ -286,14 +368,14 @@ export default function Dashboard({ user }) {
         </div>
       )}
 
-      {/* 📊 BENTO KPI CARDS GRID */}
+      {/* 📊 BENTO KPI GRID (6 Cards Clave ITIL/ITSM) */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(260px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
         gap: '1.25rem',
         marginBottom: '1.75rem'
       }}>
-        {/* Card 1 */}
+        {/* Card 1: Active Workload */}
         <div 
           onClick={() => navigate('/tickets')}
           style={{
@@ -303,26 +385,88 @@ export default function Dashboard({ user }) {
             border: '1px solid #e2e8f0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
             cursor: 'pointer',
+            borderLeft: '4px solid #3b82f6',
             transition: 'transform 0.2s ease, box-shadow 0.2s ease'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
-              {isStandardUser ? 'Mis Solicitudes' : 'Mis Tickets Asignados'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#64748b', textTransform: 'uppercase' }}>
+              {isPersonalScope ? 'Mis Tickets Activos' : 'Tickets Activos en Gestión'}
             </span>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              👤
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+              📥
             </div>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
-            {personal.myTickets || 0}
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', lineHeight: 1.2 }}>
+            {global.openTickets || 0}
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#2563eb', fontWeight: '600', marginTop: '0.5rem' }}>
-            {isStandardUser ? 'Ver solicitudes creadas →' : 'Gestionar mi bandeja de trabajo →'}
+          <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.4rem', display: 'flex', justifyContent: 'space-between' }}>
+            <span>⚡ {global.inProgressTickets || 0} en atención activa</span>
+            <span>Ver todos →</span>
           </div>
         </div>
 
-        {/* Card 2 */}
+        {/* Card 2: Incidents (Fallas) */}
+        <div 
+          onClick={() => navigate('/tickets')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            borderLeft: '4px solid #ef4444',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#ef4444', textTransform: 'uppercase' }}>
+              {isPersonalScope ? 'Mis Incidentes (Fallas)' : 'Incidentes (Averías)'}
+            </span>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef2f2', color: '#ef4444', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+              🔥
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#ef4444', lineHeight: 1.2 }}>
+            {global.incidentCount || 0}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginTop: '0.4rem' }}>
+            Afectación a la continuidad operativa
+          </div>
+        </div>
+
+        {/* Card 3: Requests (Requerimientos) */}
+        <div 
+          onClick={() => navigate('/tickets')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.25rem 1.5rem',
+            border: '1px solid #e2e8f0',
+            boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+            cursor: 'pointer',
+            borderLeft: '4px solid #00D1FF',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#0284c7', textTransform: 'uppercase' }}>
+              {isPersonalScope ? 'Mis Requerimientos' : 'Requerimientos (Peticiones)'}
+            </span>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#e0f2fe', color: '#0284c7', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+              📋
+            </div>
+          </div>
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0369a1', lineHeight: 1.2 }}>
+            {global.requestCount || 0}
+          </div>
+          <div style={{ fontSize: '0.75rem', color: '#64748b', fontWeight: '600', marginTop: '0.4rem' }}>
+            Solicitudes de servicio y accesos
+          </div>
+        </div>
+
+        {/* Card 4: Critical & Emergencies */}
         <div 
           onClick={() => navigate('/tickets?priority=CRITICAL')}
           style={{
@@ -331,54 +475,58 @@ export default function Dashboard({ user }) {
             padding: '1.25rem 1.5rem',
             border: (global.criticalTickets || 0) > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            borderLeft: '4px solid #dc2626',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase' }}>
-              {isLevel2 ? 'Mis Incidentes Críticos' : 'Tickets Críticos'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase' }}>
+              {isPersonalScope ? 'Mis Casos Críticos' : 'Incidentes Críticos'}
             </span>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fee2e2', color: '#dc2626', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
               🚨
             </div>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#0f172a', lineHeight: 1.2 }}>
             {global.criticalTickets || 0}
           </div>
-          <div style={{ fontSize: '0.8rem', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: '600', marginTop: '0.5rem' }}>
-            {(global.criticalTickets || 0) > 0 ? 'Requiere atención urgente inmediata →' : 'Sin emergencias críticas activas'}
+          <div style={{ fontSize: '0.75rem', color: (global.criticalTickets || 0) > 0 ? '#dc2626' : '#64748b', fontWeight: '700', marginTop: '0.4rem' }}>
+            {(global.criticalTickets || 0) > 0 ? 'Prioridad P1 Inmediata →' : 'Sin emergencias críticas activas'}
           </div>
         </div>
 
-        {/* Card 3 */}
+        {/* Card 5: SLA Overdue / In Risk */}
         <div 
-          onClick={() => navigate(isLevel2 ? '/tickets?status=IN_PROGRESS' : '/tickets?assigned=none')}
+          onClick={() => navigate('/tickets')}
           style={{
-            background: '#ffffff',
+            background: (global.overdueTickets || 0) > 0 ? '#fffbeb' : '#ffffff',
             borderRadius: '14px',
             padding: '1.25rem 1.5rem',
-            border: '1px solid #e2e8f0',
+            border: (global.overdueTickets || 0) > 0 ? '1px solid #fde68a' : '1px solid #e2e8f0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            borderLeft: '4px solid #f59e0b',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
-              {isLevel2 ? 'Mis Casos en Progreso' : 'Tickets Sin Asignar'}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#64748b', textTransform: 'uppercase' }}>
+              {isPersonalScope ? 'Mis Tickets Fuera de SLA' : 'Tickets Vencidos (SLA)'}
             </span>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              {isLevel2 ? '⚡' : '📥'}
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#fef3c7', color: '#d97706', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
+              ⏱️
             </div>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
-            {isLevel2 ? (personal.myTasks || 0) : (global.unassignedTickets || 0)}
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#0f172a', lineHeight: 1.2 }}>
+            {global.overdueTickets || 0}
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#d97706', fontWeight: '600', marginTop: '0.5rem' }}>
-            {isLevel2 ? 'Ver tickets en curso →' : 'Asignar a técnicos disponibles →'}
+          <div style={{ fontSize: '0.75rem', color: (global.overdueTickets || 0) > 0 ? '#d97706' : '#64748b', fontWeight: '700', marginTop: '0.4rem' }}>
+            {(global.overdueTickets || 0) > 0 ? 'Tiempo límite excedido →' : 'Todos en tiempo objetivo'}
           </div>
         </div>
 
-        {/* Card 4 */}
+        {/* Card 6: RMM Assets & Health */}
         <div 
           onClick={() => navigate('/assets')}
           style={{
@@ -387,34 +535,36 @@ export default function Dashboard({ user }) {
             padding: '1.25rem 1.5rem',
             border: '1px solid #e2e8f0',
             boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-            cursor: 'pointer'
+            cursor: 'pointer',
+            borderLeft: '4px solid #10b981',
+            transition: 'transform 0.2s ease, box-shadow 0.2s ease'
           }}
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-            <span style={{ fontSize: '0.8rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase' }}>
-              Dispositivos RMM
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.5rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', color: '#059669', textTransform: 'uppercase' }}>
+              Salud Parque RMM
             </span>
-            <div style={{ width: '36px', height: '36px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            <div style={{ width: '34px', height: '34px', borderRadius: '8px', background: '#ecfdf5', color: '#059669', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '1.1rem' }}>
               💻
             </div>
           </div>
-          <div style={{ fontSize: '2rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
-            {global.onlineAssets || 0} / {global.totalAssets || 0}
+          <div style={{ fontSize: '2rem', fontWeight: '900', color: '#0f172a', lineHeight: 1.2 }}>
+            {global.onlineAssets || 0} <span style={{ fontSize: '1.1rem', color: '#94a3b8', fontWeight: '600' }}>/ {global.totalAssets || 0}</span>
           </div>
-          <div style={{ fontSize: '0.8rem', color: '#059669', fontWeight: '600', marginTop: '0.5rem' }}>
-            Inventario & Monitoreo TI →
+          <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.4rem' }}>
+            {global.healthScore || 100}% de disponibilidad en red →
           </div>
         </div>
       </div>
 
-      {/* 📈 MAIN SECTION: CHARTS & INFRASTRUCTURE MONITOR */}
+      {/* 📈 SECTION 2: INTERACTIVE CHARTS & SEVERITY MATRIX */}
       <div style={{
         display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(380px, 1fr))',
         gap: '1.5rem',
         marginBottom: '1.75rem'
       }}>
-        {/* CHART: TICKET TREND */}
+        {/* CHART: TICKET TREND (Incidents vs Requests vs Resolved) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -422,43 +572,54 @@ export default function Dashboard({ user }) {
           border: '1px solid #e2e8f0',
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-                {isLevel2 ? 'Tendencia de Mis Incidentes & Requerimientos' : 'Tendencia de Incidentes & Requerimientos'}
+                {isPersonalScope ? 'Evolución de Mis Casos (Últimos 14 Días)' : 'Tendencia Operativa: Incidentes vs Requerimientos (14 Días)'}
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                {isLevel2 ? 'Volumen de tus tickets gestionados en los últimos 7 días' : 'Volumen de tickets ingresados en los últimos 7 días'}
+                Comparativa diaria de volumen ingresado frente a tickets resueltos
               </p>
             </div>
-            <span style={{ fontSize: '0.75rem', fontWeight: '700', padding: '0.2rem 0.5rem', borderRadius: '4px', background: '#f1f5f9', color: '#475569' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: '800', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#f1f5f9', color: '#002D62' }}>
               En tiempo real
             </span>
           </div>
 
-          <div style={{ height: '240px', width: '100%' }}>
+          <div style={{ height: '260px', width: '100%' }}>
             <ResponsiveContainer width="100%" height="100%">
               <AreaChart data={chart} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
-                  <linearGradient id="ticketGradient" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.45}/>
-                    <stop offset="95%" stopColor="#002D62" stopOpacity={0.0}/>
+                  <linearGradient id="incidentGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="requestGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.4}/>
+                    <stop offset="95%" stopColor="#00D1FF" stopOpacity={0.0}/>
+                  </linearGradient>
+                  <linearGradient id="resolvedGrad" x1="0" y1="0" x2="0" y2="1">
+                    <stop offset="5%" stopColor="#10b981" stopOpacity={0.35}/>
+                    <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="name" stroke="#94a3b8" fontSize={12} tickLine={false} />
-                <YAxis stroke="#94a3b8" fontSize={12} tickLine={false} allowDecimals={false} />
+                <XAxis dataKey="name" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
                   labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
-                <Area type="monotone" dataKey="tickets" stroke="#002D62" strokeWidth={3} fillOpacity={1} fill="url(#ticketGradient)" />
+                <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
+                <Area type="monotone" name="Incidentes" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#incidentGrad)" />
+                <Area type="monotone" name="Requerimientos" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#requestGrad)" />
+                <Area type="monotone" name="Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#resolvedGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
         </div>
 
-        {/* PRIORITY & INFRASTRUCTURE STATUS */}
+        {/* SEVERITY & STATUS MATRIX */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -471,26 +632,26 @@ export default function Dashboard({ user }) {
         }}>
           <div>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-              {isLevel2 ? 'Distribución de Mis Tickets por Severidad' : 'Distribución por Severidad'}
+              {isPersonalScope ? 'Distribución de Mis Tickets por Severidad' : 'Distribución Operativa por Severidad'}
             </h3>
             <p style={{ margin: '0.2rem 0 1rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-              {isLevel2 ? 'Proporción de tus tickets abiertos según nivel de impacto' : 'Proporción de tickets abiertos según nivel de impacto'}
+              Volumen y porcentaje según nivel de impacto técnico
             </p>
 
             <div style={{ display: 'flex', flexDirection: 'column', gap: '0.85rem' }}>
               {[
-                { key: 'CRITICAL', label: 'Crítico / Emergencia', color: '#dc2626', bg: '#fee2e2' },
-                { key: 'HIGH', label: 'Alta Prioridad', color: '#ea580c', bg: '#ffedd5' },
-                { key: 'MEDIUM', label: 'Media Prioridad', color: '#2563eb', bg: '#dbeafe' },
-                { key: 'LOW', label: 'Baja Prioridad', color: '#059669', bg: '#d1fae5' },
-              ].map(({ key, label, color, bg }) => {
+                { key: 'CRITICAL', label: 'Crítico / Emergencia', color: '#dc2626' },
+                { key: 'HIGH', label: 'Alta Prioridad', color: '#ea580c' },
+                { key: 'MEDIUM', label: 'Media Prioridad', color: '#2563eb' },
+                { key: 'LOW', label: 'Baja Prioridad', color: '#059669' },
+              ].map(({ key, label, color }) => {
                 const count = global.ticketsByPriority?.[key] || 0;
                 const total = global.openTickets || 1;
                 const pct = Math.round((count / total) * 100);
 
                 return (
                   <div key={key}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '600', marginBottom: '0.25rem' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', fontWeight: '700', marginBottom: '0.25rem' }}>
                       <span style={{ color: '#334155' }}>{label}</span>
                       <span style={{ color }}>{count} ({pct}%)</span>
                     </div>
@@ -504,18 +665,18 @@ export default function Dashboard({ user }) {
           </div>
 
           <div style={{ marginTop: '1.25rem', paddingTop: '1rem', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>¿Deseas emitir un reporte operacional?</span>
+            <span style={{ fontSize: '0.8rem', color: '#64748b' }}>¿Deseas auditoría detallada de ANS?</span>
             <button
               onClick={() => navigate('/analytics')}
-              style={{ background: '#f8fafc', border: '1px solid #cbd5e1', color: '#0f172a', padding: '0.4rem 0.85rem', borderRadius: '6px', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}
+              style={{ background: '#002D62', border: 'none', color: '#ffffff', padding: '0.45rem 0.9rem', borderRadius: '8px', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
             >
-              Ver Analytics →
+              Ver Módulo de Analítica →
             </button>
           </div>
         </div>
       </div>
 
-      {/* 🕒 BOTTOM ROW: RECENT ACTIVITIES & TELEMETRY SYNCS */}
+      {/* 🕒 SECTION 3: RECENT ACTIVITIES & PROBLEM ASSETS */}
       <div style={{
         display: 'grid',
         gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))',
@@ -530,7 +691,7 @@ export default function Dashboard({ user }) {
           boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
         }}>
           <h3 style={{ margin: '0 0 1rem 0', fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-            {isLevel2 ? 'Mi Actividad Reciente en el Service Desk' : 'Actividad Reciente del Service Desk'}
+            {isPersonalScope ? 'Mi Actividad Reciente en el Service Desk' : 'Timeline Operativo en Tiempo Real'}
           </h3>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
@@ -539,16 +700,16 @@ export default function Dashboard({ user }) {
                 No hay actividades registradas recientemente.
               </div>
             ) : (
-              activities.slice(0, 5).map((act, index) => (
+              activities.slice(0, 6).map((act, index) => (
                 <div key={index} style={{ display: 'flex', alignItems: 'flex-start', gap: '0.75rem', padding: '0.5rem 0', borderBottom: '1px solid #f8fafc' }}>
-                  <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '700' }}>
+                  <div style={{ width: '30px', height: '30px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: '800', flexShrink: 0 }}>
                     {act.user?.charAt(0) || 'S'}
                   </div>
                   <div style={{ flex: '1', fontSize: '0.85rem' }}>
                     <div>
                       <strong style={{ color: '#0f172a' }}>{act.user}</strong>{' '}
                       <span style={{ color: '#64748b' }}>{act.action} en</span>{' '}
-                      <strong style={{ color: '#2563eb' }}>{act.ticket?.title || 'Ticket'}</strong>
+                      <strong style={{ color: '#2563eb' }}>{act.ticket?.title || `Ticket #${act.ticketId}`}</strong>
                     </div>
                     <span style={{ fontSize: '0.75rem', color: '#94a3b8' }}>
                       {formatTime(act.createdAt)}
@@ -560,7 +721,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* TELEMETRY AGENTS RECENTLY SEEN */}
+        {/* TOP PROBLEM ASSETS & TELEMETRY */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -570,23 +731,23 @@ export default function Dashboard({ user }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '800', color: '#0f172a' }}>
-              Telemetría RMM de Endpoints
+              Activos con Mayor Frecuencia de Incidentes
             </h3>
             <button
               onClick={() => navigate('/assets')}
-              style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: '600', cursor: 'pointer' }}
+              style={{ background: 'none', border: 'none', color: '#2563eb', fontSize: '0.8rem', fontWeight: '700', cursor: 'pointer' }}
             >
-              Ver todos ({global.totalAssets}) →
+              Ver Inventario ({global.totalAssets}) →
             </button>
           </div>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
-            {recentAssets.length === 0 ? (
+            {(!global.topProblemAssets || global.topProblemAssets.length === 0) ? (
               <div style={{ textAlign: 'center', padding: '1.5rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-                No hay activos con telemetría reciente.
+                No hay activos con incidentes críticos acumulados.
               </div>
             ) : (
-              recentAssets.slice(0, 5).map((asset) => (
+              global.topProblemAssets.map((asset) => (
                 <div
                   key={asset.id}
                   onClick={() => navigate(`/assets?search=${asset.hostname}`)}
@@ -594,19 +755,20 @@ export default function Dashboard({ user }) {
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'space-between',
-                    padding: '0.6rem 0.75rem',
+                    padding: '0.65rem 0.85rem',
                     background: '#f8fafc',
-                    borderRadius: '8px',
+                    borderRadius: '10px',
                     cursor: 'pointer',
-                    transition: 'background 0.2s ease'
+                    transition: 'background 0.2s ease',
+                    border: '1px solid #e2e8f0'
                   }}
                 >
                   <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem' }}>
-                    <span style={{ fontSize: '1.1rem' }}>
+                    <span style={{ fontSize: '1.2rem' }}>
                       {asset.deviceType?.includes('Impresora') ? '🖨️' : asset.deviceType?.includes('Portátil') ? '💻' : '🖥️'}
                     </span>
                     <div>
-                      <div style={{ fontWeight: '700', fontSize: '0.875rem', color: '#0f172a' }}>
+                      <div style={{ fontWeight: '800', fontSize: '0.875rem', color: '#0f172a' }}>
                         {asset.hostname}
                       </div>
                       <div style={{ fontSize: '0.75rem', color: '#64748b' }}>
@@ -615,16 +777,18 @@ export default function Dashboard({ user }) {
                     </div>
                   </div>
 
-                  <span style={{
-                    fontSize: '0.7rem',
-                    fontWeight: '700',
-                    padding: '0.2rem 0.5rem',
-                    borderRadius: '4px',
-                    background: asset.status === 'ONLINE' ? '#ecfdf5' : '#fee2e2',
-                    color: asset.status === 'ONLINE' ? '#047857' : '#b91c1c'
-                  }}>
-                    {asset.status === 'ONLINE' ? '🟢 En línea' : '🔴 Desconectado'}
-                  </span>
+                  <div style={{ textAlign: 'right' }}>
+                    <span style={{
+                      fontSize: '0.7rem',
+                      fontWeight: '800',
+                      padding: '0.2rem 0.5rem',
+                      borderRadius: '4px',
+                      background: asset.activeTickets > 0 ? '#fee2e2' : '#ecfdf5',
+                      color: asset.activeTickets > 0 ? '#b91c1c' : '#047857'
+                    }}>
+                      {asset.activeTickets > 0 ? `⚠️ ${asset.activeTickets} tickets` : '🟢 Estable'}
+                    </span>
+                  </div>
                 </div>
               ))
             )}

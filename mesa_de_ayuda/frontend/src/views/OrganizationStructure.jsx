@@ -2,7 +2,6 @@ import { useEffect, useState, useMemo } from 'react';
 import { apiRequest } from '../lib/api';
 
 export default function OrganizationStructure() {
-  const [activeTab, setActiveTab] = useState('tree'); // 'tree' | 'sedes' | 'dependencias' | 'oficinas'
   const [treeData, setTreeData] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [dependencias, setDependencias] = useState([]);
@@ -672,12 +671,12 @@ export default function OrganizationStructure() {
         </div>
       )}
 
-      {/* 🧭 NAVIGATION TABS & FILTER BAR */}
+      {/* 🧭 SEARCH & FILTER BAR */}
       <div style={{
         background: '#ffffff',
         borderRadius: '14px',
         border: '1px solid #e2e8f0',
-        padding: '0.5rem',
+        padding: '0.65rem 1rem',
         marginBottom: '1.5rem',
         display: 'flex',
         flexWrap: 'wrap',
@@ -686,10 +685,9 @@ export default function OrganizationStructure() {
         gap: '0.75rem',
         boxShadow: '0 1px 3px rgba(0,0,0,0.05)'
       }}>
-        {/* Modern Tabs */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.35rem' }}>
-          <button
-            onClick={() => setActiveTab('tree')}
+        {/* Navigation Indicator */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+          <div
             style={{
               display: 'inline-flex',
               alignItems: 'center',
@@ -697,13 +695,11 @@ export default function OrganizationStructure() {
               padding: '0.6rem 1.15rem',
               borderRadius: '10px',
               fontSize: '0.875rem',
-              fontWeight: activeTab === 'tree' ? '700' : '500',
-              color: activeTab === 'tree' ? '#ffffff' : '#64748b',
-              background: activeTab === 'tree' ? 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)' : 'transparent',
+              fontWeight: '700',
+              color: '#ffffff',
+              background: 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)',
               border: 'none',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'tree' ? '0 4px 10px rgba(37, 99, 235, 0.3)' : 'none',
-              transition: 'all 0.2s ease'
+              boxShadow: '0 4px 10px rgba(37, 99, 235, 0.3)',
             }}
           >
             <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
@@ -713,83 +709,11 @@ export default function OrganizationStructure() {
               <path d="M18 9a9 9 0 0 1-9 9" />
             </svg>
             Árbol Jerárquico Visual
-          </button>
-
-          <button
-            onClick={() => setActiveTab('sedes')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.6rem 1.15rem',
-              borderRadius: '10px',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'sedes' ? '700' : '500',
-              color: activeTab === 'sedes' ? '#ffffff' : '#64748b',
-              background: activeTab === 'sedes' ? 'linear-gradient(135deg, #0f172a 0%, #2563eb 100%)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'sedes' ? '0 4px 10px rgba(37, 99, 235, 0.3)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <rect x="4" y="2" width="16" height="20" rx="2" />
-            </svg>
-            Sedes ({sedes.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('dependencias')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.6rem 1.15rem',
-              borderRadius: '10px',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'dependencias' ? '700' : '500',
-              color: activeTab === 'dependencias' ? '#ffffff' : '#64748b',
-              background: activeTab === 'dependencias' ? 'linear-gradient(135deg, #0f172a 0%, #7c3aed 100%)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'dependencias' ? '0 4px 10px rgba(124, 58, 237, 0.3)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-            Dependencias ({dependencias.length})
-          </button>
-
-          <button
-            onClick={() => setActiveTab('oficinas')}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              padding: '0.6rem 1.15rem',
-              borderRadius: '10px',
-              fontSize: '0.875rem',
-              fontWeight: activeTab === 'oficinas' ? '700' : '500',
-              color: activeTab === 'oficinas' ? '#ffffff' : '#64748b',
-              background: activeTab === 'oficinas' ? 'linear-gradient(135deg, #0f172a 0%, #059669 100%)' : 'transparent',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: activeTab === 'oficinas' ? '0 4px 10px rgba(5, 150, 105, 0.3)' : 'none',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-              <path d="M18 20V6a2 2 0 0 0-2-2H8a2 2 0 0 0-2 2v14" />
-            </svg>
-            Oficinas ({oficinas.length})
-          </button>
+          </div>
         </div>
 
         {/* Quick Search */}
-        <div style={{ position: 'relative', minWidth: '260px', flex: '1', maxWidth: '400px' }}>
+        <div style={{ position: 'relative', minWidth: '260px', flex: '1', maxWidth: '450px' }}>
           <svg
             width="16"
             height="16"
@@ -823,18 +747,15 @@ export default function OrganizationStructure() {
         </div>
       </div>
 
-      {/* 📦 TAB CONTENT */}
-
-      {/* TAB 1: ÁRBOL VISUAL */}
-      {activeTab === 'tree' && (
-        <div style={{
-          background: '#ffffff',
-          borderRadius: '16px',
-          border: '1px solid #e2e8f0',
-          padding: '1.5rem',
-          boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
-        }}>
-          {/* Tree Toolbar */}
+      {/* 📦 ÁRBOL VISUAL */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '16px',
+        border: '1px solid #e2e8f0',
+        padding: '1.5rem',
+        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.03)'
+      }}>
+        {/* Tree Toolbar */}
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
             <div style={{ fontSize: '0.875rem', color: '#64748b', fontWeight: '500' }}>
               Mostrando <strong style={{ color: '#0f172a' }}>{filteredTree.length}</strong> Sedes estructuradas
@@ -1203,190 +1124,6 @@ export default function OrganizationStructure() {
             })}
           </div>
         </div>
-      )}
-
-      {/* TAB 2: SEDES TABLE */}
-      {activeTab === 'sedes' && (
-        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Directorio de Sedes e Instalaciones</h3>
-            <button
-              onClick={() => handleOpenSedeModal()}
-              style={{ background: '#2563eb', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
-            >
-              + Nueva Sede
-            </button>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
-                  <th style={{ padding: '0.75rem 1rem' }}>Sede</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Código</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Dirección & Ciudad</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Contacto / Teléfono</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Administrador de Sede</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {sedes.map((sede) => (
-                  <tr key={sede.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
-                      🏛️ {sede.name}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem' }}>
-                      <span style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
-                        {sede.code || 'S/C'}
-                      </span>
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                      {sede.address || 'Sin dirección'} ({sede.city || 'Yopal'})
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                      {sede.phone || 'N/A'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                      {sede.managerName || 'Sin asignar'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                      <button onClick={() => handleOpenSedeModal(sede)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
-                      <button onClick={() => handleDelete('sedes', sede.id, sede.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 3: DEPENDENCIAS TABLE */}
-      {activeTab === 'dependencias' && (
-        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Secretarías, Direcciones y Áreas</h3>
-            <div style={{ display: 'flex', gap: '0.75rem' }}>
-              <select
-                value={filterSedeId}
-                onChange={(e) => setFilterSedeId(e.target.value)}
-                style={{ padding: '0.5rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.85rem' }}
-              >
-                <option value="ALL">Todas las Sedes</option>
-                {sedes.map((s) => (
-                  <option key={s.id} value={s.id}>{s.name}</option>
-                ))}
-              </select>
-              <button
-                onClick={() => handleOpenDepModal()}
-                style={{ background: '#7c3aed', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
-              >
-                + Nueva Dependencia
-              </button>
-            </div>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
-                  <th style={{ padding: '0.75rem 1rem' }}>Dependencia / Área</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Sede Vinculada</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Código / Sigla</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Jefe de Área</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Correo Electrónico</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {dependencias
-                  .filter((d) => filterSedeId === 'ALL' || String(d.sedeId) === String(filterSedeId))
-                  .map((dep) => (
-                    <tr key={dep.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                      <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
-                        📁 {dep.name}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '600' }}>
-                        {dep.sede?.name || 'Sin sede'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem' }}>
-                        <span style={{ background: '#f1f5f9', padding: '0.2rem 0.5rem', borderRadius: '4px', fontWeight: '600' }}>
-                          {dep.code || 'S/C'}
-                        </span>
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                        {dep.managerName || 'Sin jefe'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                        {dep.email || 'N/A'}
-                      </td>
-                      <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                        <button onClick={() => handleOpenDepModal(dep)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
-                        <button onClick={() => handleDelete('dependencias', dep.id, dep.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
-                      </td>
-                    </tr>
-                  ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
-
-      {/* TAB 4: OFICINAS TABLE */}
-      {activeTab === 'oficinas' && (
-        <div style={{ background: '#ffffff', borderRadius: '14px', border: '1px solid #e2e8f0', overflow: 'hidden' }}>
-          <div style={{ padding: '1.25rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center', borderBottom: '1px solid #e2e8f0', flexWrap: 'wrap', gap: '0.75rem' }}>
-            <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: '700', color: '#0f172a' }}>Oficinas & Espacios Físicos</h3>
-            <button
-              onClick={() => handleOpenOfiModal()}
-              style={{ background: '#059669', color: '#fff', border: 'none', padding: '0.5rem 1rem', borderRadius: '8px', fontSize: '0.85rem', fontWeight: '600', cursor: 'pointer' }}
-            >
-              + Nueva Oficina
-            </button>
-          </div>
-
-          <div style={{ overflowX: 'auto' }}>
-            <table style={{ width: '100%', borderCollapse: 'collapse', textAlign: 'left', fontSize: '0.875rem' }}>
-              <thead>
-                <tr style={{ background: '#f8fafc', borderBottom: '1px solid #e2e8f0', color: '#64748b', fontWeight: '700' }}>
-                  <th style={{ padding: '0.75rem 1rem' }}>Oficina / Espacio</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Piso / Nivel</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Dependencia</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Sede</th>
-                  <th style={{ padding: '0.75rem 1rem' }}>Responsable de Oficina</th>
-                  <th style={{ padding: '0.75rem 1rem', textAlign: 'right' }}>Acciones</th>
-                </tr>
-              </thead>
-              <tbody>
-                {oficinas.map((ofi) => (
-                  <tr key={ofi.id} style={{ borderBottom: '1px solid #f1f5f9' }}>
-                    <td style={{ padding: '0.85rem 1rem', fontWeight: '700', color: '#0f172a' }}>
-                      🚪 {ofi.name}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                      {ofi.floor || 'Planta Principal'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#7c3aed', fontWeight: '600' }}>
-                      {ofi.dependencia?.name || 'Directa'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#2563eb', fontWeight: '600' }}>
-                      {ofi.sede?.name || ofi.dependencia?.sede?.name || 'Sede Principal'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', color: '#475569' }}>
-                      {ofi.responsibleUser || 'Sin asignar'}
-                    </td>
-                    <td style={{ padding: '0.85rem 1rem', textAlign: 'right' }}>
-                      <button onClick={() => handleOpenOfiModal(ofi)} style={{ background: 'none', border: 'none', cursor: 'pointer', marginRight: '0.5rem' }}>✏️</button>
-                      <button onClick={() => handleDelete('oficinas', ofi.id, ofi.name)} style={{ background: 'none', border: 'none', cursor: 'pointer' }}>🗑️</button>
-                    </td>
-                  </tr>
-                ))}
-              </tbody>
-            </table>
-          </div>
-        </div>
-      )}
 
       {/* 🛠️ MODALS (SEDE, DEPENDENCIA, OFICINA) */}
       {modalType && (

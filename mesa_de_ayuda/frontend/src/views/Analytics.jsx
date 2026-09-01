@@ -193,13 +193,16 @@ export default function Analytics({ user }) {
         />
       </div>
 
-      {/* 📊 KPI CARDS GRID (6 Métricas Estratégicas ITIL) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-        gap: '1.25rem',
-        marginBottom: '1.75rem'
-      }}>
+      {/* 📊 KPI CARDS GRID (7 Métricas Estratégicas ITIL) */}
+      <div 
+        className="analytics-kpi-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+          gap: '1.25rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         <StatCard
           title={isPersonal ? "Mis Tickets Gestionados" : "Total Tickets Gestionados"}
           value={(s.totalTickets || 0).toLocaleString()}
@@ -429,12 +432,15 @@ export default function Analytics({ user }) {
       </div>
 
       {/* 📊 SECTION 3: CATEGORIES & HEATMAP */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="analytics-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Category Breakdown (Horizontal Bar) */}
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <h4 className="analytics-card-title" style={{ margin: '0 0 1rem 0' }}>
@@ -477,11 +483,14 @@ export default function Analytics({ user }) {
       </div>
 
       {/* 🍩 SECTION 4: PRIORITY & STATUS DONUTS */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(360px, 1fr))',
-        gap: '1.5rem'
-      }}>
+      <div 
+        className="analytics-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+          gap: '1.5rem'
+        }}
+      >
         <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
           <SimplePieChart
             title={isPersonal ? "Distribución de Mis Tickets por Prioridad" : "Distribución de Volumen por Severidad"}

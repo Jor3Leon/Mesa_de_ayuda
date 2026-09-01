@@ -409,12 +409,15 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 📊 3. POWER BI KPI CARDS GRID (8 Indicadores Clave de Tickets) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(220px, 1fr))',
-        gap: '1.15rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="dashboard-kpi-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 220px), 1fr))',
+          gap: '1.15rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Total Tickets */}
         <div 
           onClick={() => navigate('/tickets')}
@@ -653,12 +656,15 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 📈 POWER BI CHARTS ROW 1: EVOLUCIÓN ANUAL & TENDENCIAS */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="dashboard-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Chart 1: Evolución de Casos en el Último Año (12 Meses) */}
         <div style={{
           background: '#ffffff',
@@ -841,12 +847,15 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 📊 POWER BI CHARTS ROW 2: CICLO DE VIDA MENSUAL & MATRIZ DE ENVEJECIMIENTO (AGING RMM) */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="dashboard-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Chart 3: Estado de Casos por Mes (Stacked Bar Chart) */}
         <div style={{
           background: '#ffffff',
@@ -967,12 +976,15 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 👥 POWER BI CHARTS ROW 3: PULSO DE TÉCNICOS & RADAR DE ATENCIÓN INMEDIATA */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="dashboard-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Card: Pulso y Carga de Trabajo del Equipo Técnico */}
         <div style={{
           background: '#ffffff',
@@ -1177,12 +1189,15 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 📊 POWER BI CHARTS ROW 4: SEVERIDAD FUNCIONAL & CATEGORÍAS */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-        gap: '1.5rem',
-        marginBottom: '1.75rem'
-      }}>
+      <div 
+        className="dashboard-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '1.5rem',
+          marginBottom: '1.75rem'
+        }}
+      >
         {/* Chart 4: Distribución Operativa por Severidad (100% Funcional e Interactiva) */}
         <div style={{
           background: '#ffffff',
@@ -1300,11 +1315,14 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 📊 POWER BI CHARTS ROW 5: TIPOS DE TICKET Y CASOS POR DEPENDENCIAS & OFICINAS */}
-      <div style={{
-        display: 'grid',
-        gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))',
-        gap: '1.5rem'
-      }}>
+      <div 
+        className="dashboard-chart-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 480px), 1fr))',
+          gap: '1.5rem'
+        }}
+      >
         {/* Chart 6: Principales Tipos de Solicitud por Caso (Donut Chart) */}
         <div style={{
           background: '#ffffff',

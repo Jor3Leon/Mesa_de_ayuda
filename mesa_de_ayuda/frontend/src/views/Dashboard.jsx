@@ -80,9 +80,7 @@ export default function Dashboard({ user }) {
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return {
-      viewMode: isLevel2 || isStandardUser ? 'personal' : 'global',
-      technicianId: 'all',
-      ticketType: 'all',
+      unifiedScope: isLevel2 || isStandardUser ? 'personal' : 'global',
       startDate: thirtyDaysAgo.toISOString().split('T')[0],
       endDate: today
     };
@@ -97,16 +95,22 @@ export default function Dashboard({ user }) {
 
     const fetchData = async () => {
       try {
-        const params = {
-          ...filters,
-          ...(isLevel2 || isStandardUser ? { viewMode: 'personal' } : {})
-        };
         const queryParams = new URLSearchParams();
-        if (params.viewMode) queryParams.set('viewMode', params.viewMode);
-        if (params.technicianId && params.technicianId !== 'all') queryParams.set('technicianId', params.technicianId);
-        if (params.ticketType && params.ticketType !== 'all') queryParams.set('ticketType', params.ticketType);
-        if (params.startDate) queryParams.set('startDate', params.startDate);
-        if (params.endDate) queryParams.set('endDate', params.endDate);
+        
+        // Resolve unifiedScope into viewMode and technicianId
+        const scope = isLevel2 || isStandardUser ? 'personal' : filters.unifiedScope;
+        if (scope === 'personal') {
+          queryParams.set('viewMode', 'personal');
+        } else if (scope === 'global' || !scope) {
+          queryParams.set('viewMode', 'global');
+        } else {
+          // Specific technician ID selected
+          queryParams.set('viewMode', 'global');
+          queryParams.set('technicianId', scope);
+        }
+
+        if (filters.startDate) queryParams.set('startDate', filters.startDate);
+        if (filters.endDate) queryParams.set('endDate', filters.endDate);
 
         const dashboardData = await apiRequest(`/dashboard/data?${queryParams.toString()}`);
 
@@ -136,7 +140,8 @@ export default function Dashboard({ user }) {
     if (!data) return;
     setIsExporting(true);
     try {
-      generateDashboardReport(data, user, filters.viewMode);
+      const activeViewMode = filters.unifiedScope === 'personal' || isLevel2 ? 'personal' : 'global';
+      generateDashboardReport(data, user, activeViewMode);
     } catch (err) {
       console.error(err);
     } finally {
@@ -169,7 +174,7 @@ export default function Dashboard({ user }) {
   }
 
   const k = data?.kpis || initialData.kpis;
-  const isPersonalScope = isLevel2 || isStandardUser || filters.viewMode === 'personal';
+  const isPersonalScope = isLevel2 || isStandardUser || filters.unifiedScope === 'personal';
   const techniciansList = data?.technicians || [];
   const yearlyTrend = data?.yearlyTrend || [];
   const thirtyDaysTrend = data?.thirtyDaysTrend || [];
@@ -247,7 +252,7 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* 🎛️ 2. BARRA DE HERRAMIENTAS & FILTROS (Ubicada aparte y debajo del Header) */}
+      {/* 🎛️ 2. BARRA DE HERRAMIENTAS & FILTROS UNIFICADA (Debajo del Header) */}
       <div style={{
         background: '#ffffff',
         borderRadius: '16px',
@@ -258,10 +263,11 @@ export default function Dashboard({ user }) {
         display: 'flex',
         flexWrap: 'wrap',
         alignItems: 'flex-end',
-        gap: '12px'
+        justifyContent: 'space-between',
+        gap: '14px'
       }}>
-        {/* Rango de Fechas */}
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '14px' }}>
+          {/* Rango de Fechas: Desde */}
           <div>
             <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               Desde
@@ -283,6 +289,8 @@ export default function Dashboard({ user }) {
               }}
             />
           </div>
+
+          {/* Rango de Fechas: Hasta */}
           <div>
             <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               Hasta
@@ -304,80 +312,18 @@ export default function Dashboard({ user }) {
               }}
             />
           </div>
-        </div>
 
-        {/* Tipo de Solicitud */}
-        <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-            Tipo de Solicitud
-          </span>
-          <select
-            value={filters.ticketType}
-            onChange={(e) => handleFilterChange('ticketType', e.target.value)}
-            style={{
-              padding: '7px 12px',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              background: '#ffffff',
-              color: '#1e293b',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              outline: 'none',
-              cursor: 'pointer',
-              minWidth: '150px'
-            }}
-          >
-            <option value="all">Todos los Tipos</option>
-            <option value="Incidencia">Solo Incidentes (Fallas)</option>
-            <option value="Requerimiento">Solo Requerimientos (Peticiones)</option>
-          </select>
-        </div>
-
-        {/* Filtro de Alcance / Vista */}
-        <div>
-          <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-            Alcance / Vista
-          </span>
-          <select
-            value={isLevel2 ? 'personal' : filters.viewMode}
-            disabled={isLevel2}
-            onChange={(e) => handleFilterChange('viewMode', e.target.value)}
-            style={{
-              padding: '7px 12px',
-              border: '1px solid #cbd5e1',
-              borderRadius: '8px',
-              background: '#ffffff',
-              color: '#1e293b',
-              fontSize: '0.8125rem',
-              fontWeight: 600,
-              outline: 'none',
-              cursor: isLevel2 ? 'not-allowed' : 'pointer',
-              minWidth: '140px',
-              opacity: isLevel2 ? 0.85 : 1
-            }}
-          >
-            {isLevel2 ? (
-              <option value="personal">👤 Mis Tickets (Nivel 2)</option>
-            ) : (
-              <>
-                <option value="global">🌐 Vista Global</option>
-                <option value="personal">👤 Mis Tickets (Personal)</option>
-              </>
-            )}
-          </select>
-        </div>
-
-        {/* Filtro por Técnico (para vista global) */}
-        {!isLevel2 && filters.viewMode !== 'personal' && (
+          {/* Filtro Unificado de Búsqueda (Alcance & Técnico) */}
           <div>
             <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-              Técnico Asignado
+              Alcance / Técnico Asignado
             </span>
             <select
-              value={filters.technicianId}
-              onChange={(e) => handleFilterChange('technicianId', e.target.value)}
+              value={isLevel2 ? 'personal' : filters.unifiedScope}
+              disabled={isLevel2}
+              onChange={(e) => handleFilterChange('unifiedScope', e.target.value)}
               style={{
-                padding: '7px 12px',
+                padding: '7px 14px',
                 border: '1px solid #cbd5e1',
                 borderRadius: '8px',
                 background: '#ffffff',
@@ -385,20 +331,36 @@ export default function Dashboard({ user }) {
                 fontSize: '0.8125rem',
                 fontWeight: 600,
                 outline: 'none',
-                cursor: 'pointer',
-                minWidth: '160px'
+                cursor: isLevel2 ? 'not-allowed' : 'pointer',
+                minWidth: '220px',
+                opacity: isLevel2 ? 0.85 : 1
               }}
             >
-              <option value="all">Todos los Técnicos</option>
-              {techniciansList.map(t => (
-                <option key={t.id} value={t.id}>{t.name} ({t.role})</option>
-              ))}
+              {isLevel2 ? (
+                <option value="personal">👤 Mis Tickets (Técnico Nivel 2)</option>
+              ) : (
+                <>
+                  <optgroup label="Vistas de Alcance">
+                    <option value="global">🌐 Todos (Vista Global)</option>
+                    <option value="personal">👤 Mis Tickets (Mi Bandeja)</option>
+                  </optgroup>
+                  {techniciansList.length > 0 && (
+                    <optgroup label="Técnicos & Soporte">
+                      {techniciansList.map(t => (
+                        <option key={t.id} value={String(t.id)}>
+                          👤 {t.name} ({t.role})
+                        </option>
+                      ))}
+                    </optgroup>
+                  )}
+                </>
+              )}
             </select>
           </div>
-        )}
+        </div>
 
-        {/* Botón Exportar PDF a la derecha */}
-        <div style={{ marginLeft: 'auto' }}>
+        {/* Botón Exportar PDF en la misma fila */}
+        <div>
           <button
             type="button"
             onClick={handleExportPdf}
@@ -412,12 +374,13 @@ export default function Dashboard({ user }) {
               fontSize: '0.8125rem',
               fontWeight: 800,
               cursor: isExporting ? 'not-allowed' : 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
               boxShadow: '0 4px 12px rgba(0, 209, 255, 0.35)',
               transition: 'transform 0.15s ease',
-              height: '36px'
+              height: '36px',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
             onMouseLeave={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(0)')}

@@ -127,8 +127,8 @@ function generateSimulatedDiscovery(ip) {
   let deviceType = 'Impresora Multifuncional';
   let hostname = `HP-E731-${lastOctet}`;
   let serialNumber = `CNB${ipParts[2] || '5'}${lastOctet}K7842`;
-  let mac = `70:5A:0F:${p3}:${p4}:89`;
-  let firmware = '20260312-v4.88';
+  let mac = `00:1E:0B:${p3}:8F:${p4}`;
+  let firmware = '2504104_000234 (FutureSmart 5.4)';
 
   if (ip === '10.0.22.28' || lastOctet === 28) {
     brand = 'Lexmark';
@@ -137,13 +137,23 @@ function generateSimulatedDiscovery(ip) {
     serialNumber = '7464832020G9P';
     mac = '00:21:B7:77:36:A9';
     firmware = 'LW74.SB4.P045';
+    deviceType = 'Impresora Multifuncional';
   } else if (ip === '10.0.5.80' || lastOctet === 80) {
+    brand = 'Epson';
+    model = 'EcoTank L3150 Series';
+    hostname = 'EPSON-L3150-80';
+    serialNumber = 'X54K099880';
+    mac = 'AC:18:26:05:80:12';
+    firmware = '20.55.FA18K9';
+    deviceType = 'Impresora Multifuncional';
+  } else if (ip === '10.0.5.56' || lastOctet === 56) {
     brand = 'HP';
     model = 'LaserJet Managed MFP E731';
     hostname = 'HP-LASERJET-MANAGED-MFP-E731';
     serialNumber = 'CNB580K3960';
     mac = '00:1E:0B:05:8F:50';
     firmware = '2504104_000234 (FutureSmart 5.4)';
+    deviceType = 'Impresora Multifuncional';
   }
 
   const specs = getPrinterModelSpecs(brand, model);

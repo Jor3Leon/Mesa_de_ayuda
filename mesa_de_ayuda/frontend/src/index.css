@@ -4331,6 +4331,66 @@ tbody tr:hover {
 }
 
 /* ─── CMDB Content Grid Master-Detail & Compact Mobile Rules ─── */
+.cmdb-collapsible-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 0.65rem 0.85rem;
+  background: #f8fafc;
+  border: 1px solid #cbd5e1;
+  border-radius: 10px;
+  cursor: pointer;
+  user-select: none;
+  transition: all 0.2s ease;
+  width: 100%;
+  margin-bottom: 0.75rem;
+}
+
+.cmdb-collapsible-header:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+}
+
+.cmdb-collapsible-header.is-open {
+  border-bottom-left-radius: 0;
+  border-bottom-right-radius: 0;
+  border-bottom-color: #e2e8f0;
+  background: #f1f5f9;
+  margin-bottom: 0;
+}
+
+.cmdb-collapsible-chevron {
+  display: inline-block;
+  font-size: 0.72rem;
+  color: #64748b;
+  transition: transform 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.cmdb-collapsible-chevron.is-open {
+  transform: rotate(180deg);
+}
+
+.cmdb-collapsible-body {
+  border: 1px solid #cbd5e1;
+  border-top: none;
+  border-radius: 0 0 10px 10px;
+  background: #ffffff;
+  padding: 0.85rem;
+  margin-bottom: 0.75rem;
+  animation: cmdbSlideDown 0.2s ease-out;
+}
+
+@keyframes cmdbSlideDown {
+  from {
+    opacity: 0;
+    transform: translateY(-4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
 .cmdb-info-card {
   display: flex;
   flex-direction: column;

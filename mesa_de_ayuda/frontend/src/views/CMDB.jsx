@@ -269,6 +269,11 @@ export default function CMDB() {
   const [active360Tab, setActive360Tab] = useState('INFO'); // 'INFO' | 'TOPOLOGY' | 'TIMELINE'
   const [copiedIp, setCopiedIp] = useState(false);
 
+  // Secciones desplegables en Vista 360
+  const [isSuppliesOpen, setIsSuppliesOpen] = useState(true);
+  const [isTechSpecsOpen, setIsTechSpecsOpen] = useState(true);
+  const [isHealthMetricsOpen, setIsHealthMetricsOpen] = useState(true);
+
   // Modales
   const [isMaintenanceModalOpen, setIsMaintenanceModalOpen] = useState(false);
   const [isSoftwareModalOpen, setIsSoftwareModalOpen] = useState(false);
@@ -881,332 +886,426 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
                 <>
                   {isPrinterDevice(selectedAsset) ? (
                     <>
-                      {/* Métricas de Suministros y Consumibles para Impresoras / Escáneres */}
+                      {/* Métricas de Suministros y Consumibles para Impresoras / Escáneres (Desplegable) */}
                       <div>
-                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>🖨️</span> Estado de Consumibles y Suministros
-                        </h4>
-                        
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                          
-                          {/* Barras de Consumibles (Tóner, Fusora, Unidad de Imagen) */}
-                          {suppliesData?.supplies.map((sup, idx) => {
-                            const levelColor = sup.percent < 15 ? '#ef4444' : sup.percent < 30 ? '#f59e0b' : '#10b981';
-                            const badgeText = sup.percent < 15 ? '⚠️ Nivel Crítico' : sup.percent < 30 ? '⚠️ Nivel Bajo' : '🟢 Nivel Óptimo';
-                            
-                            return (
-                              <div key={idx} style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                                  <span style={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                    <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: sup.color, display: 'inline-block' }}></span>
-                                    {sup.name}
-                                  </span>
-                                  <span style={{ color: levelColor, fontWeight: 800 }}>
-                                    {sup.percent}%
-                                  </span>
-                                </div>
-                                
-                                <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
-                                  <div 
-                                    style={{ 
-                                      width: `${sup.percent}%`, 
-                                      height: '100%', 
-                                      background: sup.color !== '#1e293b' ? sup.color : levelColor,
-                                      transition: 'width 0.5s ease'
-                                    }} 
-                                  />
-                                </div>
-                                
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                                  <span>{badgeText}</span>
-                                  <span>Capacidad: {sup.percent}% restante</span>
-                                </div>
-                              </div>
-                            );
-                          })}
-
-                          {/* Contador Total de Páginas */}
-                          {suppliesData?.pageCount && (
-                            <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '0.85rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                              <div>
-                                <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700 }}>Contador de Impresiones / Escaneos</div>
-                                <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginTop: '2px' }}>
-                                  📊 {suppliesData.pageCount} páginas impresas
-                                </div>
-                              </div>
-                              <span className="badge info" style={{ fontSize: '0.7rem' }}>Contador SNMP</span>
-                            </div>
-                          )}
-
-                          {/* Tarjeta de Historial y Proyección de Consumo */}
-                          <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', padding: '1rem', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' }}>
-                              <div>
-                                <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                                  <span>📈</span> Proyección Predictiva y Tendencia
-                                </div>
-                                <div className="muted-text" style={{ fontSize: '0.7rem' }}>
-                                  Historial 4 semanas + Proyección estimada a 3 semanas
-                                </div>
-                              </div>
-                              <span className="badge warning" style={{ fontSize: '0.65rem' }}>IA Predictiva</span>
-                            </div>
-
-                            {/* Gráfica Visual de Barras (Histórico vs Proyectado) */}
-                            <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '90px', padding: '0.5rem 0.2rem', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '0.8rem' }}>
-                              {suppliesData?.timeline?.map((item, idx) => {
-                                const barHeight = Math.max(12, item.percent);
-                                const isCritical = item.percent <= 15;
-                                const isWarning = item.percent <= 30;
-                                const barBg = item.isCurrent 
-                                  ? '#0284c7' 
-                                  : item.isProjected 
-                                    ? (isCritical ? 'repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #fca5a5 4px, #fca5a5 8px)' : isWarning ? 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 4px, #fde68a 4px, #fde68a 8px)' : 'repeating-linear-gradient(45deg, #10b981, #10b981 4px, #a7f3d0 4px, #a7f3d0 8px)')
-                                    : '#94a3b8';
-
-                                return (
-                                  <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '4px' }}>
-                                    <span style={{ fontSize: '0.62rem', fontWeight: 700, color: item.isCurrent ? '#0284c7' : '#64748b' }}>
-                                      {item.percent}%
-                                    </span>
-                                    <div 
-                                      style={{ 
-                                        width: '18px', 
-                                        height: `${(barHeight / 100) * 55}px`, 
-                                        background: barBg, 
-                                        borderRadius: '4px 4px 0 0',
-                                        transition: 'height 0.4s ease',
-                                        border: item.isCurrent ? '2px solid #0369a1' : 'none'
-                                      }} 
-                                      title={`${item.label}: ${item.percent}% ${item.isProjected ? '(Proyectado)' : '(Histórico)'}`}
-                                    />
-                                    <span style={{ fontSize: '0.58rem', color: item.isCurrent ? '#0284c7' : '#94a3b8', fontWeight: item.isCurrent ? 800 : 500 }}>
-                                      {item.label}
-                                    </span>
-                                  </div>
-                                );
-                              })}
-                            </div>
-
-                            {/* Alerta Predictiva y Métricas Clave */}
-                            {(() => {
-                              const lowestSupply = suppliesData?.supplies?.slice().sort((a, b) => a.percent - b.percent)[0];
-                              if (!lowestSupply) return null;
-
-                              const isUrgent = lowestSupply.percent <= 25;
-                              const alertBg = isUrgent ? '#fef2f2' : '#f0fdf4';
-                              const alertBorder = isUrgent ? '#fecaca' : '#bbf7d0';
-                              const alertColor = isUrgent ? '#991b1b' : '#166534';
-
-                              return (
-                                <div style={{ background: alertBg, border: `1px solid ${alertBorder}`, padding: '0.75rem', borderRadius: '8px', marginBottom: '0.8rem' }}>
-                                  <div style={{ fontSize: '0.75rem', fontWeight: 800, color: alertColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-                                    <span>{isUrgent ? '⚠️ Alerta de Insumo Próximo a Agotarse' : '✅ Consumo Proyectado Estable'}</span>
-                                    <span>~{lowestSupply.daysLeft} días restantes</span>
-                                  </div>
-                                  <div style={{ fontSize: '0.7rem', color: alertColor, marginTop: '4px', lineHeight: 1.4 }}>
-                                    {isUrgent 
-                                      ? `El ${lowestSupply.name} (${lowestSupply.percent}%) se agotará aproximadamente el ${lowestSupply.depletionDate.toLocaleDateString()}. Se sugiere ordenar repuesto.`
-                                      : `Consumo semanal promedio de ${lowestSupply.weeklyBurnRate}%. Próximo cambio estimado para el ${lowestSupply.depletionDate.toLocaleDateString()}.`}
-                                  </div>
-
-                                  <button
-                                    type="button"
-                                    onClick={() => openMaintenanceModal(selectedAsset, 'Requerimiento', lowestSupply)}
-                                    style={{ marginTop: '0.6rem', width: '100%', padding: '0.45rem 0.6rem', fontSize: '0.74rem', fontWeight: 700, borderRadius: '6px', background: isUrgent ? '#dc2626' : '#0284c7', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
-                                  >
-                                    <span>🛒</span> Solicitar Reabastecimiento de Insumo
-                                  </button>
-                                </div>
-                              );
-                            })()}
-
-                          </div>
-
-                          {/* Protocolos de Conectividad y Monitoreo */}
-                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                            <div style={{ fontSize: '1.8rem' }}>🖨️</div>
-                            <div>
-                              <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Gestión y Monitoreo de Red</div>
-                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
-                                SNMP v1/v2c, eSCL/AirScan & Web Admin
-                              </div>
-                              <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
-                                Última sincronización: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
-                              </div>
-                            </div>
-                          </div>
-
-                        </div>
-                      </div>
-
-                      {/* Ficha Técnica y Red específica de Impresora */}
-                      <div>
-                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>⚙️</span> Ficha Técnica & Red
-                        </h4>
-                        <div className="cmdb-info-card">
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">👤 Usuario / Área:</span>
-                            <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">📍 Ubicación Física:</span>
-                            <span className="cmdb-info-val highlight">
-                              {selectedAsset.location || 'Sin ubicación'}
+                        <div 
+                          className={`cmdb-collapsible-header ${isSuppliesOpen ? 'is-open' : ''}`}
+                          onClick={() => setIsSuppliesOpen(prev => !prev)}
+                          role="button"
+                          tabIndex={0}
+                          title={isSuppliesOpen ? 'Clic para contraer sección' : 'Clic para desplegar sección'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span style={{ fontSize: '1rem' }}>🖨️</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#1e293b', letterSpacing: '0.04em' }}>
+                              Estado de Consumibles y Suministros
                             </span>
                           </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🏷️ Serial / Tag:</span>
-                            <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🏢 Marca y Fabricante:</span>
-                            <span className="cmdb-info-val">{selectedAsset.brand || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">⚙️ Modelo:</span>
-                            <span className="cmdb-info-val">{selectedAsset.model || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🌐 IP Local:</span>
-                            <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">📡 Dirección MAC:</span>
-                            <span className="cmdb-info-val mono" style={{ color: '#0284c7', fontWeight: 700 }}>{extractMacAddress(selectedAsset.networkSummary)}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🖨️ Firmware:</span>
-                            <span className="cmdb-info-val">{selectedAsset.osVersion || 'Firmware v1.0'}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {!isSuppliesOpen && suppliesData?.supplies?.length > 0 && (
+                              <span className="badge neutral" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
+                                {suppliesData.supplies.length} suministros
+                              </span>
+                            )}
+                            <span className={`cmdb-collapsible-chevron ${isSuppliesOpen ? 'is-open' : ''}`}>
+                              ▼
+                            </span>
                           </div>
                         </div>
+                        
+                        {isSuppliesOpen && (
+                          <div className="cmdb-collapsible-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            {/* Barras de Consumibles (Tóner, Fusora, Unidad de Imagen) */}
+                            {suppliesData?.supplies.map((sup, idx) => {
+                              const levelColor = sup.percent < 15 ? '#ef4444' : sup.percent < 30 ? '#f59e0b' : '#10b981';
+                              const badgeText = sup.percent < 15 ? '⚠️ Nivel Crítico' : sup.percent < 30 ? '⚠️ Nivel Bajo' : '🟢 Nivel Óptimo';
+                              
+                              return (
+                                <div key={idx} style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                    <span style={{ fontWeight: 700, color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                      <span style={{ width: '10px', height: '10px', borderRadius: '50%', background: sup.color, display: 'inline-block' }}></span>
+                                      {sup.name}
+                                    </span>
+                                    <span style={{ color: levelColor, fontWeight: 800 }}>
+                                      {sup.percent}%
+                                    </span>
+                                  </div>
+                                  
+                                  <div style={{ width: '100%', height: '8px', background: '#f1f5f9', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div 
+                                      style={{ 
+                                        width: `${sup.percent}%`, 
+                                        height: '100%', 
+                                        background: sup.color !== '#1e293b' ? sup.color : levelColor,
+                                        transition: 'width 0.5s ease'
+                                      }} 
+                                    />
+                                  </div>
+                                  
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                    <span>{badgeText}</span>
+                                    <span>Capacidad: {sup.percent}% restante</span>
+                                  </div>
+                                </div>
+                              );
+                            })}
+
+                            {/* Contador Total de Páginas */}
+                            {suppliesData?.pageCount && (
+                              <div style={{ background: '#f8fafc', border: '1px solid #cbd5e1', padding: '0.85rem', borderRadius: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                <div>
+                                  <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase', fontWeight: 700 }}>Contador de Impresiones / Escaneos</div>
+                                  <div style={{ fontWeight: 800, fontSize: '0.95rem', color: '#0f172a', marginTop: '2px' }}>
+                                    📊 {suppliesData.pageCount} páginas impresas
+                                  </div>
+                                </div>
+                                <span className="badge info" style={{ fontSize: '0.7rem' }}>Contador SNMP</span>
+                              </div>
+                            )}
+
+                            {/* Tarjeta de Historial y Proyección de Consumo */}
+                            <div style={{ background: '#f8fafc', border: '1.5px solid #cbd5e1', padding: '1rem', borderRadius: '12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.8rem' }}>
+                                <div>
+                                  <div style={{ fontSize: '0.82rem', fontWeight: 800, color: '#0f172a', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                                    <span>📈</span> Proyección Predictiva y Tendencia
+                                  </div>
+                                  <div className="muted-text" style={{ fontSize: '0.7rem' }}>
+                                    Historial 4 semanas + Proyección estimada a 3 semanas
+                                  </div>
+                                </div>
+                                <span className="badge warning" style={{ fontSize: '0.65rem' }}>IA Predictiva</span>
+                              </div>
+
+                              {/* Gráfica Visual de Barras (Histórico vs Proyectado) */}
+                              <div style={{ display: 'flex', alignItems: 'flex-end', justifyContent: 'space-between', height: '90px', padding: '0.5rem 0.2rem', background: '#fff', borderRadius: '8px', border: '1px solid #e2e8f0', marginBottom: '0.8rem' }}>
+                                {suppliesData?.timeline?.map((item, idx) => {
+                                  const barHeight = Math.max(12, item.percent);
+                                  const isCritical = item.percent <= 15;
+                                  const isWarning = item.percent <= 30;
+                                  const barBg = item.isCurrent 
+                                    ? '#0284c7' 
+                                    : item.isProjected 
+                                      ? (isCritical ? 'repeating-linear-gradient(45deg, #ef4444, #ef4444 4px, #fca5a5 4px, #fca5a5 8px)' : isWarning ? 'repeating-linear-gradient(45deg, #f59e0b, #f59e0b 4px, #fde68a 4px, #fde68a 8px)' : 'repeating-linear-gradient(45deg, #10b981, #10b981 4px, #a7f3d0 4px, #a7f3d0 8px)')
+                                      : '#94a3b8';
+
+                                  return (
+                                    <div key={idx} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', flex: 1, gap: '4px' }}>
+                                      <span style={{ fontSize: '0.62rem', fontWeight: 700, color: item.isCurrent ? '#0284c7' : '#64748b' }}>
+                                        {item.percent}%
+                                      </span>
+                                      <div 
+                                        style={{ 
+                                          width: '18px', 
+                                          height: `${(barHeight / 100) * 55}px`, 
+                                          background: barBg, 
+                                          borderRadius: '4px 4px 0 0',
+                                          transition: 'height 0.4s ease',
+                                          border: item.isCurrent ? '2px solid #0369a1' : 'none'
+                                        }} 
+                                        title={`${item.label}: ${item.percent}% ${item.isProjected ? '(Proyectado)' : '(Histórico)'}`}
+                                      />
+                                      <span style={{ fontSize: '0.58rem', color: item.isCurrent ? '#0284c7' : '#94a3b8', fontWeight: item.isCurrent ? 800 : 500 }}>
+                                        {item.label}
+                                      </span>
+                                    </div>
+                                  );
+                                })}
+                              </div>
+
+                              {/* Alerta Predictiva y Métricas Clave */}
+                              {(() => {
+                                const lowestSupply = suppliesData?.supplies?.slice().sort((a, b) => a.percent - b.percent)[0];
+                                if (!lowestSupply) return null;
+
+                                const isUrgent = lowestSupply.percent <= 25;
+                                const alertBg = isUrgent ? '#fef2f2' : '#f0fdf4';
+                                const alertBorder = isUrgent ? '#fecaca' : '#bbf7d0';
+                                const alertColor = isUrgent ? '#991b1b' : '#166534';
+
+                                return (
+                                  <div style={{ background: alertBg, border: `1px solid ${alertBorder}`, padding: '0.75rem', borderRadius: '8px', marginBottom: '0.8rem' }}>
+                                    <div style={{ fontSize: '0.75rem', fontWeight: 800, color: alertColor, display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+                                      <span>{isUrgent ? '⚠️ Alerta de Insumo Próximo a Agotarse' : '✅ Consumo Proyectado Estable'}</span>
+                                      <span>~{lowestSupply.daysLeft} días restantes</span>
+                                    </div>
+                                    <div style={{ fontSize: '0.7rem', color: alertColor, marginTop: '4px', lineHeight: 1.4 }}>
+                                      {isUrgent 
+                                        ? `El ${lowestSupply.name} (${lowestSupply.percent}%) se agotará aproximadamente el ${lowestSupply.depletionDate.toLocaleDateString()}. Se sugiere ordenar repuesto.`
+                                        : `Consumo semanal promedio de ${lowestSupply.weeklyBurnRate}%. Próximo cambio estimado para el ${lowestSupply.depletionDate.toLocaleDateString()}.`}
+                                    </div>
+
+                                    <button
+                                      type="button"
+                                      onClick={() => openMaintenanceModal(selectedAsset, 'Requerimiento', lowestSupply)}
+                                      style={{ marginTop: '0.6rem', width: '100%', padding: '0.45rem 0.6rem', fontSize: '0.74rem', fontWeight: 700, borderRadius: '6px', background: isUrgent ? '#dc2626' : '#0284c7', color: '#fff', border: 'none', cursor: 'pointer', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '0.4rem' }}
+                                    >
+                                      <span>🛒</span> Solicitar Reabastecimiento de Insumo
+                                    </button>
+                                  </div>
+                                );
+                              })()}
+
+                            </div>
+
+                            {/* Protocolos de Conectividad y Monitoreo */}
+                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <div style={{ fontSize: '1.8rem' }}>🖨️</div>
+                              <div>
+                                <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Gestión y Monitoreo de Red</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
+                                  SNMP v1/v2c, eSCL/AirScan & Web Admin
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
+                                  Última sincronización: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
+                                </div>
+                              </div>
+                            </div>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Ficha Técnica y Red específica de Impresora (Desplegable) */}
+                      <div>
+                        <div 
+                          className={`cmdb-collapsible-header ${isTechSpecsOpen ? 'is-open' : ''}`}
+                          onClick={() => setIsTechSpecsOpen(prev => !prev)}
+                          role="button"
+                          tabIndex={0}
+                          title={isTechSpecsOpen ? 'Clic para contraer sección' : 'Clic para desplegar sección'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span style={{ fontSize: '1rem' }}>⚙️</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#1e293b', letterSpacing: '0.04em' }}>
+                              Ficha Técnica & Red
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {!isTechSpecsOpen && (
+                              <span className="badge neutral" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
+                                {selectedAsset.brand || 'Detalles'} &bull; {selectedAsset.ipAddress || 'Sin IP'}
+                              </span>
+                            )}
+                            <span className={`cmdb-collapsible-chevron ${isTechSpecsOpen ? 'is-open' : ''}`}>
+                              ▼
+                            </span>
+                          </div>
+                        </div>
+
+                        {isTechSpecsOpen && (
+                          <div className="cmdb-collapsible-body" style={{ padding: '0' }}>
+                            <div className="cmdb-info-card" style={{ border: 'none', borderRadius: '0 0 10px 10px', boxShadow: 'none' }}>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">👤 Usuario / Área:</span>
+                                <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">📍 Ubicación Física:</span>
+                                <span className="cmdb-info-val highlight">
+                                  {selectedAsset.location || 'Sin ubicación'}
+                                </span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🏷️ Serial / Tag:</span>
+                                <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🏢 Marca y Fabricante:</span>
+                                <span className="cmdb-info-val">{selectedAsset.brand || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">⚙️ Modelo:</span>
+                                <span className="cmdb-info-val">{selectedAsset.model || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🌐 IP Local:</span>
+                                <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">📡 Dirección MAC:</span>
+                                <span className="cmdb-info-val mono" style={{ color: '#0284c7', fontWeight: 700 }}>{extractMacAddress(selectedAsset.networkSummary)}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🖨️ Firmware:</span>
+                                <span className="cmdb-info-val">{selectedAsset.osVersion || 'Firmware v1.0'}</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   ) : (
                     <>
-                      {/* Métricas de Salud y Rendimiento para Equipos de Cómputo */}
+                      {/* Métricas de Salud y Rendimiento para Equipos de Cómputo (Desplegable) */}
                       <div>
-                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>📊</span> Métricas de Salud y Rendimiento
-                        </h4>
+                        <div 
+                          className={`cmdb-collapsible-header ${isHealthMetricsOpen ? 'is-open' : ''}`}
+                          onClick={() => setIsHealthMetricsOpen(prev => !prev)}
+                          role="button"
+                          tabIndex={0}
+                          title={isHealthMetricsOpen ? 'Clic para contraer sección' : 'Clic para desplegar sección'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span style={{ fontSize: '1rem' }}>📊</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#1e293b', letterSpacing: '0.04em' }}>
+                              Métricas de Salud y Rendimiento
+                            </span>
+                          </div>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {!isHealthMetricsOpen && (
+                              <span className="badge neutral" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
+                                CPU &bull; RAM &bull; Disco
+                              </span>
+                            )}
+                            <span className={`cmdb-collapsible-chevron ${isHealthMetricsOpen ? 'is-open' : ''}`}>
+                              ▼
+                            </span>
+                          </div>
+                        </div>
                         
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
-                          
-                          {/* Barra de Almacenamiento */}
-                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                              <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
-                              {storageData?.total ? (
-                                <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
-                                  {storageData.free} GB libres ({storageData.freePercent}%)
-                                </span>
-                              ) : (
-                                <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
+                        {isHealthMetricsOpen && (
+                          <div className="cmdb-collapsible-body" style={{ display: 'flex', flexDirection: 'column', gap: '0.8rem' }}>
+                            {/* Barra de Almacenamiento */}
+                            <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                <span style={{ fontWeight: 600 }}>💾 Almacenamiento</span>
+                                {storageData?.total ? (
+                                  <span style={{ color: storageData.freePercent < 15 ? '#ef4444' : '#10b981', fontWeight: 700 }}>
+                                    {storageData.free} GB libres ({storageData.freePercent}%)
+                                  </span>
+                                ) : (
+                                  <span className="muted-text">{selectedAsset.storageSummary || 'N/A'}</span>
+                                )}
+                              </div>
+                              {storageData?.usedPercent !== undefined && (
+                                <div>
+                                  <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                                    <div 
+                                      style={{ 
+                                        width: `${storageData.usedPercent}%`, 
+                                        height: '100%', 
+                                        background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
+                                        transition: 'width 0.5s ease'
+                                      }} 
+                                    />
+                                  </div>
+                                  <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
+                                    <span>Usado: {storageData.used} GB</span>
+                                    <span>Total: {storageData.total} GB</span>
+                                  </div>
+                                </div>
                               )}
                             </div>
-                            {storageData?.usedPercent !== undefined && (
-                              <div>
+
+                            {/* Memoria RAM */}
+                            <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
+                                <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
+                                <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
+                                  {selectedAsset.ramSummary || '---'}
+                                </span>
+                              </div>
+                              {ramData?.usedPercent !== undefined && (
                                 <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
                                   <div 
                                     style={{ 
-                                      width: `${storageData.usedPercent}%`, 
+                                      width: `${ramData.usedPercent}%`, 
                                       height: '100%', 
-                                      background: storageData.freePercent < 15 ? '#ef4444' : storageData.freePercent < 30 ? '#f59e0b' : '#10b981',
+                                      background: '#0284c7',
                                       transition: 'width 0.5s ease'
                                     }} 
                                   />
                                 </div>
-                                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.7rem', color: '#64748b', marginTop: '4px' }}>
-                                  <span>Usado: {storageData.used} GB</span>
-                                  <span>Total: {storageData.total} GB</span>
+                              )}
+                            </div>
+
+                            {/* Procesador CPU */}
+                            <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
+                              <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
+                              <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
+                                {selectedAsset.cpuModel || 'Procesador estándar'}
+                              </div>
+                            </div>
+
+                            {/* Seguridad & Antivirus */}
+                            <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
+                              <div style={{ fontSize: '1.8rem' }}>🛡️</div>
+                              <div>
+                                <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
+                                <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
+                                  {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
+                                    ? selectedAsset.agentVersion 
+                                    : 'Microsoft Defender Antivirus'}
+                                </div>
+                                <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
+                                  Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
                                 </div>
                               </div>
-                            )}
-                          </div>
-
-                          {/* Memoria RAM */}
-                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                            <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.8rem', marginBottom: '0.4rem' }}>
-                              <span style={{ fontWeight: 600 }}>⚡ Memoria RAM</span>
-                              <span style={{ color: 'var(--color-primary)', fontWeight: 700 }}>
-                                {selectedAsset.ramSummary || '---'}
-                              </span>
-                            </div>
-                            {ramData?.usedPercent !== undefined && (
-                              <div style={{ width: '100%', height: '8px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
-                                <div 
-                                  style={{ 
-                                    width: `${ramData.usedPercent}%`, 
-                                    height: '100%', 
-                                    background: '#0284c7',
-                                    transition: 'width 0.5s ease'
-                                  }} 
-                                />
-                              </div>
-                            )}
-                          </div>
-
-                          {/* Procesador CPU */}
-                          <div style={{ background: '#fff', border: '1px solid #e2e8f0', padding: '0.9rem', borderRadius: '12px' }}>
-                            <div className="muted-text" style={{ fontSize: '0.7rem', textTransform: 'uppercase' }}>Procesador (CPU)</div>
-                            <div style={{ fontWeight: 700, fontSize: '0.85rem', color: '#0f172a', marginTop: '2px' }}>
-                              {selectedAsset.cpuModel || 'Procesador estándar'}
                             </div>
                           </div>
-
-                          {/* Seguridad & Antivirus */}
-                          <div style={{ background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '0.9rem', borderRadius: '12px', display: 'flex', alignItems: 'center', gap: '0.8rem' }}>
-                            <div style={{ fontSize: '1.8rem' }}>🛡️</div>
-                            <div>
-                              <div style={{ fontSize: '0.7rem', color: '#166534', textTransform: 'uppercase', fontWeight: 700 }}>Protección Endpoint</div>
-                              <div style={{ fontWeight: 800, fontSize: '0.85rem', color: '#14532d' }}>
-                                {selectedAsset.agentVersion && selectedAsset.agentVersion !== '1.0.0' && selectedAsset.agentVersion !== '2.0.0' 
-                                  ? selectedAsset.agentVersion 
-                                  : 'Microsoft Defender Antivirus'}
-                              </div>
-                              <div style={{ fontSize: '0.7rem', color: '#15803d' }}>
-                                Último reporte: {selectedAsset.lastSeenAt ? new Date(selectedAsset.lastSeenAt).toLocaleString() : 'Reciente'}
-                              </div>
-                            </div>
-                          </div>
-
-                        </div>
+                        )}
                       </div>
 
-                      {/* Ficha Técnica y Red */}
+                      {/* Ficha Técnica y Red para Equipos de Cómputo (Desplegable) */}
                       <div>
-                        <h4 style={{ fontSize: '0.8rem', textTransform: 'uppercase', color: 'var(--color-muted)', marginBottom: '0.8rem', letterSpacing: '0.05em', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
-                          <span>⚙️</span> Ficha Técnica & Red
-                        </h4>
-                        <div className="cmdb-info-card">
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">👤 Usuario Sesión:</span>
-                            <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🏰 Red / Dominio:</span>
-                            <span className={`cmdb-info-val ${getAssetDomain(selectedAsset) !== 'N/A' ? 'highlight' : 'muted-text'}`}>
-                              {getAssetDomain(selectedAsset)}
+                        <div 
+                          className={`cmdb-collapsible-header ${isTechSpecsOpen ? 'is-open' : ''}`}
+                          onClick={() => setIsTechSpecsOpen(prev => !prev)}
+                          role="button"
+                          tabIndex={0}
+                          title={isTechSpecsOpen ? 'Clic para contraer sección' : 'Clic para desplegar sección'}
+                        >
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.45rem' }}>
+                            <span style={{ fontSize: '1rem' }}>⚙️</span>
+                            <span style={{ fontSize: '0.8rem', fontWeight: 800, textTransform: 'uppercase', color: '#1e293b', letterSpacing: '0.04em' }}>
+                              Ficha Técnica & Red
                             </span>
                           </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🏷️ Serial / Tag:</span>
-                            <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🏢 Fabricante/Board:</span>
-                            <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">🌐 IP Local:</span>
-                            <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
-                          </div>
-                          <div className="cmdb-info-row">
-                            <span className="muted-text">💻 Sistema:</span>
-                            <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                            {!isTechSpecsOpen && (
+                              <span className="badge neutral" style={{ fontSize: '0.65rem', padding: '0.15rem 0.45rem' }}>
+                                {selectedAsset.brand || 'Detalles'} &bull; {selectedAsset.ipAddress || 'Sin IP'}
+                              </span>
+                            )}
+                            <span className={`cmdb-collapsible-chevron ${isTechSpecsOpen ? 'is-open' : ''}`}>
+                              ▼
+                            </span>
                           </div>
                         </div>
+
+                        {isTechSpecsOpen && (
+                          <div className="cmdb-collapsible-body" style={{ padding: '0' }}>
+                            <div className="cmdb-info-card" style={{ border: 'none', borderRadius: '0 0 10px 10px', boxShadow: 'none' }}>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">👤 Usuario Sesión:</span>
+                                <span className="cmdb-info-val">{formatAssignedUser(selectedAsset.assignedUser)}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🏰 Red / Dominio:</span>
+                                <span className={`cmdb-info-val ${getAssetDomain(selectedAsset) !== 'N/A' ? 'highlight' : 'muted-text'}`}>
+                                  {getAssetDomain(selectedAsset)}
+                                </span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🏷️ Serial / Tag:</span>
+                                <span className="cmdb-info-val highlight">{selectedAsset.serialNumber || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🏢 Fabricante/Board:</span>
+                                <span className="cmdb-info-val">{selectedAsset.motherboard || selectedAsset.brand || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">🌐 IP Local:</span>
+                                <span className="cmdb-info-val mono">{selectedAsset.ipAddress || '---'}</span>
+                              </div>
+                              <div className="cmdb-info-row">
+                                <span className="muted-text">💻 Sistema:</span>
+                                <span className="cmdb-info-val">{selectedAsset.osType} ({selectedAsset.osVersion || '---'})</span>
+                              </div>
+                            </div>
+                          </div>
+                        )}
                       </div>
                     </>
                   )}

@@ -85,6 +85,58 @@ function getStatusLabel(status) {
   return labels[status] || status;
 }
 
+/**
+ * Calcula las horas hábiles laborales transcurridas (L-V 8:00 - 17:00).
+ */
+function calculateElapsedBusinessHoursClient(startDate, endDate = new Date(), startHour = 8, endHour = 17) {
+  const start = new Date(startDate);
+  const end = new Date(endDate);
+  if (isNaN(start.getTime()) || isNaN(end.getTime()) || start >= end) return 0;
+  let current = new Date(start);
+  let totalBusinessMinutes = 0;
+  while (current < end) {
+    const dayOfWeek = current.getDay();
+    const isWorkday = dayOfWeek >= 1 && dayOfWeek <= 5;
+    if (isWorkday) {
+      const dayStart = new Date(current);
+      dayStart.setHours(startHour, 0, 0, 0);
+      const dayEnd = new Date(current);
+      dayEnd.setHours(endHour, 0, 0, 0);
+      const effectiveStart = current > dayStart ? current : dayStart;
+      const effectiveEnd = end < dayEnd ? end : dayEnd;
+      if (effectiveStart < effectiveEnd && effectiveStart < dayEnd && effectiveEnd > dayStart) {
+        const windowStart = effectiveStart < dayStart ? dayStart : effectiveStart;
+        const windowEnd = effectiveEnd > dayEnd ? dayEnd : effectiveEnd;
+        if (windowEnd > windowStart) totalBusinessMinutes += (windowEnd - windowStart) / (1000 * 60);
+      }
+    }
+    current.setDate(current.getDate() + 1);
+    current.setHours(0, 0, 0, 0);
+  }
+  return Number((totalBusinessMinutes / 60).toFixed(2));
+}
+
+/**
+ * Obtiene el estado y tiempo restante del ciclo de 8 horas hábiles para cierre automático.
+ */
+function getAutoCloseInfo(resolvedAt, targetHours = 8) {
+  if (!resolvedAt) return null;
+  const elapsed = calculateElapsedBusinessHoursClient(resolvedAt, new Date());
+  const remaining = Math.max(0, targetHours - elapsed);
+  const percent = Math.min(100, Math.round((elapsed / targetHours) * 100));
+  const remHours = Math.floor(remaining);
+  const remMins = Math.round((remaining - remHours) * 60);
+  return {
+    elapsed,
+    remaining,
+    percent,
+    remHours,
+    remMins,
+    isOverdue: elapsed >= targetHours,
+    label: remaining <= 0 ? 'Cierre automático en proceso' : `${remHours}h ${remMins}m hábiles restantes`
+  };
+}
+
 function getInitials(name) {
   return String(name || 'Usuario')
     .split(' ')
@@ -1188,6 +1240,81 @@ export default function Tickets() {
                 
                 {activeTab === 'ticket' && (
                   <>
+                    {/* 🕒 BANNER DE CIERRE AUTOMÁTICO EN 8 HORAS HÁBILES */}
+                    {(selectedTicket.status === 'RESOLVED' || form.status === 'RESOLVED') && (() => {
+                      const autoClose = getAutoCloseInfo(selectedTicket.resolvedAt || new Date());
+                      return (
+                        <div style={{
+                          background: 'linear-gradient(135deg, #f0fdf4 0%, #dcfce7 100%)',
+                          border: '1px solid #bbf7d0',
+                          borderLeft: '5px solid #16a34a',
+                          borderRadius: '12px',
+                          padding: '1rem 1.25rem',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          gap: '1rem',
+                          boxShadow: '0 2px 8px rgba(22, 163, 74, 0.08)',
+                          flexWrap: 'wrap'
+                        }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                            <div style={{
+                              width: '42px',
+                              height: '42px',
+                              borderRadius: '10px',
+                              background: '#16a34a',
+                              color: '#fff',
+                              display: 'flex',
+                              alignItems: 'center',
+                              justifyContent: 'center',
+                              fontSize: '1.3rem',
+                              flexShrink: 0
+                            }}>
+                              ⏱️
+                            </div>
+                            <div>
+                              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+                                <strong style={{ color: '#14532d', fontSize: '0.95rem' }}>
+                                  Ticket Solucionado / Resuelto
+                                </strong>
+                                <span style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 800,
+                                  background: '#16a34a',
+                                  color: '#fff',
+                                  padding: '2px 8px',
+                                  borderRadius: '12px'
+                                }}>
+                                  Cierre en 8h Hábiles
+                                </span>
+                              </div>
+                              <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.82rem', color: '#166534', lineHeight: 1.4 }}>
+                                Se ha brindado solución a este caso. El sistema procederá al <strong>cierre automático</strong> tras 8 horas hábiles laborales si el solicitante no reporta inconformidades.
+                              </p>
+                            </div>
+                          </div>
+
+                          {autoClose && (
+                            <div style={{
+                              background: '#fff',
+                              padding: '0.5rem 0.9rem',
+                              borderRadius: '8px',
+                              border: '1px solid #86efac',
+                              textAlign: 'right',
+                              flexShrink: 0
+                            }}>
+                              <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b', fontWeight: 600, textTransform: 'uppercase' }}>
+                                Temporizador Hábil
+                              </span>
+                              <strong style={{ fontSize: '0.88rem', color: autoClose.isOverdue ? '#dc2626' : '#15803d' }}>
+                                ⏳ {autoClose.label}
+                              </strong>
+                            </div>
+                          )}
+                        </div>
+                      );
+                    })()}
+
                     {/* CHAT / TIMELINE */}
                     <div className="ticket-conversation-panel" style={{ border: '1.5px solid #d0d7de', borderRadius: '16px', background: '#fff', display: 'flex', flexDirection: 'column', overflow: 'hidden', maxHeight: '600px' }}>
                       <div className="ticket-conversation-scroll" style={{ padding: '1.5rem', display: 'flex', flexDirection: 'column', gap: '1.5rem', overflowY: 'auto', flex: 1 }}>

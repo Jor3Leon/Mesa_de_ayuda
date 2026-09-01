@@ -3,6 +3,7 @@ const { PrismaClient } = require('@prisma/client');
 const { buildApp } = require('./app');
 const fs = require('fs');
 const path = require('path');
+const { autoCloseResolvedTickets } = require('./lib/business-hours');
 
 const prisma = new PrismaClient();
 const app = buildApp(prisma);
@@ -14,6 +15,12 @@ const server = app.listen(PORT, () => {
   // Iniciar ciclo de respaldos cada 24 horas
   runBackup();
   setInterval(runBackup, 24 * 60 * 60 * 1000);
+
+  // Iniciar ciclo de cierre automático de tickets resueltos (>8 horas hábiles) cada 2 minutos
+  autoCloseResolvedTickets(prisma).catch(console.error);
+  setInterval(() => {
+    autoCloseResolvedTickets(prisma).catch(console.error);
+  }, 2 * 60 * 1000);
 });
 
 function runBackup() {

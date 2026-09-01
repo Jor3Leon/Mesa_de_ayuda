@@ -16,14 +16,16 @@ const {
   parseResponsibleUserIds
 } = require('../lib/ticket-service');
 const { requireAuth, requirePermission } = require('../lib/middleware');
+const { autoCloseResolvedTickets } = require('../lib/business-hours');
 
 function getTicketRoutes(prisma) {
   const router = express.Router();
 
   router.use(requireAuth(prisma));
 
-    router.get('/', requirePermission('TICKETS_VIEW'), async (req, res, next) => {
+  router.get('/', requirePermission('TICKETS_VIEW'), async (req, res, next) => {
     try {
+      await autoCloseResolvedTickets(prisma).catch(console.error);
       const isStandardUser = req.auth.user.role === 'USUARIO ESTANDAR';
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
       const where = {
@@ -123,6 +125,7 @@ function getTicketRoutes(prisma) {
   
   router.get('/:id', requirePermission('TICKETS_VIEW'), async (req, res, next) => {
     try {
+      await autoCloseResolvedTickets(prisma).catch(console.error);
       const id = Number.parseInt(req.params.id, 10);
       const ticket = await prisma.ticket.findUnique({
         where: { id },

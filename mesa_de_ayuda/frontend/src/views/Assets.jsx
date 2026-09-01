@@ -948,25 +948,81 @@ export default function Assets() {
 
   return (
     <div className="view-container">
-      <section className="hero-panel">
-        <div>
-          <p className="eyebrow">Inventario de dispositivos</p>
-          <h2>Consola operativa de equipos, agente y trazabilidad tecnica</h2>
-          <p className="muted-text">
-            Administra el parque tecnologico con filtros, edicion, detalle tecnico y acciones rapidas por dispositivo.
-          </p>
-        </div>
-        <div className="stat-grid compact-grid">
-          <div className="stat-card">
-            <span>{stats.card1Title}</span>
-            <strong>{stats.card1Value}</strong>
+      {/* 🌟 HERO CONTROL BAR */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          borderRadius: '16px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
+          color: '#ffffff',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+              color: '#ffffff',
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
+              <line x1="8" y1="21" x2="16" y2="21" />
+              <line x1="12" y1="17" x2="12" y2="21" />
+            </svg>
           </div>
-          <div className="stat-card">
-            <span>{stats.card2Title}</span>
-            <strong>{stats.card2Value}</strong>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+                Inventario de Activos & Dispositivos
+              </h1>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '9999px',
+                  background: 'rgba(0, 209, 255, 0.18)',
+                  color: '#00D1FF',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
+                }}
+              >
+                ITAM v2.2
+              </span>
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+              Consola operativa de equipos, agentes instalados y trazabilidad técnica del parque informático.
+            </p>
           </div>
         </div>
-      </section>
+
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: '0.6rem' }}>
+            <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.55rem 0.95rem', color: '#ffffff', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>{stats.card1Title}</span>
+              <strong style={{ fontSize: '1.1rem', color: '#00D1FF' }}>{stats.card1Value}</strong>
+            </div>
+            <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.55rem 0.95rem', color: '#ffffff', display: 'flex', flexDirection: 'column' }}>
+              <span style={{ fontSize: '0.68rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>{stats.card2Title}</span>
+              <strong style={{ fontSize: '1.1rem', color: '#10b981' }}>{stats.card2Value}</strong>
+            </div>
+          </div>
+        </div>
+      </div>
 
       {error && <div className="feedback error">{error}</div>}
       {feedback && <div className="feedback">{feedback}</div>}

@@ -538,56 +538,103 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
   return (
     <div className="view-container">
-      <section className="hero-panel cmdb-hero-panel">
-        <div className="cmdb-hero-left">
-          <div className="cmdb-hero-live-pill">
-            <span className="live-dot"></span>
-            MONITOREO CMDB 360° EN TIEMPO REAL
+      {/* 🌟 HERO CONTROL BAR */}
+      <div
+        style={{
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          borderRadius: '16px',
+          padding: '1.75rem 2rem',
+          marginBottom: '1.75rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
+          color: '#ffffff',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+              color: '#ffffff',
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M21 16V8a2 2 0 0 0-1-1.73l-7-4a2 2 0 0 0-2 0l-7 4A2 2 0 0 0 3 8v8a2 2 0 0 0 1 1.73l7 4a2 2 0 0 0 2 0l7-4A2 2 0 0 0 21 16z" />
+              <polyline points="3.27 6.96 12 12.01 20.73 6.96" />
+              <line x1="12" y1="22.08" x2="12" y2="12" />
+            </svg>
           </div>
-          <p className="eyebrow">Estrategia de Activos & Infraestructura</p>
-          <h2>Consola Operativa CMDB</h2>
-          <p className="muted-text">
-            Monitoreo en tiempo real de la salud del parque informático, inventario de hardware y software, y gestión de mantenimientos preventivos.
-          </p>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+                Consola Operativa CMDB & Vista 360°
+              </h1>
+              <span
+                style={{
+                  fontSize: '0.75rem',
+                  fontWeight: '700',
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '9999px',
+                  background: 'rgba(0, 209, 255, 0.18)',
+                  color: '#00D1FF',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
+                }}
+              >
+                ITIL / CMDB v2.2
+              </span>
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+              Monitoreo en tiempo real de la salud del parque informático, inventario de hardware y software, y gestión de mantenimientos.
+            </p>
+          </div>
         </div>
-        
-        <div className="cmdb-stats-grid">
-          <div className="cmdb-stat-box default">
-            <div className="cmdb-stat-icon-wrap default">🖥️</div>
-            <div className="cmdb-stat-info">
-              <div className="cmdb-stat-val">{stats.total}</div>
-              <div className="cmdb-stat-lbl">Total Activos</div>
+
+        {/* Stats Grid inside Hero */}
+        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
+          <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>🖥️</span>
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#00D1FF' }}>{stats.total}</div>
+              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Total Activos</div>
             </div>
           </div>
 
-          <div className="cmdb-stat-box success">
-            <div className="cmdb-stat-icon-wrap success">🟢</div>
-            <div className="cmdb-stat-info">
-              <div className="cmdb-stat-val">
-                {stats.online} 
-                <span className="cmdb-stat-tag success">{stats.healthScore}% Salud</span>
-              </div>
-              <div className="cmdb-stat-lbl">En Línea</div>
+          <div style={{ background: '#002D62', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>🟢</span>
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#10b981' }}>{stats.online}</div>
+              <div style={{ fontSize: '0.65rem', color: '#a7f3d0', textTransform: 'uppercase', fontWeight: 600 }}>En Línea ({stats.healthScore}%)</div>
             </div>
           </div>
 
-          <div className="cmdb-stat-box warning">
-            <div className="cmdb-stat-icon-wrap warning">⚠️</div>
-            <div className="cmdb-stat-info">
-              <div className="cmdb-stat-val">{stats.warning}</div>
-              <div className="cmdb-stat-lbl">En Riesgo / Offline</div>
+          <div style={{ background: '#002D62', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f59e0b' }}>{stats.warning}</div>
+              <div style={{ fontSize: '0.65rem', color: '#fde68a', textTransform: 'uppercase', fontWeight: 600 }}>En Riesgo / Offline</div>
             </div>
           </div>
 
-          <div className="cmdb-stat-box info">
-            <div className="cmdb-stat-icon-wrap info">🛡️</div>
-            <div className="cmdb-stat-info">
-              <div className="cmdb-stat-val">{stats.securityScore}%</div>
-              <div className="cmdb-stat-lbl">Cobertura Endpoint</div>
+          <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+            <span style={{ fontSize: '1.2rem' }}>🛡️</span>
+            <div>
+              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#38bdf8' }}>{stats.securityScore}%</div>
+              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Cobertura Endpoint</div>
             </div>
           </div>
         </div>
-      </section>
+      </div>
 
       {error && <div className="feedback error" style={{ margin: '1rem 0' }}>{error}</div>}
 

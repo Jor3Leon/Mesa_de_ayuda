@@ -2315,32 +2315,119 @@ export default function Tickets() {
         </div>
       ) : (
         <>
-          <section className="section-heading">
-            <div>
-              <h2>Tickets y gestion de incidentes</h2>
-              <p>Registro, prioridad y seguimiento de solicitudes de soporte.</p>
-            </div>
-            <div className="toolbar" style={{ gap: '0.8rem' }}>
-              <div className="inventory-actions-group" style={{ display: 'flex', border: '1px solid var(--color-border)', borderRadius: '10px', overflow: 'hidden', background: '#fff', boxShadow: '0 2px 5px rgba(0,0,0,0.05)' }}>
-                <button 
-                  className="inventory-action-btn"
-                  onClick={() => downloadTickets('excel')}
-                  style={{ border: 'none', background: 'transparent', padding: '0.6rem 1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: '#1D6F42' }}
-                >
-                  <i className="fas fa-file-excel"></i>
-                  <span>Excel Estructurado</span>
-                </button>
-                <button 
-                  className="inventory-action-btn"
-                  onClick={() => downloadTickets('pdf')}
-                  style={{ border: 'none', background: 'transparent', padding: '0.6rem 1rem', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 600, color: '#E02424', borderLeft: '1px solid #eee' }}
-                >
-                  <i className="fas fa-file-pdf"></i>
-                  <span>Reporte PDF</span>
-                </button>
+          {/* 🌟 HERO CONTROL BAR */}
+          <div
+            style={{
+              background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+              borderRadius: '16px',
+              padding: '1.75rem 2rem',
+              marginBottom: '1.75rem',
+              boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+              border: '1px solid rgba(0, 209, 255, 0.25)',
+              color: '#ffffff',
+              display: 'flex',
+              flexWrap: 'wrap',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: '1.25rem',
+            }}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+              <div
+                style={{
+                  width: '42px',
+                  height: '42px',
+                  borderRadius: '10px',
+                  background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+                  color: '#ffffff',
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
+                  <polyline points="14 2 14 8 20 8" />
+                  <line x1="16" y1="13" x2="8" y2="13" />
+                  <line x1="16" y1="17" x2="8" y2="17" />
+                  <line x1="10" y1="9" x2="8" y2="9" />
+                </svg>
+              </div>
+              <div>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+                    Gestión de Tickets & Incidentes
+                  </h1>
+                  <span
+                    style={{
+                      fontSize: '0.75rem',
+                      fontWeight: '700',
+                      padding: '0.15rem 0.55rem',
+                      borderRadius: '9999px',
+                      background: 'rgba(0, 209, 255, 0.18)',
+                      color: '#00D1FF',
+                      border: '1px solid rgba(0, 209, 255, 0.4)',
+                    }}
+                  >
+                    ITSM v2.2
+                  </span>
+                </div>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+                  Registro, prioridad, asignación y seguimiento en tiempo real de solicitudes y soporte técnico.
+                </p>
               </div>
             </div>
-          </section>
+
+            {/* Export Toolbar Buttons */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
+              <button 
+                type="button"
+                onClick={() => downloadTickets('excel')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#002D62',
+                  color: '#ffffff',
+                  padding: '0.65rem 1.15rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <i className="fas fa-file-excel" style={{ color: '#10b981' }}></i>
+                <span>Excel Estructurado</span>
+              </button>
+
+              <button 
+                type="button"
+                onClick={() => downloadTickets('pdf')}
+                style={{
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.5rem',
+                  background: '#002D62',
+                  color: '#ffffff',
+                  padding: '0.65rem 1.15rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  border: '1px solid rgba(239, 68, 68, 0.4)',
+                  cursor: 'pointer',
+                  boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
+                  transition: 'all 0.2s ease',
+                }}
+              >
+                <i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i>
+                <span>Reporte PDF</span>
+              </button>
+            </div>
+          </div>
 
           {error && <div className="feedback error" style={{ marginBottom: '1.5rem', borderRadius: '12px' }}>{error}</div>}
           {feedback && <div className="feedback" style={{ marginBottom: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #10b981' }}>{feedback}</div>}

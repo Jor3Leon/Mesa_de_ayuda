@@ -913,68 +913,65 @@ export default function Assets() {
       {error && <div className="feedback error">{error}</div>}
       {feedback && <div className="feedback">{feedback}</div>}
 
-      <section className="stat-grid asset-kpi-grid">
+      {/* 🌟 4 TARJETAS KPI COMPACTAS Y ALINEADAS EN 1 FILA */}
+      <section className="asset-kpi-grid">
         <article 
-          className={`stat-card asset-kpi-card ${categoryFilter === 'ALL' ? 'active-kpi-all' : ''}`}
+          className={`asset-kpi-card ${categoryFilter === 'ALL' ? 'active-kpi-all' : ''}`}
           onClick={() => setCategoryFilter('ALL')}
           title="Ver todos los dispositivos del inventario"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#002D62', margin: 0 }}>Total de Dispositivos</span>
-            <span style={{ fontSize: '1.25rem' }}>📦</span>
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#002D62' }}>Total Dispositivos</span>
+            <span className="asset-kpi-card-icon">📦</span>
           </div>
-          <strong style={{ fontSize: '1.85rem', color: '#002D62', fontWeight: 800 }}>{totalCount}</strong>
-          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#00D1FF', display: 'inline-block' }}></span>
-            Parque informático total
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#002D62' }}>{totalCount}</strong>
+            <span className="asset-kpi-card-subtitle">Parque total</span>
           </div>
         </article>
 
         <article 
-          className={`stat-card asset-kpi-card ${categoryFilter === 'Equipos de Computo' ? 'active-kpi-compute' : ''}`}
+          className={`asset-kpi-card ${categoryFilter === 'Equipos de Computo' ? 'active-kpi-compute' : ''}`}
           onClick={() => setCategoryFilter(categoryFilter === 'Equipos de Computo' ? 'ALL' : 'Equipos de Computo')}
           title="Filtrar por Equipos de Cómputo (PC, Portátiles, Todo en Uno)"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#0284c7', margin: 0 }}>Equipos de Cómputo</span>
-            <span style={{ fontSize: '1.25rem' }}>💻</span>
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#0284c7' }}>Equipos Cómputo</span>
+            <span className="asset-kpi-card-icon">💻</span>
           </div>
-          <strong style={{ fontSize: '1.85rem', color: '#0284c7', fontWeight: 800 }}>{computeCount}</strong>
-          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#0284c7', display: 'inline-block' }}></span>
-            PC, Portátiles y Todo en Uno
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#0284c7' }}>{computeCount}</strong>
+            <span className="asset-kpi-card-subtitle">PC, Laptops y AIO</span>
           </div>
         </article>
 
         <article 
-          className={`stat-card asset-kpi-card ${categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora' ? 'active-kpi-printer' : ''}`}
+          className={`asset-kpi-card ${categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora' ? 'active-kpi-printer' : ''}`}
           onClick={() => setCategoryFilter(categoryFilter.includes('Impresora') ? 'ALL' : 'Impresoras y/o Escaneres')}
           title="Filtrar por Impresoras, Escáneres y Multifuncionales"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#059669', margin: 0 }}>Impresoras y Escáneres</span>
-            <span style={{ fontSize: '1.25rem' }}>🖨️</span>
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#059669' }}>Impresoras / Escáner</span>
+            <span className="asset-kpi-card-icon">🖨️</span>
           </div>
-          <strong style={{ fontSize: '1.85rem', color: '#059669', fontWeight: 800 }}>{printerCount}</strong>
-          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#10b981', display: 'inline-block' }}></span>
-            Multifuncionales y Térmicas
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#059669' }}>{printerCount}</strong>
+            <span className="asset-kpi-card-subtitle">Multifuncionales</span>
           </div>
         </article>
 
         <article 
-          className={`stat-card asset-kpi-card ${categoryFilter === 'Dispositivo de Red' ? 'active-kpi-network' : ''}`}
+          className={`asset-kpi-card ${categoryFilter === 'Dispositivo de Red' ? 'active-kpi-network' : ''}`}
           onClick={() => setCategoryFilter(categoryFilter === 'Dispositivo de Red' ? 'ALL' : 'Dispositivo de Red')}
           title="Filtrar por Dispositivos de Red (Switches, Routers, Servidores, Módems)"
         >
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
-            <span style={{ fontSize: '0.82rem', fontWeight: 700, color: '#7c3aed', margin: 0 }}>Dispositivos de Red</span>
-            <span style={{ fontSize: '1.25rem' }}>🌐</span>
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#7c3aed' }}>Dispositivos de Red</span>
+            <span className="asset-kpi-card-icon">🌐</span>
           </div>
-          <strong style={{ fontSize: '1.85rem', color: '#7c3aed', fontWeight: 800 }}>{networkCount}</strong>
-          <div style={{ fontSize: '0.74rem', color: '#64748b', marginTop: '0.35rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: '#8b5cf6', display: 'inline-block' }}></span>
-            Switches, Routers y Servidores
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#7c3aed' }}>{networkCount}</strong>
+            <span className="asset-kpi-card-subtitle">Switches, Servers</span>
           </div>
         </article>
       </section>

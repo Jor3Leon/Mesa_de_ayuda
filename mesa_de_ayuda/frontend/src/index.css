@@ -1197,46 +1197,109 @@ textarea {
   font-size: 1.55rem;
 }
 
-/* ── ITAM / Inventario KPI Cards ── */
+/* ── ITAM / Inventario KPI Cards Ultra-Compact Grid ── */
+.asset-kpi-grid {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 0.65rem;
+  margin-bottom: 1.15rem;
+  width: 100%;
+  box-sizing: border-box;
+}
+
 .asset-kpi-card {
-  padding: 1.15rem 1.25rem;
-  border-radius: 14px;
+  padding: 0.6rem 0.85rem;
+  border-radius: 10px;
   background: #ffffff;
   border: 1px solid #e2e8f0;
-  box-shadow: 0 4px 6px -1px rgba(0, 0, 0, 0.03), 0 2px 4px -1px rgba(0, 0, 0, 0.02);
-  transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1);
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.03);
+  transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1);
   cursor: pointer;
   user-select: none;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 0.15rem;
+  min-height: 58px;
+  box-sizing: border-box;
 }
 
 .asset-kpi-card:hover {
-  transform: translateY(-3px);
-  box-shadow: 0 10px 20px -5px rgba(0, 45, 98, 0.12), 0 4px 6px -2px rgba(0, 45, 98, 0.04);
+  transform: translateY(-2px);
+  box-shadow: 0 6px 14px -3px rgba(0, 45, 98, 0.1);
   border-color: #cbd5e1;
+}
+
+.asset-kpi-card-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 0.35rem;
+}
+
+.asset-kpi-card-title {
+  font-size: 0.72rem;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.asset-kpi-card-icon {
+  font-size: 0.95rem;
+  line-height: 1;
+  opacity: 0.85;
+}
+
+.asset-kpi-card-body {
+  display: flex;
+  justify-content: space-between;
+  align-items: baseline;
+  gap: 0.4rem;
+}
+
+.asset-kpi-card-value {
+  font-size: 1.4rem;
+  font-weight: 800;
+  line-height: 1;
+  letter-spacing: -0.02em;
+}
+
+.asset-kpi-card-subtitle {
+  font-size: 0.67rem;
+  color: #64748b;
+  font-weight: 500;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  text-align: right;
+  flex: 1;
 }
 
 .asset-kpi-card.active-kpi-all {
   border-color: #002D62;
   background: linear-gradient(180deg, #f0f7ff 0%, #ffffff 100%);
-  box-shadow: 0 0 0 2px rgba(0, 45, 98, 0.18), 0 8px 16px -4px rgba(0, 45, 98, 0.1);
+  box-shadow: 0 0 0 2px rgba(0, 45, 98, 0.18), 0 4px 10px -2px rgba(0, 45, 98, 0.08);
 }
 
 .asset-kpi-card.active-kpi-compute {
   border-color: #0284c7;
   background: linear-gradient(180deg, #f0f9ff 0%, #ffffff 100%);
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.22), 0 8px 16px -4px rgba(2, 132, 199, 0.1);
+  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.22), 0 4px 10px -2px rgba(2, 132, 199, 0.08);
 }
 
 .asset-kpi-card.active-kpi-printer {
   border-color: #059669;
   background: linear-gradient(180deg, #ecfdf5 0%, #ffffff 100%);
-  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.22), 0 8px 16px -4px rgba(5, 150, 105, 0.1);
+  box-shadow: 0 0 0 2px rgba(5, 150, 105, 0.22), 0 4px 10px -2px rgba(5, 150, 105, 0.08);
 }
 
 .asset-kpi-card.active-kpi-network {
   border-color: #7c3aed;
   background: linear-gradient(180deg, #f5f3ff 0%, #ffffff 100%);
-  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.22), 0 8px 16px -4px rgba(124, 58, 237, 0.1);
+  box-shadow: 0 0 0 2px rgba(124, 58, 237, 0.22), 0 4px 10px -2px rgba(124, 58, 237, 0.08);
 }
 
 .section-heading {
@@ -5108,9 +5171,10 @@ tbody tr:hover {
     box-sizing: border-box !important;
   }
 
-  /* 📊 2x2 Responsive KPI Grids (Dashboard & Analytics) */
+  /* 📊 2x2 Responsive KPI Grids (Dashboard, Analytics, Inventory) */
   .dashboard-kpi-grid,
   .analytics-kpi-grid,
+  .asset-kpi-grid,
   .bento-grid,
   .stat-grid,
   .compact-grid,
@@ -5123,8 +5187,8 @@ tbody tr:hover {
   div[style*="grid-template-columns: repeat(auto-fit, minmax(240px, 1fr))"] {
     display: grid !important;
     grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
-    gap: 0.55rem !important;
-    margin-top: 0.4rem !important;
+    gap: 0.5rem !important;
+    margin-top: 0.35rem !important;
     margin-bottom: 0.85rem !important;
     width: 100% !important;
     box-sizing: border-box !important;
@@ -5142,19 +5206,36 @@ tbody tr:hover {
   .analytics-kpi-grid > div,
   .bento-item,
   .stat-card,
+  .asset-kpi-card,
   .cmdb-stat-box,
   .discovery-counter-card,
   .analytics-stat-card,
   .permissions-summary-card {
-    padding: 0.65rem 0.75rem !important;
-    border-radius: 12px !important;
-    gap: 0.35rem !important;
-    min-height: auto !important;
+    padding: 0.55rem 0.7rem !important;
+    border-radius: 10px !important;
+    gap: 0.2rem !important;
+    min-height: 52px !important;
     min-width: 0 !important;
     box-sizing: border-box !important;
     background: #ffffff !important;
     border: 1px solid #e2e8f0 !important;
-    box-shadow: 0 2px 6px rgba(0, 45, 98, 0.04) !important;
+    box-shadow: 0 1px 4px rgba(0, 45, 98, 0.04) !important;
+  }
+
+  .asset-kpi-card-title {
+    font-size: 0.68rem !important;
+  }
+
+  .asset-kpi-card-icon {
+    font-size: 0.85rem !important;
+  }
+
+  .asset-kpi-card-value {
+    font-size: 1.25rem !important;
+  }
+
+  .asset-kpi-card-subtitle {
+    font-size: 0.62rem !important;
   }
 
   /* KPI Titles */

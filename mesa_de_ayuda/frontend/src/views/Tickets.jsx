@@ -1228,7 +1228,7 @@ export default function Tickets() {
                   Estadísticas
                 </div>
                 <div onClick={() => setActiveTab('elementos')} style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #e0e0e0', cursor: 'pointer', background: activeTab === 'elementos' ? '#f8f9fa' : 'transparent', fontWeight: activeTab === 'elementos' ? 700 : 400, borderLeft: activeTab === 'elementos' ? '3px solid #29b6f6' : '3px solid transparent' }}>
-                  Elementos {selectedTicket.assetId && <span style={{float: 'right', background: '#e0edf9', color: '#002D62', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>1</span>}
+                  Elementos {(form.assetId || selectedTicket.assetId) && <span style={{float: 'right', background: '#e0edf9', color: '#002D62', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>1</span>}
                 </div>
                 <div onClick={() => setActiveTab('historico')} style={{ padding: '0.8rem 1rem', borderBottom: '1px solid #e0e0e0', cursor: 'pointer', background: activeTab === 'historico' ? '#f8f9fa' : 'transparent', fontWeight: activeTab === 'historico' ? 700 : 400, borderLeft: activeTab === 'historico' ? '3px solid #29b6f6' : '3px solid transparent' }}>
                   Histórico <span style={{float: 'right', background: '#e0edf9', color: '#002D62', padding: '2px 6px', borderRadius: '4px', fontSize: '0.75rem'}}>{activities.length}</span>
@@ -1979,6 +1979,8 @@ export default function Tickets() {
                               if (norm === 'description' || norm === 'descripcion' || norm === 'descripción') return 'Descripción';
                               if (norm === 'responsibleuserids' || norm === 'assignedtoid' || norm === 'responsables' || norm === 'técnico asignado' || norm === 'tecnico asignado') return 'Técnico Asignado';
                               if (norm === 'observerid' || norm === 'seguimiento') return 'Seguimiento';
+                              if (norm === 'assetid' || norm === 'asset' || norm === 'elemento asociado' || norm === 'dispositivo' || norm === 'activo' || norm === 'elemento') return 'Elemento Asociado';
+                              if (norm === 'customerid' || norm === 'solicitante' || norm === 'cliente') return 'Solicitante';
                               if (norm === 'comment' || norm === 'comentario') return 'Comentario';
                               return f.charAt(0).toUpperCase() + f.slice(1);
                             };
@@ -1997,7 +1999,7 @@ export default function Tickets() {
                             };
 
                             const formatValue = (v, fieldName) => {
-                              if (!v || v === 'Ninguno' || v === 'Desconocida' || v === 'Sin asignar' || v === 'Sin Asignar' || v === 'Sin Ubicación' || v === 'Sin ANS' || v === 'Sin Categoría' || v === 'Sin Tipo') return v || 'Sin dato';
+                              if (!v || v === 'Ninguno' || v === 'Desconocida' || v === 'Sin asignar' || v === 'Sin Asignar' || v === 'Sin Ubicación' || v === 'Sin ANS' || v === 'Sin Categoría' || v === 'Sin Tipo' || v === 'Sin elemento asociado' || v === 'Sin Solicitante') return v || 'Sin dato';
                               
                               const normField = fieldName ? String(fieldName).trim().toLowerCase() : '';
 
@@ -2013,7 +2015,16 @@ export default function Tickets() {
                                 if (matchedUser) return matchedUser.name;
                               }
 
-                              // 3. Nombres de Estado y Prioridad
+                              // 3. Resolver ID de Activo / Elemento Asociado
+                              if (normField === 'assetid' || normField === 'elemento asociado' || normField === 'dispositivo' || normField === 'activo') {
+                                const matchedAsset = assets.find(a => String(a.id) === String(v));
+                                if (matchedAsset) {
+                                  const brandModel = [matchedAsset.brand, matchedAsset.model].filter(Boolean).join(' ');
+                                  return matchedAsset.hostname + (brandModel ? ` (${brandModel})` : '');
+                                }
+                              }
+
+                              // 4. Nombres de Estado y Prioridad
                               const m = { 
                                 'NEW': 'Nuevo', 'OPEN': 'Abierto', 'IN_PROGRESS': 'En Progreso', 
                                 'RESOLVED': 'Resuelto', 'CLOSED': 'Cerrado', 'SCHEDULED': 'Programado',
@@ -2053,6 +2064,8 @@ export default function Tickets() {
                               dotColor = '#6366f1'; actionBg = '#eef2ff'; actionColor = '#4f46e5';
                             } else if (normF.includes('tecnico') || normF.includes('técnico') || normF.includes('responsable')) {
                               dotColor = '#0284c7'; actionBg = '#f0f9ff'; actionColor = '#0369a1';
+                            } else if (normF.includes('elemento') || normF.includes('asset') || normF.includes('activo') || normF.includes('dispositivo')) {
+                              dotColor = '#00D1FF'; actionBg = '#e0f2fe'; actionColor = '#0284c7';
                             } else if (normF.includes('categor')) {
                               dotColor = '#059669'; actionBg = '#ecfdf5'; actionColor = '#047857';
                             } else if (normF === 'tipo' || normF === 'tickettype') {
@@ -2063,8 +2076,14 @@ export default function Tickets() {
                               dotColor = '#8b5cf6'; actionBg = '#f5f3ff'; actionColor = '#6d28d9';
                             } else if (normF.includes('seguimiento') || normF === 'observerid') {
                               dotColor = '#0ea5e9'; actionBg = '#f0fdfa'; actionColor = '#0f766e';
+                            } else if (normF.includes('solicitante') || normF.includes('customer') || normF.includes('cliente')) {
+                              dotColor = '#10b981'; actionBg = '#ecfdf5'; actionColor = '#059669';
                             } else if (normF.includes('priorid')) {
                               dotColor = '#ef4444'; actionBg = '#fef2f2'; actionColor = '#b91c1c';
+                            } else if (normF.includes('título') || normF.includes('titulo')) {
+                              dotColor = '#0284c7'; actionBg = '#f0f9ff'; actionColor = '#0369a1';
+                            } else if (normF.includes('descripci')) {
+                              dotColor = '#64748b'; actionBg = '#f1f5f9'; actionColor = '#475569';
                             }
 
                             return (
@@ -2151,7 +2170,7 @@ export default function Tickets() {
                 )}
 
                 {activeTab === 'elementos' && (() => {
-                  const asset = assets.find(a => a.id === selectedTicket.assetId);
+                  const asset = assets.find(a => String(a.id) === String(form.assetId || selectedTicket.assetId)) || selectedTicket.asset;
                   return (
                     <div style={{ background: '#fff', border: '1px solid #e0e0e0', borderRadius: '6px', overflow: 'hidden' }}>
                       <div style={{ background: '#f8fbfc', borderBottom: '1px solid #e0e0e0', padding: '1rem 1.5rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
@@ -2266,20 +2285,62 @@ export default function Tickets() {
 	                ) : null}
 
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
-                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Elementos asociados</label>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Elementos asociados</label>
+                    {form.assetId && (
+                      <span style={{ fontSize: '0.7rem', color: '#0284c7', background: '#e0f2fe', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                        Asociado
+                      </span>
+                    )}
+                  </div>
                   <div style={{ display: 'flex', alignItems: 'center', borderBottom: '1px solid #ced4da', paddingBottom: '0.2rem', opacity: isStandardUser(currentUser) ? 0.7 : 1 }}>
                     <span style={{color: '#666', marginRight: '0.5rem'}}>🔍</span>
                     <input 
                       list="asset-datalist" 
-                      placeholder="" 
+                      placeholder={isStandardUser(currentUser) ? 'Sin dispositivo asignado' : 'Buscar elemento o escribir hostname...'} 
                       readOnly={isStandardUser(currentUser)}
                       style={{ flex: 1, border: 'none', background: 'transparent', outline: 'none', padding: '0.2rem 0', fontSize: '0.9rem', cursor: isStandardUser(currentUser) ? 'not-allowed' : 'text' }} 
-                      onChange={(e) => { const selected = assets.find(a => a.hostname === e.target.value); if (selected) { const locMatch = selected.location ? locations.find(l => l.name === selected.location) : null; setForm({ ...form, assetId: selected.id, locationId: locMatch ? String(locMatch.id) : form.locationId }); } else { setForm({...form, assetId: ''}); } }} 
-                      defaultValue={selectedTicket.asset?.hostname || ''} 
+                      value={(() => {
+                        const matched = assets.find(a => String(a.id) === String(form.assetId));
+                        return matched ? matched.hostname : (form.assetHostname !== undefined ? form.assetHostname : (selectedTicket?.asset?.hostname || ''));
+                      })()}
+                      onChange={(e) => { 
+                        const val = e.target.value;
+                        const selected = assets.find(a => a.hostname.toLowerCase() === val.trim().toLowerCase()); 
+                        if (selected) { 
+                          const locMatch = selected.location ? locations.find(l => l.name === selected.location) : null; 
+                          setForm({ 
+                            ...form, 
+                            assetId: selected.id, 
+                            assetHostname: selected.hostname, 
+                            locationId: locMatch ? String(locMatch.id) : form.locationId 
+                          }); 
+                        } else { 
+                          setForm({ 
+                            ...form, 
+                            assetId: '', 
+                            assetHostname: val 
+                          }); 
+                        } 
+                      }} 
                     />
+                    {form.assetId && !isStandardUser(currentUser) && (
+                      <button 
+                        type="button" 
+                        title="Desvincular elemento"
+                        onClick={() => setForm({ ...form, assetId: '', assetHostname: '' })}
+                        style={{ border: 'none', background: 'transparent', color: '#ef4444', cursor: 'pointer', fontSize: '0.85rem', padding: '0 0.3rem', fontWeight: 700 }}
+                      >
+                        ✕
+                      </button>
+                    )}
                     {!isStandardUser(currentUser) && (
                       <datalist id="asset-datalist">
-                        {assets.filter(a => { const selLoc = locations.find(l => String(l.id) === String(form.locationId)); return !selLoc || a.location === selLoc.name; }).map((a) => <option key={a.id} value={a.hostname} />)}
+                        {assets.map((a) => (
+                          <option key={a.id} value={a.hostname}>
+                            {a.deviceType ? `[${a.deviceType}] ` : ''}{[a.brand, a.model].filter(Boolean).join(' ')}{a.location ? ` - ${a.location}` : ''}
+                          </option>
+                        ))}
                       </datalist>
                     )}
                   </div>

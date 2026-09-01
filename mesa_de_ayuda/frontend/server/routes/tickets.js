@@ -163,7 +163,12 @@ function getTicketRoutes(prisma) {
       const id = Number.parseInt(req.params.id, 10);
       const targetTicket = await prisma.ticket.findUnique({ 
         where: { id },
-        include: { assignedTo: true, secondaryAssignedTo: true }
+        include: { 
+          asset: true,
+          customer: true,
+          assignedTo: true, 
+          secondaryAssignedTo: true 
+        }
       });
       
       if (!targetTicket) {
@@ -187,8 +192,7 @@ function getTicketRoutes(prisma) {
       if (!hasEditPermission && isCreator) {
         if (req.body.status !== undefined) {
           if (targetTicket.status !== 'RESOLVED' && req.body.status === 'CLOSED') {
-             // Let them close even if not resolved if they want? 
-             // Usually users can close their own tickets.
+             // Let them close even if not resolved if they want
           } else if (targetTicket.status !== 'RESOLVED') {
              throw createHttpError(400, 'Solo puedes aceptar/rechazar si el ticket está SOLUCIONADO.');
           }
@@ -258,13 +262,14 @@ function getTicketRoutes(prisma) {
         data: updateData,
         include: {
           customer: true,
+          asset: true,
           assignedTo: { include: { role: true, location: true } },
           secondaryAssignedTo: { include: { role: true, location: true } },
           createdBy: { include: { role: true, location: true } },
         },
       });
 
-      // Activity Recording - Auditoría completa de cambios
+      // Activity Recording - Auditoría exhaustiva de todos los cambios
       const activitiesToCreate = [];
 
       // 1. Estado
@@ -283,7 +288,6 @@ function getTicketRoutes(prisma) {
                                    currentResponsibleIds.length > 0 &&
                                    !hasAssignmentMessage;
         
-        // Priorizar el comentario enviado en el body si existe
         let newValue = req.body.statusComment || updateData.status;
 
         if (isAssignmentStatus) {
@@ -306,7 +310,30 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 2. Tipo (ticketType)
+      // 2. Elemento Asociado / Dispositivo / Activo (assetId)
+      if (updateData.assetId !== undefined && updateData.assetId !== targetTicket.assetId) {
+        const assetIds = [targetTicket.assetId, updateData.assetId].filter((aid) => Number.isInteger(aid) && aid > 0);
+        const foundAssets = assetIds.length > 0 ? await prisma.asset.findMany({ where: { id: { in: assetIds } } }) : [];
+
+        const getAssetDisplay = (aid) => {
+          if (!aid) return 'Sin elemento asociado';
+          const match = foundAssets.find(a => a.id === aid);
+          if (!match) return `Activo #${aid}`;
+          const brandModel = [match.brand, match.model].filter(Boolean).join(' ');
+          return match.hostname + (brandModel ? ` (${brandModel})` : '');
+        };
+
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Elemento Asociado',
+          oldValue: getAssetDisplay(targetTicket.assetId),
+          newValue: getAssetDisplay(updateData.assetId),
+        });
+      }
+
+      // 3. Tipo (ticketType)
       if (updateData.ticketType !== undefined && updateData.ticketType !== targetTicket.ticketType) {
         activitiesToCreate.push({
           ticketId: id,
@@ -318,7 +345,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 3. Categoría (category)
+      // 4. Categoría (category)
       if (updateData.category !== undefined && updateData.category !== targetTicket.category) {
         activitiesToCreate.push({
           ticketId: id,
@@ -330,7 +357,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 4. Prioridad (priority)
+      // 5. Prioridad (priority)
       if (updateData.priority !== undefined && updateData.priority !== targetTicket.priority) {
         activitiesToCreate.push({
           ticketId: id,
@@ -342,7 +369,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 5. ANS / SLA (sla)
+      // 6. ANS / SLA (sla)
       if (updateData.sla !== undefined && updateData.sla !== targetTicket.sla) {
         activitiesToCreate.push({
           ticketId: id,
@@ -354,7 +381,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 6. Ubicación (locationId)
+      // 7. Ubicación (locationId)
       if (updateData.locationId !== undefined && updateData.locationId !== targetTicket.locationId) {
         const locationIds = [targetTicket.locationId, updateData.locationId].filter((lid) => Number.isInteger(lid) && lid > 0);
         const locs = locationIds.length > 0 ? await prisma.location.findMany({ where: { id: { in: locationIds } } }) : [];
@@ -371,7 +398,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 7. Seguimiento / Observador (observerId)
+      // 8. Seguimiento / Observador (observerId)
       if (updateData.observerId !== undefined && updateData.observerId !== targetTicket.observerId) {
         const observerIds = [targetTicket.observerId, updateData.observerId].filter((uid) => Number.isInteger(uid) && uid > 0);
         const obsUsers = observerIds.length > 0 ? await prisma.user.findMany({ where: { id: { in: observerIds } } }) : [];
@@ -388,7 +415,7 @@ function getTicketRoutes(prisma) {
         });
       }
 
-      // 8. Técnicos Asignados / Participantes (responsibleUserIds)
+      // 9. Técnicos Asignados / Participantes (responsibleUserIds)
       if (updateData.responsibleUserIds !== undefined) {
         const oldRespIds = parseResponsibleUserIds(targetTicket.responsibleUserIds);
         const newRespIds = parseResponsibleUserIds(updateData.responsibleUserIds);
@@ -414,7 +441,7 @@ function getTicketRoutes(prisma) {
         }
       }
 
-      // 9. Título (title)
+      // 10. Título (title)
       if (updateData.title !== undefined && updateData.title !== targetTicket.title) {
         activitiesToCreate.push({
           ticketId: id,
@@ -423,6 +450,35 @@ function getTicketRoutes(prisma) {
           field: 'Título',
           oldValue: targetTicket.title,
           newValue: updateData.title,
+        });
+      }
+
+      // 11. Descripción (description)
+      if (updateData.description !== undefined && updateData.description !== targetTicket.description) {
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Descripción',
+          oldValue: 'Contenido modificado',
+          newValue: 'Descripción actualizada',
+        });
+      }
+
+      // 12. Solicitante / Cliente (customerId)
+      if (updateData.customerId !== undefined && updateData.customerId !== targetTicket.customerId) {
+        const custIds = [targetTicket.customerId, updateData.customerId].filter((cid) => Number.isInteger(cid) && cid > 0);
+        const custs = custIds.length > 0 ? await prisma.customer.findMany({ where: { id: { in: custIds } } }) : [];
+        const oldCust = custs.find(c => c.id === targetTicket.customerId)?.name || 'Sin Solicitante';
+        const newCust = custs.find(c => c.id === updateData.customerId)?.name || 'Sin Solicitante';
+
+        activitiesToCreate.push({
+          ticketId: id,
+          user: req.auth.user.name,
+          action: 'UPDATED',
+          field: 'Solicitante',
+          oldValue: oldCust,
+          newValue: newCust,
         });
       }
 

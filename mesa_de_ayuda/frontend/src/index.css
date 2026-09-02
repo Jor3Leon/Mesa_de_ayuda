@@ -5337,7 +5337,7 @@ tbody tr:hover {
     line-height: 1.2 !important;
   }
 
-  /* 📈 Chart Grids (Dashboard & Analytics Rows) -> 1 Column Full Width */
+  /* 📈 Chart Grids (Dashboard & Analytics Rows) -> 1 Column Grid with full track width */
   .dashboard-chart-grid,
   .analytics-chart-grid,
   div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(480px, 1fr))'"],
@@ -5348,8 +5348,8 @@ tbody tr:hover {
   div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))'"],
   div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))'"],
   div[style*="gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))'"] {
-    display: flex !important;
-    flex-direction: column !important;
+    display: grid !important;
+    grid-template-columns: 100% !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -5362,6 +5362,7 @@ tbody tr:hover {
   .analytics-chart-grid > div,
   .analytics-chart-card,
   .card {
+    display: block !important;
     width: 100% !important;
     max-width: 100% !important;
     min-width: 0 !important;
@@ -5395,13 +5396,16 @@ tbody tr:hover {
   /* 📊 Recharts Wrappers: 100% Fluid on Mobile */
   .recharts-responsive-container {
     width: 100% !important;
-    min-width: 0 !important;
+    min-width: 100% !important;
+    max-width: 100% !important;
     min-height: 220px !important;
     display: block !important;
+    position: relative !important;
   }
 
   .recharts-wrapper {
     max-width: 100% !important;
+    width: 100% !important;
   }
 
   /* 🧭 Control Bars & Filters on Mobile */

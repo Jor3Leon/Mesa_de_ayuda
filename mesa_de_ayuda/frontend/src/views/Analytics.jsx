@@ -316,8 +316,8 @@ export default function Analytics({ user }) {
           </div>
         </div>
 
-        <div style={{ width: '100%', minWidth: 0, minHeight: '300px', position: 'relative' }}>
-          <ResponsiveContainer width="100%" height={300} minWidth={0}>
+        <div style={{ width: '100%', minHeight: '300px', position: 'relative' }}>
+          <ResponsiveContainer width="100%" height={300} minWidth={100}>
             <AreaChart data={dailyEvolution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="anIncGrad" x1="0" y1="0" x2="0" y2="1">
@@ -334,7 +334,7 @@ export default function Analytics({ user }) {
                 </linearGradient>
               </defs>
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="label" stroke="#94a3b8" fontSize={11} tickLine={false} />
+              <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
               <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
               <Tooltip 
                 contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}

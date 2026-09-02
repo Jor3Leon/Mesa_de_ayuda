@@ -791,8 +791,8 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height={280} minWidth={0}>
+          <div style={{ width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height={280} minWidth={100}>
               <AreaChart data={yearlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="yearCreatedGrad" x1="0" y1="0" x2="0" y2="1">
@@ -809,7 +809,7 @@ export default function Dashboard({ user }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
@@ -886,8 +886,8 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height={280} minWidth={0}>
+          <div style={{ width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height={280} minWidth={100}>
               <AreaChart 
                 data={trendRange === '30d' ? thirtyDaysTrend : yearlyTrend} 
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -903,7 +903,7 @@ export default function Dashboard({ user }) {
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey={trendRange === '30d' ? 'name' : 'shortMonth'} stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <XAxis dataKey={trendRange === '30d' ? 'name' : 'shortMonth'} stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
@@ -947,11 +947,11 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height={280} minWidth={0}>
+          <div style={{ width: '100%', minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height={280} minWidth={100}>
               <BarChart data={monthlyStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
+                <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
                 <Tooltip 
                   contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
@@ -1410,8 +1410,8 @@ export default function Dashboard({ user }) {
             Distribución de casos según su clasificación institucional
           </p>
 
-          <div style={{ width: '100%', minWidth: 0, minHeight: '230px', position: 'relative' }}>
-            <ResponsiveContainer width="100%" height={230} minWidth={0}>
+          <div style={{ width: '100%', minHeight: '230px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height={230} minWidth={100}>
               <PieChart>
                 <Pie
                   isAnimationActive={false}

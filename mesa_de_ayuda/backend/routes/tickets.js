@@ -6,7 +6,8 @@ const {
   normalizeOptionalString, 
   normalizeOptionalDate,
   createHttpError,
-  createValidationError
+  createValidationError,
+  sanitizeHtmlServer
 } = require('../lib/utils');
 const { 
   normalizeResponsibleUserIdsInput, 
@@ -60,7 +61,7 @@ function getTicketRoutes(prisma) {
       if (!subject || typeof subject !== 'string' || subject.trim() === '') {
         throw createValidationError('El título (subject) es requerido.', 'title');
       }
-      const description = requireNonEmptyString(req.body.description, 'description');
+      const description = sanitizeHtmlServer(requireNonEmptyString(req.body.description, 'description'));
       const priority = normalizeOptionalString(req.body.priority) || 'BAJA';
       
       // Si no viene customerId, usamos un cliente por defecto o el ID del creador
@@ -131,8 +132,11 @@ function getTicketRoutes(prisma) {
     try {
       await autoCloseResolvedTickets(prisma).catch(console.error);
       const id = Number.parseInt(req.params.id, 10);
-      const ticket = await prisma.ticket.findUnique({
-        where: { id },
+      const ticket = await prisma.ticket.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        },
         include: {
           customer: true,
           asset: true,
@@ -149,7 +153,7 @@ function getTicketRoutes(prisma) {
         throw createHttpError(404, 'Ticket no encontrado.');
       }
 
-      if (req.auth.organizationId && ticket.organizationId && ticket.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && ticket.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes acceso a este ticket.');
       }
 
@@ -166,8 +170,11 @@ function getTicketRoutes(prisma) {
   router.put('/:id', async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const targetTicket = await prisma.ticket.findUnique({ 
-        where: { id },
+      const targetTicket = await prisma.ticket.findFirst({ 
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        },
         include: { 
           asset: true,
           customer: true,
@@ -180,7 +187,7 @@ function getTicketRoutes(prisma) {
         throw createHttpError(404, 'Ticket no encontrado.');
       }
 
-      if (req.auth.organizationId && targetTicket.organizationId && targetTicket.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && targetTicket.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para modificar este ticket.');
       }
 
@@ -222,7 +229,7 @@ function getTicketRoutes(prisma) {
           }
           updateData.title = incomingTitle.toUpperCase();
         }
-        if (req.body.description !== undefined) updateData.description = requireNonEmptyString(req.body.description, 'description');
+        if (req.body.description !== undefined) updateData.description = sanitizeHtmlServer(requireNonEmptyString(req.body.description, 'description'));
         if (req.body.priority !== undefined) updateData.priority = requireNonEmptyString(req.body.priority, 'priority');
         if (req.body.status !== undefined) updateData.status = requireNonEmptyString(req.body.status, 'status');
         if (req.body.category !== undefined) updateData.category = normalizeOptionalString(req.body.category);
@@ -500,8 +507,11 @@ function getTicketRoutes(prisma) {
   router.get('/:id/activities', async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const ticket = await prisma.ticket.findUnique({
-        where: { id },
+      const ticket = await prisma.ticket.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        },
         include: { 
           asset: true, 
           createdBy: true 
@@ -550,8 +560,11 @@ function getTicketRoutes(prisma) {
       const ticketId = Number.parseInt(req.params.id, 10);
       
       // Bloquear comentarios si el ticket está RESUELTO o CERRADO
-      const ticket = await prisma.ticket.findUnique({
-        where: { id: ticketId },
+      const ticket = await prisma.ticket.findFirst({
+        where: {
+          id: ticketId,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        },
         select: { status: true, organizationId: true }
       });
 
@@ -559,7 +572,7 @@ function getTicketRoutes(prisma) {
         throw createHttpError(404, 'Ticket no encontrado.');
       }
 
-      if (req.auth.organizationId && ticket.organizationId && ticket.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && ticket.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para comentar en este ticket.');
       }
 
@@ -567,7 +580,7 @@ function getTicketRoutes(prisma) {
         throw createHttpError(403, 'No se pueden agregar comentarios a un ticket que ya ha sido solucionado o cerrado. Debe reabrir el caso para comentar.');
       }
 
-      const content = requireNonEmptyString(req.body.content, 'content');
+      const content = sanitizeHtmlServer(requireNonEmptyString(req.body.content, 'content'));
       const type = normalizeOptionalString(req.body.type) || 'COMMENT';
 
       const activity = await prisma.ticketActivity.create({

@@ -8,20 +8,12 @@ const {
   normalizeOptionalString, 
   normalizeOptionalPositiveInt,
   createHttpError,
-  createValidationError
+  createValidationError,
+  isValidIpv4,
+  isAllowedPrivateIpv4
 } = require('../lib/utils');
 const { requireAuth, requirePermission, requireAnyPermission } = require('../lib/middleware');
-
-function isValidIpv4(ip) {
-  if (!ip || typeof ip !== 'string') return false;
-  const parts = ip.trim().split('.');
-  if (parts.length !== 4) return false;
-  return parts.every(part => {
-    if (!/^\d{1,3}$/.test(part)) return false;
-    const num = Number(part);
-    return num >= 0 && num <= 255;
-  });
-}
+const { rateLimit } = require('../lib/rate-limit');
 
 function normalizeMac(mac) {
   if (!mac || typeof mac !== 'string') return null;
@@ -368,13 +360,19 @@ function getDiscoveryRoutes(prisma) {
     }
   });
 
-  // 2. POST /api/discovery/scan - Perform or simulate network discovery
-  router.post('/scan', requireAnyPermission('ASSETS_VIEW', 'ASSETS_MANAGE', 'TICKETS_VIEW', 'DASHBOARD_VIEW'), async (req, res, next) => {
+  const scanRateLimiter = rateLimit({ windowMs: 60000, max: 10, message: 'Límite de escaneo excedido. Máximo 10 escaneos por minuto.' });
+
+  // 2. POST /api/discovery/scan - Perform network discovery safely
+  router.post('/scan', scanRateLimiter, requirePermission('ASSETS_MANAGE'), async (req, res, next) => {
     try {
-      const { ip, community = 'public', agentId, organizationSlug } = req.body;
+      const { ip, community = 'public' } = req.body;
 
       if (!isValidIpv4(ip)) {
         throw createValidationError('La dirección IP debe tener un formato IPv4 válido (ej: 10.0.5.56).');
+      }
+
+      if (!isAllowedPrivateIpv4(ip)) {
+        throw createValidationError('Por motivos de seguridad (anti-SSRF), el escaneo solo está permitido para direcciones IPv4 privadas o locales (RFC 1918 / Loopback). Direcciones públicas o metadatos de nube están bloqueados.');
       }
 
       const orgId = req.auth.organizationId;
@@ -405,7 +403,7 @@ function getDiscoveryRoutes(prisma) {
       if (pHttp.reachable) protocols.push('HTTP Web Admin (80)');
       if (pHttps.reachable) protocols.push('HTTPS Web Admin (443)');
 
-      const isOnline = protocols.length > 0 || existingByIp?.status === 'ONLINE' || ip.startsWith('10.0.5.') || ip === '127.0.0.1';
+      const isOnline = protocols.length > 0 || existingByIp?.status === 'ONLINE';
 
       let brand = existingByIp?.brand || null;
       let model = existingByIp?.model || null;
@@ -413,70 +411,55 @@ function getDiscoveryRoutes(prisma) {
       let mac = extractMacFromSummary(existingByIp?.networkSummary) || null;
       let hostname = existingByIp?.hostname || null;
       let firmware = existingByIp?.osVersion || null;
-      let deviceType = existingByIp?.deviceType || 'MULTIFUNCTION';
+      let deviceType = existingByIp?.deviceType || (isOnline ? 'PRINTER' : null);
       let webUrl = pHttp.reachable ? pHttp.url : (pHttps.reachable ? pHttps.url : (isOnline ? `http://${ip}` : null));
 
-      // Heuristics on probe results if not already known
-      const textToAnalyze = `${snmpDescr || ''} ${pHttp.title || ''} ${pHttp.server || ''} ${pHttps.title || ''}`;
+      const textToAnalyze = `${snmpDescr || ''} ${pHttp.title || ''} ${pHttp.server || ''} ${pHttps.title || ''}`.trim();
 
-      if (!brand) {
-        if (/Epson|EcoTank|WorkForce/i.test(textToAnalyze) || ip === '10.0.5.80' || ip.endsWith('.80')) brand = 'Epson';
-        else if (/Lexmark/i.test(textToAnalyze) || ip === '10.0.22.28' || ip.endsWith('.28')) brand = 'Lexmark';
+      let detectionSource = 'NONE';
+      if (existingByIp) detectionSource = 'DATABASE';
+      else if (snmpDescr) detectionSource = 'SNMP';
+      else if (pHttp.reachable || pHttps.reachable) detectionSource = 'HTTP';
+
+      // Identify brand ONLY from real text banners / descriptions
+      if (!brand && textToAnalyze) {
+        if (/Epson|EcoTank|WorkForce/i.test(textToAnalyze)) brand = 'Epson';
+        else if (/Lexmark/i.test(textToAnalyze)) brand = 'Lexmark';
         else if (/Canon|imageRUNNER|i-SENSYS/i.test(textToAnalyze)) brand = 'Canon';
         else if (/Brother|MFC|DCP|HL/i.test(textToAnalyze)) brand = 'Brother';
         else if (/Kyocera|ECOSYS|TASKalfa/i.test(textToAnalyze)) brand = 'Kyocera';
-        else if (/Xerox|WorkCentre|VersaLink/i.test(textToAnalyze)) brand = 'Xerox';
+        else if (/Xerox|WorkCentre|VersaLink|AltaLink/i.test(textToAnalyze)) brand = 'Xerox';
         else if (/Ricoh|Aficio|IM C/i.test(textToAnalyze)) brand = 'Ricoh';
-        else if (/HP|LaserJet|OfficeJet|PageWide/i.test(textToAnalyze) || ip === '10.0.5.56' || ip.endsWith('.56')) brand = 'HP';
-        else if (isOnline) brand = 'HP'; // Sensible default for enterprise office environments
+        else if (/HP|LaserJet|OfficeJet|PageWide|DeskJet/i.test(textToAnalyze)) brand = 'HP';
       }
 
-      if (!model) {
-        if (brand === 'Epson') model = 'EcoTank L3150 Series';
-        else if (brand === 'Lexmark') model = 'MX722adhe';
-        else if (brand === 'HP') model = 'LaserJet Managed MFP E731';
-        else if (brand === 'Canon') model = 'imageRUNNER ADVANCE C3530';
-        else if (brand === 'Brother') model = 'MFC-L8900CDW';
-        else if (brand === 'Kyocera') model = 'TASKalfa 3554ci';
-        else if (isOnline) model = 'Equipo Multifuncional de Red';
+      // Identify model ONLY from real text banners / descriptions
+      if (!model && textToAnalyze) {
+        const hpMatch = textToAnalyze.match(/(?:LaserJet|OfficeJet|PageWide|DeskJet)[^\r\n,;"]+/i);
+        const lexMatch = textToAnalyze.match(/(?:Lexmark\s+)?([MC][XS]\d{3,4}[a-z]*)/i);
+        const epsonMatch = textToAnalyze.match(/(?:EcoTank|WorkForce|L\d{4})[^\r\n,;"]+/i);
+        const canonMatch = textToAnalyze.match(/(?:imageRUNNER|i-SENSYS)[^\r\n,;"]+/i);
+        const brotherMatch = textToAnalyze.match(/(?:MFC|DCP|HL)-[A-Z0-9]+/i);
+        const kyoceraMatch = textToAnalyze.match(/(?:TASKalfa|ECOSYS)[^\r\n,;"]+/i);
+        const xeroxMatch = textToAnalyze.match(/(?:WorkCentre|VersaLink|AltaLink)[^\r\n,;"]+/i);
+        const ricohMatch = textToAnalyze.match(/(?:Aficio|IM\s+C\d+)[^\r\n,;"]+/i);
+
+        if (hpMatch) model = hpMatch[0].trim();
+        else if (lexMatch) model = lexMatch[0].trim();
+        else if (epsonMatch) model = epsonMatch[0].trim();
+        else if (canonMatch) model = canonMatch[0].trim();
+        else if (brotherMatch) model = brotherMatch[0].trim();
+        else if (kyoceraMatch) model = kyoceraMatch[0].trim();
+        else if (xeroxMatch) model = xeroxMatch[0].trim();
+        else if (ricohMatch) model = ricohMatch[0].trim();
       }
 
       if (!hostname) {
-        if (ip === '10.0.5.80') hostname = 'EPSON-L3150-80';
-        else if (ip === '10.0.22.28') hostname = 'STIC24183';
-        else if (ip === '10.0.5.56') hostname = 'HP-LASERJET-MANAGED-MFP-E731';
-        else {
-          hostname = brand && model 
-            ? `${brand}-${model}`.replace(/[^A-Za-z0-9]/g, '-').toUpperCase().slice(0, 24)
-            : `PRN-${ip.replace(/\./g, '-')}`;
+        if (brand && model) {
+          hostname = `${brand}-${model}`.replace(/[^A-Za-z0-9]/g, '-').toUpperCase().slice(0, 24);
+        } else if (isOnline) {
+          hostname = `DEV-${ip.replace(/\./g, '-')}`;
         }
-      }
-
-      if (!serialNumber && isOnline) {
-        if (ip === '10.0.5.80') serialNumber = 'X54K099880';
-        else if (ip === '10.0.22.28') serialNumber = '7464832020G9P';
-        else if (ip === '10.0.5.56') serialNumber = 'CNB580K3960';
-        else {
-          const ipParts = ip.split('.');
-          serialNumber = `CNB${ipParts[2]}${ipParts[3]}K${Math.abs((parseInt(ipParts[3]) * 37) % 9000 + 1000)}`;
-        }
-      }
-
-      if (!mac && isOnline) {
-        if (ip === '10.0.5.80') mac = 'AC:18:26:05:80:12';
-        else if (ip === '10.0.22.28') mac = '00:21:B7:77:36:A9';
-        else if (ip === '10.0.5.56') mac = '00:1E:0B:05:8F:50';
-        else {
-          const p4 = (Number(ip.split('.')[3]) || 56).toString(16).padStart(2, '0').toUpperCase();
-          const p3 = (Number(ip.split('.')[2]) || 5).toString(16).padStart(2, '0').toUpperCase();
-          mac = `00:1E:0B:${p3}:8F:${p4}`;
-        }
-      }
-
-      if (!firmware && isOnline) {
-        if (brand === 'Epson') firmware = '20.55.FA18K9';
-        else if (brand === 'Lexmark') firmware = 'LW74.SB4.P045';
-        else firmware = '2504104_000234 (FutureSmart 5.4)';
       }
 
       // Check if this MAC or Serial exists in database under a DIFFERENT IP (IP change detection!)
@@ -505,8 +488,6 @@ function getDiscoveryRoutes(prisma) {
         }
       }
 
-      // Regla general: Si el dispositivo ya está registrado y su hostname fue asignado/modificado por un técnico/administrador,
-      // respetar y mantener dicho Hostname en lugar de regenerar nombres por defecto.
       if (matchedExistingAsset) {
         if (matchedExistingAsset.hostname) hostname = matchedExistingAsset.hostname;
         if (matchedExistingAsset.brand) brand = matchedExistingAsset.brand;
@@ -515,40 +496,47 @@ function getDiscoveryRoutes(prisma) {
         if (matchedExistingAsset.deviceType) deviceType = matchedExistingAsset.deviceType;
       }
 
-      const durationSec = Math.max(0.4, Number(((Date.now() - startTime) / 1000).toFixed(2)));
+      const durationSec = Math.max(0.2, Number(((Date.now() - startTime) / 1000).toFixed(2)));
 
       // Capabilities
       const capabilities = {
-        printing: true,
-        scanning: deviceType === 'MULTIFUNCTION' || deviceType === 'SCANNER' || true,
-        copying: deviceType === 'MULTIFUNCTION' || true,
+        printing: Boolean(pJetDirect || pIpp || brand || model),
+        scanning: deviceType === 'MULTIFUNCTION' || deviceType === 'SCANNER',
+        copying: deviceType === 'MULTIFUNCTION',
         fax: false
       };
 
-      // Real Model Specific Consumables, Counters and Technology
-      const modelSpecs = getPrinterModelSpecs(brand, model, textToAnalyze);
-      const consumables = modelSpecs.consumables;
-      const counters = modelSpecs.counters;
+      // Model Specific Specs (only if model/brand identified)
+      const modelSpecs = (brand || model) ? getPrinterModelSpecs(brand, model, textToAnalyze) : {
+        isColor: false,
+        printTech: 'Láser',
+        consumables: [],
+        counters: []
+      };
+
+      const isIdentified = Boolean(brand || model || serialNumber || mac || matchedExistingAsset);
 
       res.json({
         success: true,
         ip,
         mac,
         hostname,
-        brand,
-        model,
-        serialNumber,
-        firmware,
-        deviceType: deviceType || 'MULTIFUNCTION',
+        brand: brand || null,
+        model: model || null,
+        serialNumber: serialNumber || null,
+        firmware: firmware || null,
+        deviceType: deviceType || 'Desconocido',
         status: isOnline ? 'ONLINE' : 'OFFLINE',
         webUrl,
-        protocols: protocols.length > 0 ? protocols : ['SNMP v2c', 'HTTP Web Admin'],
+        protocols,
         capabilities,
         isColor: modelSpecs.isColor,
         printTech: modelSpecs.printTech,
-        consumables,
-        counters,
+        consumables: modelSpecs.consumables,
+        counters: modelSpecs.counters,
         discoveryDuration: durationSec,
+        isIdentified,
+        detectionSource,
         isExistingAsset: Boolean(matchedExistingAsset),
         existingAssetId: matchedExistingAsset?.id || null,
         ipChangeDetected,

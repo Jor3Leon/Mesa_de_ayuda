@@ -11,7 +11,7 @@ import ssl
 import sys
 
 
-def sync_to_server(payload, server_url="https://mesa-de-ayuda-rho.vercel.app", api_key="", proxy="", verify_tls=True):
+def sync_to_server(payload, server_url="https://mesa-de-ayuda-rho.vercel.app", api_key="", proxy=""):
     """
     Send system inventory payload to Helpdesk backend API.
     Returns (success: bool, message: str, asset_id: int/None)
@@ -36,18 +36,10 @@ def sync_to_server(payload, server_url="https://mesa-de-ayuda-rho.vercel.app", a
 
     data_bytes = json.dumps(payload, ensure_ascii=False).encode("utf-8")
 
-    # SSL Context
-    ssl_context = None
-    if not verify_tls:
-        ssl_context = ssl._create_unverified_context()
-
     # Proxy support
     handlers = []
     if proxy:
         handlers.append(urllib.request.ProxyHandler({"http": proxy, "https": proxy}))
-    
-    if ssl_context:
-        handlers.append(urllib.request.HTTPSHandler(context=ssl_context))
 
     opener = urllib.request.build_opener(*handlers) if handlers else urllib.request.build_opener()
 

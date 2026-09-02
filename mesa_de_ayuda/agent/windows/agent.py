@@ -83,10 +83,16 @@ def load_config():
 
 
 def save_config(config):
-    """Save configuration dictionary to config.json."""
+    """Save configuration dictionary to config.json with restricted permissions."""
     os.makedirs(INSTALL_DIR, exist_ok=True)
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
+    try:
+        if sys.platform == "win32":
+            import subprocess
+            subprocess.run(["icacls", CONFIG_FILE, "/inheritance:r", "/grant:r", "*S-1-5-32-544:F", "*S-1-5-18:F"], capture_output=True)
+    except Exception:
+        pass
 
 
 def perform_sync(server_url=None, org_slug=None, api_key=None, proxy=None):

@@ -66,12 +66,9 @@ function requirePermission(...permissions) {
     }
     
     const userPermissions = req.auth.user.permissions || [];
-    console.log(`[DEBUG] Checking permissions: ${permissions.join(', ')} for user: ${req.auth.user.name} (${req.auth.user.role})`);
-    console.log(`[DEBUG] User permissions: ${JSON.stringify(userPermissions)}`);
     const hasPermission = permissions.every(p => userPermissions.includes(p));
 
     if (!hasPermission) {
-      console.log(`[DEBUG] Permission check FAILED`);
       return next(createHttpError(403, 'Insufficient permissions. No tiene los permisos necesarios.'));
     }
 

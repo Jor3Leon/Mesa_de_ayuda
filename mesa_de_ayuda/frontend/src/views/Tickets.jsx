@@ -7,6 +7,7 @@ import RichTextEditor from '../components/common/RichTextEditor';
 import SlaBadge from '../components/tickets/SlaBadge';
 import TicketList from '../components/tickets/TicketList';
 import CategorySelector from '../components/tickets/CategorySelector';
+import { sanitizeHtml } from '../lib/sanitize';
 
 const initialForm = {
   title: '',
@@ -1376,7 +1377,7 @@ export default function Tickets() {
                             ) : (
                               <>
                                 <div style={{ fontWeight: 700, color: '#2e7d32', marginBottom: '0.3rem', fontSize: '0.95rem' }}>{form.title || selectedTicket.title}</div>
-                                <div style={{ fontSize: '0.88rem', color: '#333' }} dangerouslySetInnerHTML={{ __html: form.description || selectedTicket.description || 'Sin descripcion' }} />
+                                <div style={{ fontSize: '0.88rem', color: '#333' }} dangerouslySetInnerHTML={{ __html: sanitizeHtml(form.description || selectedTicket.description || 'Sin descripcion') }} />
                               </>
                             )}
                           </div>
@@ -1790,7 +1791,7 @@ export default function Tickets() {
                               }
                             }}
                             style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', padding: '0.5rem 1.4rem', border: `2px solid ${isResolved ? '#cbd5e1' : clr}`, borderRadius: '20px', background: isResolved ? '#f1f5f9' : (composeMode === mode ? clr : '#fff'), color: isResolved ? '#94a3b8' : (composeMode === mode ? '#fff' : clr), fontWeight: 600, fontSize: '0.85rem', cursor: isResolved ? 'not-allowed' : 'pointer', opacity: isResolved ? 0.6 : 1, transition: 'all 0.18s' }}
-                            dangerouslySetInnerHTML={{ __html: lbl }}
+                            dangerouslySetInnerHTML={{ __html: sanitizeHtml(lbl) }}
                           />
                         ));
                       })()}
@@ -2503,13 +2504,14 @@ export default function Tickets() {
         </div>
       ) : (
         <>
-          {/* 🌟 HERO CONTROL BAR */}
+          {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
           <div
+            className="card"
             style={{
-              background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+              background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
               borderRadius: '16px',
-              padding: '1.75rem 2rem',
-              marginBottom: '1.75rem',
+              padding: '1.25rem 1.5rem',
+              marginBottom: '1.25rem',
               boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
               border: '1px solid rgba(0, 209, 255, 0.25)',
               color: '#ffffff',
@@ -2550,55 +2552,6 @@ export default function Tickets() {
                   Registro, prioridad, asignación y seguimiento en tiempo real de solicitudes y soporte técnico.
                 </p>
               </div>
-            </div>
-
-            {/* Export Toolbar Buttons */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-              <button 
-                type="button"
-                onClick={() => downloadTickets('excel')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  background: '#002D62',
-                  color: '#ffffff',
-                  padding: '0.65rem 1.15rem',
-                  borderRadius: '10px',
-                  fontWeight: '600',
-                  fontSize: '0.875rem',
-                  border: '1px solid rgba(0, 209, 255, 0.4)',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <i className="fas fa-file-excel" style={{ color: '#10b981' }}></i>
-                <span>Excel Estructurado</span>
-              </button>
-
-              <button 
-                type="button"
-                onClick={() => downloadTickets('pdf')}
-                style={{
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '0.5rem',
-                  background: '#002D62',
-                  color: '#ffffff',
-                  padding: '0.65rem 1.15rem',
-                  borderRadius: '10px',
-                  fontWeight: '600',
-                  fontSize: '0.875rem',
-                  border: '1px solid rgba(239, 68, 68, 0.4)',
-                  cursor: 'pointer',
-                  boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
-                  transition: 'all 0.2s ease',
-                }}
-              >
-                <i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i>
-                <span>Reporte PDF</span>
-              </button>
             </div>
           </div>
 
@@ -2741,16 +2694,37 @@ export default function Tickets() {
 
           <section className="responsive-split-card">
             <article className="card tickets-list-card responsive-list">
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '0.75rem' }}>
                 <h3 style={{ margin: 0 }}>Tickets recientes</h3>
-                <button 
-                  className="primary mobile-toggle-btn" 
-                  onClick={() => setShowMobileForm(!showMobileForm)}
-                  style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
-                >
-                  <i className={`fas ${showMobileForm ? 'fa-times' : 'fa-plus'}`} style={{ marginRight: '6px' }}></i>
-                  {showMobileForm ? 'Cerrar Formulario' : 'Nuevo Ticket'}
-                </button>
+                
+                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+                  <button 
+                    type="button" 
+                    className="btn-ghost"
+                    onClick={() => downloadTickets('excel')}
+                    style={{ fontSize: '0.8125rem', padding: '0.4rem 0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <i className="fas fa-file-excel" style={{ color: '#10b981' }}></i>
+                    <span>Excel</span>
+                  </button>
+                  <button 
+                    type="button" 
+                    className="btn-ghost"
+                    onClick={() => downloadTickets('pdf')}
+                    style={{ fontSize: '0.8125rem', padding: '0.4rem 0.75rem', display: 'inline-flex', alignItems: 'center', gap: '0.35rem' }}
+                  >
+                    <i className="fas fa-file-pdf" style={{ color: '#ef4444' }}></i>
+                    <span>PDF</span>
+                  </button>
+                  <button 
+                    className="primary mobile-toggle-btn" 
+                    onClick={() => setShowMobileForm(!showMobileForm)}
+                    style={{ padding: '0.5rem 1rem', fontSize: '0.85rem', borderRadius: '8px' }}
+                  >
+                    <i className={`fas ${showMobileForm ? 'fa-times' : 'fa-plus'}`} style={{ marginRight: '6px' }}></i>
+                    {showMobileForm ? 'Cerrar Formulario' : 'Nuevo Ticket'}
+                  </button>
+                </div>
               </div>
 
               <div className="inventory-toolbar" style={{ display: 'flex', flexDirection: 'column' }}>
@@ -2816,7 +2790,7 @@ export default function Tickets() {
                   </div>
                 </div>
               </div>
-              <div className="table-shell tickets-table-scroll" style={{ marginTop: '1rem' }}>
+              <div className="table-shell tickets-table-scroll hide-mobile" style={{ marginTop: '1rem' }}>
                 {filteredTickets.length === 0 ? (
                   <div className="empty-state">No se encontraron tickets registrados que coincidan con la vista.</div>
                 ) : (
@@ -2881,6 +2855,55 @@ export default function Tickets() {
                       ))}
                     </tbody>
                   </table>
+                )}
+              </div>
+
+              {/* Vista Móvil: Tarjetas optimizadas para Smartphones */}
+              <div className="show-mobile tickets-mobile-cards" style={{ marginTop: '1rem' }}>
+                {filteredTickets.length === 0 ? (
+                  <div className="empty-state">No se encontraron tickets registrados.</div>
+                ) : (
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '0.75rem' }}>
+                    {filteredTickets.map((ticket) => (
+                      <div 
+                        key={ticket.id} 
+                        className="mobile-ticket-card"
+                        onClick={() => handleSelectTicket(ticket)}
+                        style={{
+                          background: '#ffffff',
+                          border: '1px solid #e2e8f0',
+                          borderRadius: '10px',
+                          padding: '0.85rem',
+                          display: 'flex',
+                          flexDirection: 'column',
+                          gap: '0.45rem',
+                          cursor: 'pointer',
+                          boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                          minHeight: '44px'
+                        }}
+                      >
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          <span style={{ fontWeight: 800, color: '#1e40af', fontSize: '0.85rem' }}>#{ticket.id}</span>
+                          <span className={`badge ${getStatusClass(ticket.status)}`} style={{ fontSize: '0.72rem' }}>
+                            {getStatusLabel(ticket.status)}
+                          </span>
+                        </div>
+                        <div style={{ fontWeight: 700, color: '#1e293b', fontSize: '0.92rem', lineHeight: '1.25' }}>
+                          {ticket.title}
+                        </div>
+                        <div className="muted-text" style={{ fontSize: '0.78rem', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden' }}>
+                          {stripHtml(ticket.description)}
+                        </div>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '0.2rem', paddingTop: '0.4rem', borderTop: '1px solid #f1f5f9', fontSize: '0.75rem', color: '#64748b' }}>
+                          <span>👤 {ticket.createdBy?.name || 'Administrador'}</span>
+                          <span>📅 {new Date(ticket.createdAt).toLocaleDateString()}</span>
+                        </div>
+                        <div style={{ marginTop: '0.15rem' }}>
+                          <SlaProgressBar createdAt={ticket.createdAt} sla={ticket.sla} resolvedAt={ticket.resolvedAt || ticket.closedAt} status={ticket.status} />
+                        </div>
+                      </div>
+                    ))}
+                  </div>
                 )}
               </div>
             </article>

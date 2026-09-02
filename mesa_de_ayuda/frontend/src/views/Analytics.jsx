@@ -119,33 +119,37 @@ export default function Analytics({ user }) {
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO CONTROL BAR (Midnight Blue Suite) */}
-      <div style={{
-        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
-        borderRadius: '16px',
-        padding: '1.75rem 2rem',
-        marginBottom: '1.75rem',
-        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
-        border: '1px solid rgba(0, 209, 255, 0.25)',
-        color: '#ffffff',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1.25rem'
-      }}>
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      <div
+        className="card"
+        style={{
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
+          color: '#ffffff',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+        }}
+      >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
           <div style={{
-            width: '44px',
-            height: '44px',
-            borderRadius: '12px',
+            width: '42px',
+            height: '42px',
+            borderRadius: '10px',
             background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
             display: 'flex',
             alignItems: 'center',
             justifyContent: 'center',
             boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
             fontSize: '1.35rem',
-            color: '#001D40'
+            color: '#001D40',
+            flexShrink: 0,
           }}>
             📈
           </div>
@@ -182,7 +186,22 @@ export default function Analytics({ user }) {
             </p>
           </div>
         </div>
+      </div>
 
+      {/* 🎛️ BARRA DE FILTROS & ACCIONES (Debajo del Header) */}
+      <div style={{
+        background: '#ffffff',
+        borderRadius: '16px',
+        padding: '1.15rem 1.5rem',
+        marginBottom: '1.25rem',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: '14px'
+      }}>
         <AnalyticsFilters 
           filters={filters} 
           onChange={setFilters} 

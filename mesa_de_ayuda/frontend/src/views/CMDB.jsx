@@ -538,13 +538,13 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
   return (
     <div className="view-container">
-      {/* 🌟 HERO CONTROL BAR */}
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
       <div
+        className="card"
         style={{
-          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
           borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          marginBottom: '1.75rem',
+          padding: '1.25rem 1.5rem',
           boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
           border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
@@ -553,6 +553,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
           alignItems: 'center',
           justifyContent: 'space-between',
           gap: '1.25rem',
+          marginBottom: '1.25rem',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
@@ -584,44 +585,56 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
             </p>
           </div>
         </div>
-
-        {/* Stats Grid inside Hero */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.65rem', alignItems: 'center' }}>
-          <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>🖥️</span>
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#00D1FF' }}>{stats.total}</div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Total Activos</div>
-            </div>
-          </div>
-
-          <div style={{ background: '#002D62', border: '1px solid rgba(16, 185, 129, 0.4)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>🟢</span>
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#10b981' }}>{stats.online}</div>
-              <div style={{ fontSize: '0.65rem', color: '#a7f3d0', textTransform: 'uppercase', fontWeight: 600 }}>En Línea ({stats.healthScore}%)</div>
-            </div>
-          </div>
-
-          <div style={{ background: '#002D62', border: '1px solid rgba(245, 158, 11, 0.4)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>⚠️</span>
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#f59e0b' }}>{stats.warning}</div>
-              <div style={{ fontSize: '0.65rem', color: '#fde68a', textTransform: 'uppercase', fontWeight: 600 }}>En Riesgo / Offline</div>
-            </div>
-          </div>
-
-          <div style={{ background: '#002D62', border: '1px solid rgba(0, 209, 255, 0.35)', borderRadius: '10px', padding: '0.5rem 0.85rem', color: '#ffffff', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-            <span style={{ fontSize: '1.2rem' }}>🛡️</span>
-            <div>
-              <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#38bdf8' }}>{stats.securityScore}%</div>
-              <div style={{ fontSize: '0.65rem', color: '#94a3b8', textTransform: 'uppercase', fontWeight: 600 }}>Cobertura Endpoint</div>
-            </div>
-          </div>
-        </div>
       </div>
 
       {error && <div className="feedback error" style={{ margin: '1rem 0' }}>{error}</div>}
+
+      {/* 🌟 4 TARJETAS KPI DEBAJO DEL HEADER */}
+      <section className="asset-kpi-grid" style={{ marginBottom: '1.25rem' }}>
+        <article className="asset-kpi-card" title="Total de Activos Registrados en CMDB">
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#002D62' }}>Total Activos</span>
+            <span className="asset-kpi-card-icon">🖥️</span>
+          </div>
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#002D62' }}>{stats.total}</strong>
+            <span className="asset-kpi-card-subtitle">Parque CMDB</span>
+          </div>
+        </article>
+
+        <article className="asset-kpi-card" title="Dispositivos activos y comunicándose con el agente">
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#059669' }}>En Línea</span>
+            <span className="asset-kpi-card-icon">🟢</span>
+          </div>
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#059669' }}>{stats.online}</strong>
+            <span className="asset-kpi-card-subtitle">Salud: {stats.healthScore}%</span>
+          </div>
+        </article>
+
+        <article className="asset-kpi-card" title="Dispositivos con alertas o desconectados">
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#d97706' }}>En Riesgo / Offline</span>
+            <span className="asset-kpi-card-icon">⚠️</span>
+          </div>
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#d97706' }}>{stats.warning}</strong>
+            <span className="asset-kpi-card-subtitle">Atención técnica requerida</span>
+          </div>
+        </article>
+
+        <article className="asset-kpi-card" title="Porcentaje de endpoints con agente de seguridad activo">
+          <div className="asset-kpi-card-header">
+            <span className="asset-kpi-card-title" style={{ color: '#0284c7' }}>Cobertura Endpoint</span>
+            <span className="asset-kpi-card-icon">🛡️</span>
+          </div>
+          <div className="asset-kpi-card-body">
+            <strong className="asset-kpi-card-value" style={{ color: '#0284c7' }}>{stats.securityScore}%</strong>
+            <span className="asset-kpi-card-subtitle">Protección RMM</span>
+          </div>
+        </article>
+      </section>
 
       <div className={`cmdb-content-grid ${selectedAsset ? 'has-selected' : ''} ${showMobile360 ? 'mobile-show-360' : 'mobile-show-table'}`}>
         

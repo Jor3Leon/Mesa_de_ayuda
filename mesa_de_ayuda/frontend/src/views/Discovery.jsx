@@ -398,58 +398,71 @@ export default function Discovery() {
 
   return (
     <div className="view-container" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
-      {/* 🌟 HERO CONTROL BAR */}
-      <section
-        className="discovery-hero-section"
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      <div
+        className="card"
         style={{
-          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
           borderRadius: '16px',
-          padding: '1.75rem 2rem',
+          padding: '1.25rem 1.5rem',
           marginBottom: '1.25rem',
           boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
           border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
         }}
       >
-        <div className="discovery-hero-info">
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem', marginBottom: '0.45rem', flexWrap: 'wrap' }}>
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: '700',
-                padding: '0.15rem 0.55rem',
-                borderRadius: '6px',
-                background: 'rgba(0, 209, 255, 0.18)',
-                color: '#00D1FF',
-                border: '1px solid rgba(0, 209, 255, 0.4)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              RMM • Activos
-            </span>
-            <span
-              style={{
-                fontSize: '0.72rem',
-                fontWeight: '600',
-                padding: '0.15rem 0.55rem',
-                borderRadius: '6px',
-                background: 'rgba(16, 185, 129, 0.15)',
-                color: '#34d399',
-                border: '1px solid rgba(16, 185, 129, 0.3)',
-                whiteSpace: 'nowrap',
-              }}
-            >
-              SNMP • eSCL • WSD
-            </span>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
+              width: '42px',
+              height: '42px',
+              borderRadius: '10px',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+              color: '#ffffff',
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M5 12.55a11 11 0 0 1 14.08 0" />
+              <path d="M1.42 9a16 16 0 0 1 21.16 0" />
+              <path d="M8.53 16.11a6 6 0 0 1 6.95 0" />
+              <line x1="12" y1="20" x2="12.01" y2="20" />
+            </svg>
           </div>
-          <h1 style={{ margin: '0 0 0.35rem 0', fontWeight: 800, fontSize: '1.5rem', letterSpacing: '-0.025em', color: '#ffffff' }}>
-            Network Device Discovery
-          </h1>
-          <p style={{ maxWidth: '780px', margin: 0, fontSize: '0.875rem', color: '#cbd5e1', lineHeight: 1.5 }}>
-            Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local.
-          </p>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
+              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+                Network Device Discovery
+              </h1>
+              <span
+                style={{
+                  fontSize: '0.72rem',
+                  fontWeight: '700',
+                  padding: '0.15rem 0.55rem',
+                  borderRadius: '6px',
+                  background: 'rgba(0, 209, 255, 0.18)',
+                  color: '#00D1FF',
+                  border: '1px solid rgba(0, 209, 255, 0.4)',
+                  whiteSpace: 'nowrap',
+                }}
+              >
+                SNMP • eSCL • WSD
+              </span>
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+              Exploración, identificación y registro automático de impresoras, escáneres y multifuncionales en la red local.
+            </p>
+          </div>
         </div>
-      </section>
+      </div>
 
       {/* Quick Navigation Toolbar */}
       <div className="discovery-toolbar">

@@ -41,6 +41,16 @@ scratch/
 .dev-processes.json
 *.err.log
 
+# Dumps & local sensitive exports
+*.json_dump
+full_db*.json
+assets_list*.json
+dump_*.json
+*_dump.json
+scripts/local-only/
+*/scripts/local-only/
+local-only/
+
 # IDE & OS
 .vscode/
 .idea/

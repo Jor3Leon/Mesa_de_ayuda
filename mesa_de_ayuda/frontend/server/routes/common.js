@@ -146,6 +146,12 @@ function getCommonRoutes(prisma) {
   router.put('/roles/:id', requirePermission('ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
+      const targetRole = await prisma.role.findUnique({ where: { id } });
+      if (!targetRole) throw createHttpError(404, 'Rol no encontrado.');
+      if (req.auth.organizationId && targetRole.organizationId !== req.auth.organizationId) {
+        throw createHttpError(403, 'No tienes permiso para modificar este rol.');
+      }
+
       const { name, description, permissionCodes } = req.body;
 
       // 1. Actualizar datos básicos del rol

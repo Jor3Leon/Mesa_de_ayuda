@@ -32,15 +32,20 @@ export default function SimpleBarChart({ data, title, color = '#3b82f6' }) {
             }}
           >
             {/* Label */}
-            <span style={{
-              fontSize: '0.8125rem',
-              color: '#475569',
-              fontWeight: 600,
-              minWidth: '110px',
-              whiteSpace: 'nowrap',
-              overflow: 'hidden',
-              textOverflow: 'ellipsis'
-            }}>
+            <span 
+              className="analytics-bar-label"
+              title={item.label}
+              style={{
+                fontSize: '0.8125rem',
+                color: '#475569',
+                fontWeight: 600,
+                minWidth: '85px',
+                maxWidth: '130px',
+                whiteSpace: 'nowrap',
+                overflow: 'hidden',
+                textOverflow: 'ellipsis'
+              }}
+            >
               {item.label}
             </span>
 

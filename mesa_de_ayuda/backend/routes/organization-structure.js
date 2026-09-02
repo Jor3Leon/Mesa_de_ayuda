@@ -8,74 +8,6 @@ const {
 } = require('../lib/utils');
 const { requireAuth, requireAnyPermission } = require('../lib/middleware');
 
-let tablesEnsured = false;
-
-async function ensureTablesExist(prisma) {
-  if (tablesEnsured) return;
-  try {
-    if (typeof prisma.$executeRawUnsafe === 'function') {
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "Sede" (
-          "id" SERIAL NOT NULL,
-          "name" TEXT NOT NULL,
-          "code" TEXT,
-          "address" TEXT,
-          "city" TEXT DEFAULT 'Yopal',
-          "phone" TEXT,
-          "managerName" TEXT,
-          "isActive" BOOLEAN NOT NULL DEFAULT true,
-          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "organizationId" TEXT,
-          CONSTRAINT "Sede_pkey" PRIMARY KEY ("id")
-        );
-      `);
-
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "Dependencia" (
-          "id" SERIAL NOT NULL,
-          "name" TEXT NOT NULL,
-          "code" TEXT,
-          "managerName" TEXT,
-          "email" TEXT,
-          "isActive" BOOLEAN NOT NULL DEFAULT true,
-          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "sedeId" INTEGER,
-          "organizationId" TEXT,
-          CONSTRAINT "Dependencia_pkey" PRIMARY KEY ("id")
-        );
-      `);
-
-      await prisma.$executeRawUnsafe(`
-        CREATE TABLE IF NOT EXISTS "Oficina" (
-          "id" SERIAL NOT NULL,
-          "name" TEXT NOT NULL,
-          "code" TEXT,
-          "floor" TEXT,
-          "responsibleUser" TEXT,
-          "isActive" BOOLEAN NOT NULL DEFAULT true,
-          "createdAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "updatedAt" TIMESTAMP(3) NOT NULL DEFAULT CURRENT_TIMESTAMP,
-          "dependenciaId" INTEGER,
-          "sedeId" INTEGER,
-          "organizationId" TEXT,
-          CONSTRAINT "Oficina_pkey" PRIMARY KEY ("id")
-        );
-      `);
-
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Sede_organizationId_idx" ON "Sede"("organizationId");`).catch(() => {});
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Dependencia_sedeId_idx" ON "Dependencia"("sedeId");`).catch(() => {});
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Oficina_dependenciaId_idx" ON "Oficina"("dependenciaId");`).catch(() => {});
-      await prisma.$executeRawUnsafe(`CREATE INDEX IF NOT EXISTS "Oficina_sedeId_idx" ON "Oficina"("sedeId");`).catch(() => {});
-      
-      tablesEnsured = true;
-    }
-  } catch (err) {
-    console.warn('[Auto-Schema] Notice during table check:', err.message);
-  }
-}
-
 function getOrgStructureRoutes(prisma) {
   const router = express.Router();
 
@@ -114,7 +46,6 @@ function getOrgStructureRoutes(prisma) {
   // 1. GET /api/organization-structure - Full hierarchical tree with counts
   router.get('/', async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const orgFilter = req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {};
 
       const [sedes, dependencias, oficinas, assets, users] = await Promise.all([
@@ -215,7 +146,6 @@ function getOrgStructureRoutes(prisma) {
   // -------------------------
   router.get('/sedes', async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const orgFilter = req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {};
       const sedes = await prisma.sede.findMany({
         where: orgFilter,
@@ -233,7 +163,6 @@ function getOrgStructureRoutes(prisma) {
 
   router.post('/sedes', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const name = requireNonEmptyString(req.body?.name, 'nombre de la sede');
       const code = normalizeOptionalString(req.body?.code);
       const address = normalizeOptionalString(req.body?.address);
@@ -266,8 +195,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.put('/sedes/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.sede.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Sede no encontrada.');
+
       const { name, code, address, city, phone, managerName, isActive } = req.body || {};
 
       const sede = await prisma.sede.update({
@@ -295,8 +231,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.delete('/sedes/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.sede.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Sede no encontrada.');
+
       await prisma.sede.delete({ where: { id } });
       res.json({ success: true, message: 'Sede eliminada correctamente.' });
     } catch (error) {
@@ -309,7 +252,6 @@ function getOrgStructureRoutes(prisma) {
   // -------------------------
   router.get('/dependencias', async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const orgFilter = req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {};
       const dependencias = await prisma.dependencia.findMany({
         where: orgFilter,
@@ -327,7 +269,6 @@ function getOrgStructureRoutes(prisma) {
 
   router.post('/dependencias', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const name = requireNonEmptyString(req.body?.name, 'nombre del área/dependencia');
       const code = normalizeOptionalString(req.body?.code);
       const managerName = normalizeOptionalString(req.body?.managerName);
@@ -361,8 +302,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.put('/dependencias/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.dependencia.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Dependencia no encontrada.');
+
       const { name, code, managerName, email, sedeId, isActive } = req.body || {};
 
       const dep = await prisma.dependencia.update({
@@ -390,8 +338,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.delete('/dependencias/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.dependencia.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Dependencia no encontrada.');
+
       await prisma.dependencia.delete({ where: { id } });
       res.json({ success: true, message: 'Dependencia eliminada correctamente.' });
     } catch (error) {
@@ -404,7 +359,6 @@ function getOrgStructureRoutes(prisma) {
   // -------------------------
   router.get('/oficinas', async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const orgFilter = req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {};
       const oficinas = await prisma.oficina.findMany({
         where: orgFilter,
@@ -422,7 +376,6 @@ function getOrgStructureRoutes(prisma) {
 
   router.post('/oficinas', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const name = requireNonEmptyString(req.body?.name, 'nombre de la oficina');
       const code = normalizeOptionalString(req.body?.code);
       const floor = normalizeOptionalString(req.body?.floor);
@@ -467,8 +420,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.put('/oficinas/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.oficina.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Oficina no encontrada.');
+
       const { name, code, floor, responsibleUser, dependenciaId, sedeId, isActive } = req.body || {};
 
       const ofi = await prisma.oficina.update({
@@ -500,8 +460,15 @@ function getOrgStructureRoutes(prisma) {
 
   router.delete('/oficinas/:id', requireAnyPermission('ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
-      await ensureTablesExist(prisma);
       const id = Number.parseInt(req.params.id, 10);
+      const target = await prisma.oficina.findFirst({
+        where: {
+          id,
+          ...(req.auth?.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!target) throw createHttpError(404, 'Oficina no encontrada.');
+
       await prisma.oficina.delete({ where: { id } });
       res.json({ success: true, message: 'Oficina eliminada correctamente.' });
     } catch (error) {

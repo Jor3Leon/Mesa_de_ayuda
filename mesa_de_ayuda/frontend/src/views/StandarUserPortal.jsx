@@ -118,13 +118,14 @@ export default function StandarUserPortal() {
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO CONTROL BAR */}
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
       <div
+        className="card"
         style={{
-          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
           borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          marginBottom: '1.75rem',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem',
           boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
           border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
@@ -163,30 +164,6 @@ export default function StandarUserPortal() {
             </p>
           </div>
         </div>
-
-        <button
-          onClick={() => setShowModal(true)}
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: '0.5rem',
-            background: '#002D62',
-            color: '#ffffff',
-            padding: '0.65rem 1.25rem',
-            borderRadius: '10px',
-            fontWeight: '600',
-            fontSize: '0.875rem',
-            border: '1px solid rgba(0, 209, 255, 0.4)',
-            cursor: 'pointer',
-            boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
-            transition: 'all 0.2s ease',
-          }}
-        >
-          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M12 5v14M5 12h14" />
-          </svg>
-          Crear Solicitud
-        </button>
       </div>
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}
@@ -433,26 +410,54 @@ export default function StandarUserPortal() {
           </button>
         </div>
 
-        {/* Live Search */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1', maxWidth: '380px', minWidth: '220px', background: '#f8fafc', padding: '0.4rem 0.8rem', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar en mis solicitudes..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
+        {/* Live Search & Action Button */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', flex: '1', maxWidth: '540px', minWidth: '260px' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flex: '1', background: '#f8fafc', padding: '0.4rem 0.8rem', borderRadius: '10px', border: '1px solid #cbd5e1' }}>
+            <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="#94a3b8" strokeWidth="2">
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar en mis solicitudes..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                border: 'none',
+                outline: 'none',
+                background: 'transparent',
+                width: '100%',
+                fontSize: '0.85rem',
+                color: '#1e293b',
+              }}
+            />
+          </div>
+
+          <button
+            type="button"
+            onClick={() => setShowModal(true)}
             style={{
-              border: 'none',
-              outline: 'none',
-              background: 'transparent',
-              width: '100%',
-              fontSize: '0.85rem',
-              color: '#1e293b',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '0.45rem',
+              background: '#002D62',
+              color: '#ffffff',
+              padding: '0.55rem 1.15rem',
+              borderRadius: '8px',
+              fontWeight: '600',
+              fontSize: '0.82rem',
+              border: '1px solid rgba(0, 209, 255, 0.4)',
+              cursor: 'pointer',
+              boxShadow: '0 2px 8px rgba(0, 45, 98, 0.25)',
+              whiteSpace: 'nowrap',
+              transition: 'all 0.2s ease',
             }}
-          />
+          >
+            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M12 5v14M5 12h14" />
+            </svg>
+            Crear Solicitud
+          </button>
         </div>
       </div>
 

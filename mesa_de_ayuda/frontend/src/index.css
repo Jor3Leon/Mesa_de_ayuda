@@ -1,4 +1,15 @@
 :root {
+  /* 📐 STANDARDIZED BREAKPOINTS CONVENTION
+     --bp-mobile: 480px;   (smartphones en vertical)
+     --bp-tablet: 768px;   (tablets / celulares en horizontal / breakpoint móvil principal)
+     --bp-laptop: 1024px;  (laptops pequeñas / tablets grandes)
+     --bp-desktop: 1280px; (escritorio y monitores)
+  */
+  --bp-mobile: 480px;
+  --bp-tablet: 768px;
+  --bp-laptop: 1024px;
+  --bp-desktop: 1280px;
+
   /* 🎨 PALETA DE COLORES PREMIUM INFRASTRUCTURE SYSTEM */
   --color-primary: #002D62;       /* Primary: Deep Navy Blue */
   --color-primary-dark: #001D40;  /* Primary Dark */
@@ -1052,7 +1063,7 @@ textarea {
   color: var(--color-muted);
 }
 
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .bento-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -1530,7 +1541,7 @@ tbody tr:hover {
   align-items: start;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .split-card {
     grid-template-columns: 1fr;
   }
@@ -1549,7 +1560,7 @@ tbody tr:hover {
   grid-template-columns: 1fr 430px;
 }
 
-@media (max-width: 1100px) {
+@media (max-width: 1024px) {
   .cmdb-content-grid.has-selected {
     grid-template-columns: 1fr;
   }
@@ -2102,7 +2113,7 @@ tbody tr:hover {
   color: var(--color-primary-dark);
 }
 
-@media (max-width: 1400px) {
+@media (max-width: 1280px) {
   .sidebar {
     width: 236px;
   }
@@ -2308,7 +2319,7 @@ tbody tr:hover {
   }
 }
 
-@media (max-width: 1180px) and (hover: none), (max-width: 1180px) and (pointer: coarse) {
+@media (max-width: 1024px) and (hover: none), (max-width: 1024px) and (pointer: coarse) {
   .split-card {
     grid-template-columns: 1fr;
   }
@@ -2340,8 +2351,8 @@ tbody tr:hover {
 .show-mobile-flex { display: none !important; }
 .show-mobile-block { display: none !important; }
 
-/* ── Tablet ≤960px ── */
-@media (max-width: 960px) and (hover: none), (max-width: 960px) and (pointer: coarse) {
+/* ── Tablet ≤768px ── */
+@media (max-width: 768px) and (hover: none), (max-width: 768px) and (pointer: coarse) {
   .login-topbar,
   .login-card {
     grid-template-columns: 1fr;
@@ -2759,10 +2770,11 @@ tbody tr:hover {
 }
 
 /* ════════════════════════════════════════════
-   RESPONSIVE — HEADER & SIDEBAR (≤900px)
+   RESPONSIVE — HEADER & SIDEBAR (≤768px)
    ════════════════════════════════════════════ */
-@media (max-width: 900px) {
+@media (max-width: 768px) {
   .hide-mobile { display: none !important; }
+  .show-mobile { display: block !important; }
   .show-mobile-flex { display: flex !important; }
   .show-mobile-block { display: block !important; }
 
@@ -3615,7 +3627,7 @@ tbody tr:hover {
   }
 }
 
-@media (max-width: 440px) {
+@media (max-width: 480px) {
   .main-content { padding: 0.45rem; }
   .card, .hero-panel { padding: 0.65rem; border-radius: 10px; }
   .bento-grid, .analytics-kpi-grid { gap: 0.45rem !important; }
@@ -3899,7 +3911,7 @@ tbody tr:hover {
 }
 
 /* Responsive Bento */
-@media (max-width: 1200px) {
+@media (max-width: 1024px) {
   .bento-grid {
     grid-template-columns: repeat(2, 1fr);
   }
@@ -4182,7 +4194,7 @@ tbody tr:hover {
   }
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .cmdb-stats-grid {
     grid-template-columns: repeat(2, 1fr) !important;
     gap: 0.55rem !important;
@@ -4380,7 +4392,7 @@ tbody tr:hover {
   line-height: 1.2;
 }
 
-@media (max-width: 640px) {
+@media (max-width: 480px) {
   .permission-capability-list {
     grid-template-columns: 1fr !important;
   }
@@ -4868,8 +4880,8 @@ tbody tr:hover {
   }
 }
 
-/* Small Screens and Mobile (< 640px) */
-@media (max-width: 640px) {
+/* Small Screens and Mobile (< 480px) */
+@media (max-width: 480px) {
   .discovery-layout {
     display: flex;
     flex-direction: column;
@@ -4994,6 +5006,42 @@ tbody tr:hover {
    ========================================================================== */
 
 @media screen and (max-width: 768px) {
+  /* 📱 Global iOS Safari Zoom Prevention: All inputs/selects >= 16px */
+  input:not([type="checkbox"]):not([type="radio"]):not([type="range"]):not([type="color"]),
+  select,
+  textarea,
+  .field input,
+  .field select,
+  .field textarea,
+  .form-control,
+  .analytics-filter-input,
+  .analytics-filter-select,
+  .cmdb-search-bar input,
+  .inventory-toolbar-filters input,
+  .inventory-toolbar-filters select,
+  .discovery-card input {
+    font-size: 16px !important;
+  }
+
+  /* 👆 Touch Targets: Minimum 44px for touch interactions (Apple/Google HIG) */
+  .btn,
+  button.status-pill,
+  .header-mobile-avatar-btn,
+  .asset-action-btn,
+  .sidebar-link,
+  .mobile-ticket-card,
+  .mobile-asset-card,
+  .filter-chip {
+    min-height: 44px;
+  }
+
+  /* 📊 Responsive Analytics Bar Labels */
+  .analytics-bar-label {
+    min-width: 65px !important;
+    max-width: 85px !important;
+    font-size: 0.72rem !important;
+  }
+
   /* 🌟 Global Viewport & Container Constraints */
   html, body, #root, .app-wrapper {
     width: 100% !important;

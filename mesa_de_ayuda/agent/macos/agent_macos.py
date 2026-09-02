@@ -70,10 +70,14 @@ def load_config():
 
 
 def save_config(config):
-    """Save configuration dictionary to config.json."""
+    """Save configuration dictionary to config.json with restricted permissions."""
     os.makedirs(INSTALL_DIR, exist_ok=True)
     with open(CONFIG_FILE, "w", encoding="utf-8") as f:
         json.dump(config, f, indent=2, ensure_ascii=False)
+    try:
+        os.chmod(CONFIG_FILE, 0o600)
+    except Exception:
+        pass
 
 
 def perform_sync(server_url=None, org_slug=None, api_key=None, proxy=None):

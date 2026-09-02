@@ -1,5 +1,14 @@
-node_modules
 # Keep environment variables out of version control
 .env
+.env.*
+!.env.example
 
 /generated/prisma
+
+# Dumps & local-only scripts
+*.json_dump
+full_db*.json
+assets_list*.json
+dump_*.json
+scripts/local-only/
+local-only/

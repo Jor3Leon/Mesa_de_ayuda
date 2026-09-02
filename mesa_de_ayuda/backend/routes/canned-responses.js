@@ -48,9 +48,14 @@ function getCannedResponseRoutes(prisma) {
   router.put('/:id', requirePermission('TICKETS_CONFIGURE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const target = await prisma.cannedResponse.findUnique({ where: { id } });
+      const target = await prisma.cannedResponse.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!target) throw createHttpError(404, 'Respuesta rápida no encontrada.');
-      if (req.auth.organizationId && target.organizationId && target.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && target.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para modificar este recurso.');
       }
 
@@ -76,9 +81,14 @@ function getCannedResponseRoutes(prisma) {
   router.delete('/:id', requirePermission('TICKETS_CONFIGURE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const target = await prisma.cannedResponse.findUnique({ where: { id } });
+      const target = await prisma.cannedResponse.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!target) throw createHttpError(404, 'Respuesta rápida no encontrada.');
-      if (req.auth.organizationId && target.organizationId && target.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && target.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para eliminar este recurso.');
       }
 

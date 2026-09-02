@@ -312,24 +312,27 @@ export default function OrganizationStructure() {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-       {/* 🌟 HERO CONTROL BAR */}
-      <div style={{
-        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
-        borderRadius: '16px',
-        padding: '1.75rem 2rem',
-        marginBottom: '1.75rem',
-        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
-        border: '1px solid rgba(0, 209, 255, 0.25)',
-        color: '#ffffff',
-        display: 'flex',
-        flexWrap: 'wrap',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        gap: '1.25rem'
-      }}>
-        <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem', marginBottom: '0.5rem' }}>
-            <div style={{
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      <div
+        className="card"
+        style={{
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem',
+          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+          border: '1px solid rgba(0, 209, 255, 0.25)',
+          color: '#ffffff',
+          display: 'flex',
+          flexWrap: 'wrap',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '1.25rem',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.75rem' }}>
+          <div
+            style={{
               width: '42px',
               height: '42px',
               borderRadius: '10px',
@@ -338,102 +341,27 @@ export default function OrganizationStructure() {
               alignItems: 'center',
               justifyContent: 'center',
               boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
-              color: '#ffffff'
-            }}>
-              <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M3 21h18" />
-                <path d="M5 21V7l8-4v18" />
-                <path d="M19 21V11l-6-4" />
-                <path d="M9 9v.01" />
-                <path d="M9 12v.01" />
-                <path d="M9 15v.01" />
-                <path d="M9 18v.01" />
-              </svg>
-            </div>
-            <div>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                Estructura Organizacional & Ubicaciones
-              </h1>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-                Jerarquía corporativa de 3 niveles: Sedes, Dependencias y Oficinas físicas para localización exacta de Activos TI.
-              </p>
-            </div>
+              color: '#ffffff',
+            }}
+          >
+            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <path d="M3 21h18" />
+              <path d="M5 21V7l8-4v18" />
+              <path d="M19 21V11l-6-4" />
+              <path d="M9 9v.01" />
+              <path d="M9 12v.01" />
+              <path d="M9 15v.01" />
+              <path d="M9 18v.01" />
+            </svg>
           </div>
-        </div>
-
-        {/* Action Buttons Responsive Group */}
-        <div style={{ display: 'flex', flexWrap: 'wrap', gap: '0.75rem', alignItems: 'center' }}>
-          <button
-            onClick={() => handleOpenSedeModal()}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: '#002D62',
-              color: '#ffffff',
-              padding: '0.65rem 1.15rem',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '0.875rem',
-              border: '1px solid rgba(0, 209, 255, 0.4)',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Nueva Sede
-          </button>
-
-          <button
-            onClick={() => handleOpenDepModal()}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'rgba(255, 255, 255, 0.1)',
-              color: '#ffffff',
-              padding: '0.65rem 1.15rem',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '0.875rem',
-              border: '1px solid rgba(255, 255, 255, 0.2)',
-              cursor: 'pointer',
-              backdropFilter: 'blur(4px)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#a855f7" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Nueva Dependencia
-          </button>
-
-          <button
-            onClick={() => handleOpenOfiModal()}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
-              color: '#ffffff',
-              padding: '0.65rem 1.25rem',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '0.875rem',
-              border: 'none',
-              cursor: 'pointer',
-              boxShadow: '0 4px 14px rgba(37, 99, 235, 0.4)',
-              transition: 'all 0.2s ease'
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 5v14M5 12h14" />
-            </svg>
-            Nueva Oficina
-          </button>
+          <div>
+            <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Estructura Organizacional & Ubicaciones
+            </h1>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+              Jerarquía corporativa de 3 niveles: Sedes, Dependencias y Oficinas físicas para localización exacta de Activos TI.
+            </p>
+          </div>
         </div>
       </div>
 
@@ -701,38 +629,116 @@ export default function OrganizationStructure() {
           </div>
         </div>
 
-        {/* Quick Search */}
-        <div style={{ position: 'relative', minWidth: '260px', flex: '1', maxWidth: '450px' }}>
-          <svg
-            width="16"
-            height="16"
-            viewBox="0 0 24 24"
-            fill="none"
-            stroke="#94a3b8"
-            strokeWidth="2"
-            strokeLinecap="round"
-            strokeLinejoin="round"
-            style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
-          >
-            <circle cx="11" cy="11" r="8" />
-            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-          </svg>
-          <input
-            type="text"
-            placeholder="Buscar por sede, área, oficina o responsable..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            style={{
-              width: '100%',
-              padding: '0.55rem 1rem 0.55rem 2.25rem',
-              borderRadius: '8px',
-              border: '1px solid #cbd5e1',
-              fontSize: '0.875rem',
-              outline: 'none',
-              background: '#f8fafc',
-              boxSizing: 'border-box'
-            }}
-          />
+        {/* Quick Search & Actions */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap', flex: '1', justifyContent: 'flex-end' }}>
+          <div style={{ position: 'relative', minWidth: '220px', flex: '1', maxWidth: '380px' }}>
+            <svg
+              width="16"
+              height="16"
+              viewBox="0 0 24 24"
+              fill="none"
+              stroke="#94a3b8"
+              strokeWidth="2"
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              style={{ position: 'absolute', left: '12px', top: '50%', transform: 'translateY(-50%)' }}
+            >
+              <circle cx="11" cy="11" r="8" />
+              <line x1="21" y1="21" x2="16.65" y2="16.65" />
+            </svg>
+            <input
+              type="text"
+              placeholder="Buscar por sede, área, oficina o responsable..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              style={{
+                width: '100%',
+                padding: '0.5rem 1rem 0.5rem 2.25rem',
+                borderRadius: '8px',
+                border: '1px solid #cbd5e1',
+                fontSize: '0.85rem',
+                outline: 'none',
+                background: '#f8fafc',
+                boxSizing: 'border-box'
+              }}
+            />
+          </div>
+
+          <div style={{ display: 'flex', gap: '0.45rem', flexWrap: 'wrap' }}>
+            <button
+              type="button"
+              onClick={() => handleOpenSedeModal()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#002D62',
+                color: '#ffffff',
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                fontWeight: '600',
+                fontSize: '0.8rem',
+                border: '1px solid rgba(0, 209, 255, 0.4)',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(0, 45, 98, 0.25)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              + Sede
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenDepModal()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: '#f5f3ff',
+                color: '#6d28d9',
+                padding: '0.5rem 0.85rem',
+                borderRadius: '8px',
+                fontWeight: '600',
+                fontSize: '0.8rem',
+                border: '1px solid #ddd6fe',
+                cursor: 'pointer',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="#7c3aed" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              + Dependencia
+            </button>
+
+            <button
+              type="button"
+              onClick={() => handleOpenOfiModal()}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '0.4rem',
+                background: 'linear-gradient(135deg, #2563eb 0%, #1d4ed8 100%)',
+                color: '#ffffff',
+                padding: '0.5rem 0.95rem',
+                borderRadius: '8px',
+                fontWeight: '600',
+                fontSize: '0.8rem',
+                border: 'none',
+                cursor: 'pointer',
+                boxShadow: '0 2px 6px rgba(37, 99, 235, 0.3)',
+                transition: 'all 0.2s ease'
+              }}
+            >
+              <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round">
+                <path d="M12 5v14M5 12h14" />
+              </svg>
+              + Oficina
+            </button>
+          </div>
         </div>
       </div>
 

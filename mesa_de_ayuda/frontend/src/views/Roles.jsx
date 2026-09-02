@@ -200,14 +200,14 @@ export default function Roles() {
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-      
-      {/* 🌟 HERO CONTROL BAR */}
+      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
       <div
+        className="card"
         style={{
-          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
           borderRadius: '16px',
-          padding: '1.75rem 2rem',
-          marginBottom: '1.75rem',
+          padding: '1.25rem 1.5rem',
+          marginBottom: '1.25rem',
           boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
           border: '1px solid rgba(0, 209, 255, 0.25)',
           color: '#ffffff',
@@ -245,35 +245,6 @@ export default function Roles() {
             </p>
           </div>
         </div>
-
-        {selectedRole && (
-          <button
-            onClick={handleSave}
-            disabled={saving}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: '0.5rem',
-              background: '#002D62',
-              color: '#ffffff',
-              padding: '0.65rem 1.35rem',
-              borderRadius: '10px',
-              fontWeight: '600',
-              fontSize: '0.875rem',
-              border: '1px solid rgba(0, 209, 255, 0.4)',
-              cursor: saving ? 'not-allowed' : 'pointer',
-              boxShadow: '0 4px 14px rgba(0, 45, 98, 0.4)',
-              transition: 'all 0.2s ease',
-            }}
-          >
-            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="#00D1FF" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M19 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11l5 5v11a2 2 0 0 1-2 2z" />
-              <polyline points="17 21 17 13 7 13 7 21" />
-              <polyline points="7 3 7 8 15 8" />
-            </svg>
-            {saving ? 'Guardando...' : 'Guardar Matriz'}
-          </button>
-        )}
       </div>
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}

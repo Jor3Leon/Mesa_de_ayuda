@@ -8,6 +8,16 @@ const WORK_START_HOUR = 8;
 const WORK_END_HOUR = 17;
 const TARGET_BUSINESS_HOURS = 8;
 
+/**
+ * Calcula las horas hábiles laborales transcurridas entre dos fechas.
+ * Excluye fines de semana (Sábados y Domingos) y horas fuera del rango laboral.
+ * 
+ * @param {Date|string} startDate Fecha inicial (e.g. resolvedAt)
+ * @param {Date|string} endDate Fecha final (e.g. now)
+ * @param {number} startHour Hora de inicio laboral (default 8)
+ * @param {number} endHour Hora de fin laboral (default 17)
+ * @returns {number} Horas hábiles transcurridas
+ */
 function calculateElapsedBusinessHours(startDate, endDate = new Date(), startHour = WORK_START_HOUR, endHour = WORK_END_HOUR) {
   const start = new Date(startDate);
   const end = new Date(endDate);
@@ -42,6 +52,7 @@ function calculateElapsedBusinessHours(startDate, endDate = new Date(), startHou
       }
     }
 
+    // Avanzar al inicio del siguiente día (00:00)
     current.setDate(current.getDate() + 1);
     current.setHours(0, 0, 0, 0);
   }
@@ -49,6 +60,13 @@ function calculateElapsedBusinessHours(startDate, endDate = new Date(), startHou
   return Number((totalBusinessMinutes / 60).toFixed(2));
 }
 
+/**
+ * Calcula la fecha y hora exacta en la que se completarán X horas hábiles laborales desde una fecha dada.
+ * 
+ * @param {Date|string} startDate Fecha inicial (e.g. resolvedAt)
+ * @param {number} targetHours Horas hábiles objetivo (default 8)
+ * @returns {Date} Fecha futura de cumplimiento
+ */
 function getAutoCloseTargetDate(startDate, targetHours = TARGET_BUSINESS_HOURS) {
   const start = new Date(startDate);
   if (isNaN(start.getTime())) return null;
@@ -92,6 +110,13 @@ function getAutoCloseTargetDate(startDate, targetHours = TARGET_BUSINESS_HOURS) 
   return current;
 }
 
+/**
+ * Ejecuta el cierre automático de todos los tickets en estado RESOLVED
+ * que hayan superado las 8 horas hábiles laborales desde su fecha de resolución.
+ * 
+ * @param {object} prisma Cliente de Prisma
+ * @returns {Promise<Array>} Lista de IDs de tickets cerrados automáticamente
+ */
 async function autoCloseResolvedTickets(prisma) {
   try {
     const resolvedTickets = await prisma.ticket.findMany({

@@ -20,6 +20,7 @@ import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
 import Discovery from './views/Discovery';
 import logoImg from './assets/logo.png';
+import useIsMobile from './hooks/useIsMobile';
 
 function getShortRoleLabel(role) {
   const normalized = (role || '').trim().toUpperCase();
@@ -511,15 +512,15 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
         setIsOpen(false);
       }
     }
-    if (isOpen && !isMobile) {
+    if (isOpen) {
       document.addEventListener('mousedown', handleClickOutside);
-      document.addEventListener('touchstart', handleClickOutside);
+      document.addEventListener('touchstart', handleClickOutside, { passive: true });
     }
     return () => {
       document.removeEventListener('mousedown', handleClickOutside);
       document.removeEventListener('touchstart', handleClickOutside);
     };
-  }, [isOpen, isMobile]);
+  }, [isOpen]);
 
   if (availableRoles.length === 0) {
     return (

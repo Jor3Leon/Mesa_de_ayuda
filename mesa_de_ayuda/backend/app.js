@@ -102,7 +102,13 @@ function buildApp(prisma = new PrismaClient()) {
     
     console.error(`[API ERROR ${statusCode}] ${req.method} ${req.url}:`, error);
 
-    const message = error.message || 'Error en el servidor.';
+    // Only expose messages for explicit client errors (4xx with statusCode).
+    // Hide internal 500 errors, database crashes, and Prisma exceptions from client responses.
+    const isClientError = typeof error.statusCode === 'number' && error.statusCode >= 400 && error.statusCode < 500;
+    const message = isClientError 
+      ? (error.message || 'Solicitud inválida.')
+      : 'Ocurrió un error interno en el servidor. Por favor, intente nuevamente.';
+
     res.status(statusCode).json({
       error: message,
     });

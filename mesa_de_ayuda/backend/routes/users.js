@@ -32,12 +32,15 @@ function getUserRoutes(prisma) {
   router.get('/:id', requirePermission('USERS_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const user = await prisma.user.findUnique({
-        where: { id },
+      const user = await prisma.user.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        },
         include: { organization: true, role: true, location: true },
       });
       if (!user) throw createHttpError(404, 'Usuario no encontrado.');
-      if (req.auth.organizationId && user.organizationId && user.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && user.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes acceso a este usuario.');
       }
       res.json(sanitizeUser(user));
@@ -99,10 +102,15 @@ function getUserRoutes(prisma) {
   router.put('/:id', requirePermission('USERS_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const targetUser = await prisma.user.findUnique({ where: { id } });
+      const targetUser = await prisma.user.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!targetUser) throw createHttpError(404, 'Usuario no encontrado.');
 
-      if (req.auth.organizationId && targetUser.organizationId && targetUser.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && targetUser.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para modificar este usuario.');
       }
 
@@ -150,10 +158,15 @@ function getUserRoutes(prisma) {
         throw createHttpError(400, 'No puedes desactivar tu propio usuario.');
       }
 
-      const targetUser = await prisma.user.findUnique({ where: { id } });
+      const targetUser = await prisma.user.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!targetUser) throw createHttpError(404, 'Usuario no encontrado.');
 
-      if (req.auth.organizationId && targetUser.organizationId && targetUser.organizationId !== req.auth.organizationId) {
+      if (req.auth.organizationId && targetUser.organizationId !== req.auth.organizationId) {
         throw createHttpError(403, 'No tienes permiso para modificar este usuario.');
       }
 

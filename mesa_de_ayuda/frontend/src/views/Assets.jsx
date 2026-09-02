@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
+import { sanitizeHtml } from '../lib/sanitize';
 
 function stripHtml(html) {
   if (!html) return '';
@@ -1033,7 +1034,7 @@ export default function Assets() {
 
         <div className={`asset-layout ${showMobileDetail ? 'mobile-show-detail' : 'mobile-show-list'}`} style={{ '--desktop-columns': 'minmax(0, 6fr) minmax(0, 4fr)' }}>
           <article className="asset-list-card">
-            <div className="table-shell">
+            <div className="table-shell hide-mobile">
               {filteredAssets.length === 0 ? (
                 <div className="empty-state">No hay dispositivos que coincidan con la busqueda actual.</div>
               ) : (
@@ -1071,6 +1072,46 @@ export default function Assets() {
                     ))}
                   </tbody>
                 </table>
+              )}
+            </div>
+
+            {/* Vista Móvil: Tarjetas optimizadas para Smartphones */}
+            <div className="show-mobile asset-mobile-cards" style={{ padding: '0.2rem' }}>
+              {filteredAssets.length === 0 ? (
+                <div className="empty-state">No hay dispositivos que coincidan con la busqueda actual.</div>
+              ) : (
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.65rem' }}>
+                  {filteredAssets.map((asset) => (
+                    <div
+                      key={asset.id}
+                      className={`mobile-asset-card ${selectedAssetId === asset.id ? 'asset-card-active' : ''}`}
+                      onClick={() => {
+                        setSelectedAssetId(asset.id);
+                        setShowMobileDetail(true);
+                      }}
+                      style={{
+                        background: '#ffffff',
+                        border: selectedAssetId === asset.id ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                        borderRadius: '10px',
+                        padding: '0.85rem',
+                        cursor: 'pointer',
+                        boxShadow: '0 1px 3px rgba(0,0,0,0.04)',
+                        minHeight: '44px'
+                      }}
+                    >
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.25rem' }}>
+                        <strong style={{ color: '#1e293b', fontSize: '0.9rem' }}>{asset.hostname}</strong>
+                        <span className={`badge ${getStatusClass(asset.status)}`} style={{ fontSize: '0.72rem' }}>{asset.status}</span>
+                      </div>
+                      <div style={{ fontSize: '0.78rem', color: '#64748b' }}>
+                        {asset.brand || 'Sin marca'} {asset.model || ''} {asset.serialNumber ? `• S/N: ${asset.serialNumber}` : ''}
+                      </div>
+                      <div style={{ fontSize: '0.75rem', color: '#475569', marginTop: '0.3rem' }}>
+                        📍 {asset.location || 'Sin ubicación'}
+                      </div>
+                    </div>
+                  ))}
+                </div>
               )}
             </div>
           </article>
@@ -1928,7 +1969,7 @@ export default function Assets() {
                     border: '1px solid #eee',
                     whiteSpace: 'pre-wrap'
                   }}
-                  dangerouslySetInnerHTML={{ __html: viewingTicket.description }}
+                  dangerouslySetInnerHTML={{ __html: sanitizeHtml(viewingTicket.description) }}
                 />
               </div>
               

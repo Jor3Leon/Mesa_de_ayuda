@@ -10,8 +10,14 @@ const {
 const { requireAuth, requirePermission, requireAnyPermission } = require('../lib/middleware');
 
 function requireAgentApiKey(req, res, next) {
-  const expectedKey = process.env.AGENT_API_KEY;
-  if (!expectedKey) return next();
+  const orgSlug = String(req.headers['x-organization-slug'] || req.body?.organizationSlug || '').toLowerCase().trim();
+  const orgEnvVar = orgSlug ? `AGENT_API_KEY_${orgSlug.toUpperCase().replace(/[^A-Z0-9]/g, '_')}` : null;
+  const expectedKey = (orgEnvVar && process.env[orgEnvVar]) ? process.env[orgEnvVar] : process.env.AGENT_API_KEY;
+
+  if (!expectedKey) {
+    return res.status(503).json({ error: 'Agent API Key no configurada en el servidor.' });
+  }
+
   const providedKey = req.headers['x-agent-key'];
   if (!providedKey || providedKey !== expectedKey) {
     return res.status(401).json({ error: 'Invalid or missing Agent API Key (X-Agent-Key header).' });
@@ -102,6 +108,8 @@ function getAssetRoutes(prisma) {
         : installedSoftware;
 
       const data = {
+        // Regla general: Si el activo ya existe y tiene un hostname configurado (modificado por Administrador o Técnico Nivel 3),
+        // mantener el cambio realizado sin que la sincronización automática del sistema lo deshaga.
         hostname: asset ? (asset.hostname || hostname) : hostname,
         serialNumber: serialNumber || asset?.serialNumber || undefined,
         ipAddress: ipAddress || asset?.ipAddress || '0.0.0.0',
@@ -247,7 +255,12 @@ function getAssetRoutes(prisma) {
   router.get('/:id', requirePermission('ASSETS_VIEW'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const asset = await prisma.asset.findUnique({ where: { id } });
+      const asset = await prisma.asset.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!asset) throw createHttpError(404, 'Asset not found.');
       res.json(asset);
     } catch (error) {
@@ -258,6 +271,14 @@ function getAssetRoutes(prisma) {
   router.put('/:id', requirePermission('ASSETS_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
+      const targetAsset = await prisma.asset.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+      if (!targetAsset) throw createHttpError(404, 'Asset not found.');
+
       if (req.body.hostname !== undefined || req.body.serialNumber !== undefined) {
         await ensureUniqueAssetIdentifiers(req.body, id, req.auth.organizationId);
       }
@@ -295,7 +316,12 @@ function getAssetRoutes(prisma) {
   router.get('/:id/history', requireAnyPermission('ASSETS_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const asset = await prisma.asset.findUnique({ where: { id } });
+      const asset = await prisma.asset.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
       if (!asset) throw createHttpError(404, 'Asset not found.');
 
       const orConditions = [{ assetId: id }];
@@ -311,9 +337,12 @@ function getAssetRoutes(prisma) {
         orConditions.push({ description: { contains: cleanSerial, mode: 'insensitive' } });
       }
 
+      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
       const [tickets, maintenances] = await Promise.all([
         prisma.ticket.findMany({
           where: {
+            ...orgFilter,
             OR: orConditions
           },
           include: {
@@ -334,6 +363,8 @@ function getAssetRoutes(prisma) {
       next(error);
     }
   });
+
+
 
   return router;
 }

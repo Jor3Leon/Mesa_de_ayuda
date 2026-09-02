@@ -818,13 +818,13 @@ export default function Dashboard({ user }) {
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                 {yearlyMetric === 'creationVsResolution' ? (
                   <>
-                    <Area type="monotone" name="Casos Creados" dataKey="created" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
-                    <Area type="monotone" name="Casos Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#yearResolvedGrad)" />
+                    <Area isAnimationActive={false} type="monotone" name="Casos Creados" dataKey="created" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
+                    <Area isAnimationActive={false} type="monotone" name="Casos Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#yearResolvedGrad)" />
                   </>
                 ) : (
                   <>
-                    <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#yearIncGrad)" />
-                    <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
+                    <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#yearIncGrad)" />
+                    <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#yearCreatedGrad)" />
                   </>
                 )}
               </AreaChart>
@@ -910,8 +910,8 @@ export default function Dashboard({ user }) {
                   labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
-                <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
+                <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
+                <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -958,11 +958,11 @@ export default function Dashboard({ user }) {
                   labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
                 />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
-                <Bar dataKey="new" name="Nuevos / Abiertos" stackId="a" fill="#00D1FF" radius={[0, 0, 0, 0]} />
-                <Bar dataKey="inProgress" name="En Progreso" stackId="a" fill="#8b5cf6" />
-                <Bar dataKey="pending" name="En Espera" stackId="a" fill="#f59e0b" />
-                <Bar dataKey="resolved" name="Resueltos" stackId="a" fill="#10b981" />
-                <Bar dataKey="closed" name="Cerrados" stackId="a" fill="#64748b" radius={[4, 4, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="new" name="Nuevos / Abiertos" stackId="a" fill="#00D1FF" radius={[0, 0, 0, 0]} />
+                <Bar isAnimationActive={false} dataKey="inProgress" name="En Progreso" stackId="a" fill="#8b5cf6" />
+                <Bar isAnimationActive={false} dataKey="pending" name="En Espera" stackId="a" fill="#f59e0b" />
+                <Bar isAnimationActive={false} dataKey="resolved" name="Resueltos" stackId="a" fill="#10b981" />
+                <Bar isAnimationActive={false} dataKey="closed" name="Cerrados" stackId="a" fill="#64748b" radius={[4, 4, 0, 0]} />
               </BarChart>
             </ResponsiveContainer>
           </div>
@@ -1414,6 +1414,7 @@ export default function Dashboard({ user }) {
             <ResponsiveContainer width="100%" height={230} minWidth={0}>
               <PieChart>
                 <Pie
+                  isAnimationActive={false}
                   data={topRequestTypes}
                   dataKey="count"
                   nameKey="label"

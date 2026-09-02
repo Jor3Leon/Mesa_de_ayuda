@@ -341,9 +341,9 @@ export default function Analytics({ user }) {
                 labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
               />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-              <Area type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
-              <Area type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />
-              <Area type="monotone" name="Tickets Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#anResGrad)" />
+              <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
+              <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />
+              <Area isAnimationActive={false} type="monotone" name="Tickets Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#anResGrad)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>

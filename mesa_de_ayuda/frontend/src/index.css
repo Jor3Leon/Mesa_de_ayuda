@@ -5393,13 +5393,15 @@ tbody tr:hover {
   }
 
   /* 📊 Recharts Wrappers: 100% Fluid on Mobile */
-  .recharts-responsive-container,
-  .recharts-wrapper,
-  .recharts-surface {
+  .recharts-responsive-container {
     width: 100% !important;
-    max-width: 100% !important;
     min-width: 0 !important;
-    box-sizing: border-box !important;
+    min-height: 220px !important;
+    display: block !important;
+  }
+
+  .recharts-wrapper {
+    max-width: 100% !important;
   }
 
   /* 🧭 Control Bars & Filters on Mobile */

@@ -35,10 +35,11 @@ export default function SimplePieChart({ data, title, colorScheme = 'priority' }
       <div style={{
         display: 'flex',
         alignItems: 'center',
-        gap: '40px',
+        gap: '1.25rem',
         flexWrap: 'wrap',
         justifyContent: 'center',
         flex: 1,
+        minWidth: 0,
       }}>
         {/* Donut chart */}
         <div style={{ position: 'relative', width: '160px', height: '160px', flexShrink: 0 }}>
@@ -89,7 +90,7 @@ export default function SimplePieChart({ data, title, colorScheme = 'priority' }
         </div>
 
         {/* Legend */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '180px', flex: 1 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', minWidth: '140px', flex: 1 }}>
           {segments.map((seg, i) => {
             const pct = Math.round(seg.percent);
             return (

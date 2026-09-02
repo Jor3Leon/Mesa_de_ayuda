@@ -791,8 +791,8 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ height: '280px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: '280px', width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
               <AreaChart data={yearlyTrend} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <defs>
                   <linearGradient id="yearCreatedGrad" x1="0" y1="0" x2="0" y2="1">
@@ -886,8 +886,8 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ height: '280px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: '280px', width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
               <AreaChart 
                 data={trendRange === '30d' ? thirtyDaysTrend : yearlyTrend} 
                 margin={{ top: 10, right: 10, left: -20, bottom: 0 }}
@@ -947,8 +947,8 @@ export default function Dashboard({ user }) {
             </div>
           </div>
 
-          <div style={{ height: '280px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: '280px', width: '100%', minWidth: 0, minHeight: '280px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={240}>
               <BarChart data={monthlyStatus} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={11} tickLine={false} />
@@ -1410,8 +1410,8 @@ export default function Dashboard({ user }) {
             Distribución de casos según su clasificación institucional
           </p>
 
-          <div style={{ height: '230px', width: '100%' }}>
-            <ResponsiveContainer width="100%" height="100%">
+          <div style={{ height: '230px', width: '100%', minWidth: 0, minHeight: '230px', position: 'relative' }}>
+            <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={200}>
               <PieChart>
                 <Pie
                   data={topRequestTypes}

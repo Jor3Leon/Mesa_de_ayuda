@@ -109,7 +109,7 @@ function getPrinterModelSpecs(brand, model) {
   const counters = {
     totalPages: 42890,
     monochromePages: isColor ? 24470 : 42890,
-    colorPages: isColor ? 18420 : null,
+    colorPages: isColor ? 18420 : 0,
     scans: 12150
   };
 
@@ -798,21 +798,16 @@ export default function Discovery() {
                       {scanResult.counters.totalPages ? scanResult.counters.totalPages.toLocaleString() : 'N/A'}
                     </div>
                   </div>
-                  {scanResult.counters.colorPages !== null && scanResult.counters.colorPages !== undefined ? (
-                    <div className="discovery-counter-card">
-                      <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Páginas Color</small>
-                      <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
-                        {typeof scanResult.counters.colorPages === 'number' ? scanResult.counters.colorPages.toLocaleString() : scanResult.counters.colorPages}
-                      </div>
+                  <div className="discovery-counter-card">
+                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Páginas Color</small>
+                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
+                      {scanResult.counters.colorPages !== null && scanResult.counters.colorPages !== undefined
+                        ? (typeof scanResult.counters.colorPages === 'number'
+                            ? scanResult.counters.colorPages.toLocaleString()
+                            : scanResult.counters.colorPages)
+                        : '0'}
                     </div>
-                  ) : (
-                    <div className="discovery-counter-card" style={{ background: '#f8fafc' }}>
-                      <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Tecnología Color</small>
-                      <div style={{ fontSize: '0.82rem', fontWeight: 700, color: '#64748b', marginTop: '4px' }}>
-                        No aplica (Monocromo)
-                      </div>
-                    </div>
-                  )}
+                  </div>
                   <div className="discovery-counter-card">
                     <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Monocromo</small>
                     <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#334155', marginTop: '2px' }}>

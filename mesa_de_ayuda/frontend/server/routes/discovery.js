@@ -114,7 +114,7 @@ function getPrinterModelSpecs(brand, model, sysDescr = '') {
   const counters = {
     totalPages: 42890,
     monochromePages: 42890,
-    colorPages: isColor ? 18420 : null,
+    colorPages: isColor ? 18420 : 0,
     scans: 12150
   };
 

@@ -1203,7 +1203,7 @@ export default function Tickets() {
   }
 
   return (
-    <div className="view-container">
+    <div className="view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       {selectedTicket ? (
         <div className="ticket-detail-shell" style={{ background: '#fff', borderRadius: '12px', padding: '1.5rem', boxShadow: '0 4px 12px rgba(0,0,0,0.05)' }}>
           {error && <div className="feedback error" style={{ marginBottom: '1rem', borderRadius: '8px' }}>{error}</div>}

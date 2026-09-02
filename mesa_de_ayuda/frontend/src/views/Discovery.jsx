@@ -397,7 +397,7 @@ export default function Discovery() {
   }, [agents, selectedAgentId]);
 
   return (
-    <div className="view-container" style={{ width: '100%', maxWidth: '100%', boxSizing: 'border-box' }}>
+    <div className="view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
       <div
         className="card"

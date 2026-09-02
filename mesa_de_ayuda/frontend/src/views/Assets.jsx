@@ -834,7 +834,7 @@ export default function Assets() {
   }
 
   return (
-    <div className="view-container">
+    <div className="view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       {/* 🌟 HERO CONTROL BAR */}
       <div
         style={{

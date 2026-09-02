@@ -21,10 +21,10 @@ La plataforma está diseñada bajo un enfoque **Cloud-Native**:
 - **Capa de Datos:** **PostgreSQL en la nube (Supabase / Neon)** gestionado mediante **Prisma ORM** con aislamiento estricto por Organización (`organizationId`).
 
 ```mermaid
-graph TD
-    A[Vercel CDN - Frontend SPA] -->|HTTPS / API Requests| B[Backend Cloud API - Express]
-    B -->|Prisma ORM / Connection Pooler| C[(Supabase - PostgreSQL Multi-Tenant)]
-    D[Agente de Descubrimiento Hardware] -->|Sync Telemetría| B
+flowchart TD
+    A["Vercel CDN (Frontend SPA)"] -->|"HTTPS / API Requests"| B["Backend Cloud API (Express)"]
+    B -->|"Prisma ORM / Connection Pooler"| C[("Supabase (PostgreSQL Multi-Tenant)")]
+    D["Agente de Descubrimiento Hardware"] -->|"Sync Telemetría"| B
 ```
 
 ---

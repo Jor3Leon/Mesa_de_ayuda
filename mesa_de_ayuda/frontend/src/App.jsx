@@ -1083,28 +1083,28 @@ function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isColl
         ))}
       </div>
 
-      {/* Footer del sidebar en mobile */}
-      <div className="sidebar-mobile-footer">
+      {/* Footer del sidebar premium unificado */}
+      <div className="sidebar-footer sidebar-mobile-footer">
         <div 
           className="sidebar-footer-user" 
-          onClick={() => { onClose(); onOpenProfile(); }}
+          onClick={() => { onClose && onClose(); onOpenProfile && onOpenProfile(); }}
           style={{ cursor: 'pointer' }}
           title="Ver mi perfil"
         >
-          <UserAvatar user={user} size={36} />
+          <UserAvatar user={user} size={32} />
           <div className="sidebar-footer-info">
-            <strong>{user?.name}</strong>
+            <strong>{user?.name || 'Usuario'}</strong>
             <small>{getRoleLabel(user?.role)}</small>
           </div>
         </div>
 
         <button 
           type="button" 
-          className="sidebar-mobile-logout-btn" 
+          className="sidebar-logout-btn sidebar-mobile-logout-btn" 
           onClick={onLogout}
           title="Cerrar sesión"
         >
-          <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
             <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
             <polyline points="16 17 21 12 16 7" />
             <line x1="21" y1="12" x2="9" y2="12" />

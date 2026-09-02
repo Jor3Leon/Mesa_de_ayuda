@@ -316,8 +316,8 @@ export default function Analytics({ user }) {
           </div>
         </div>
 
-        <div style={{ height: '300px', width: '100%', minWidth: 0, minHeight: '300px', position: 'relative' }}>
-          <ResponsiveContainer width="100%" height="100%" minWidth={0} minHeight={250}>
+        <div style={{ width: '100%', minWidth: 0, minHeight: '300px', position: 'relative' }}>
+          <ResponsiveContainer width="100%" height={300} minWidth={0}>
             <AreaChart data={dailyEvolution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
               <defs>
                 <linearGradient id="anIncGrad" x1="0" y1="0" x2="0" y2="1">

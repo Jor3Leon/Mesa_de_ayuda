@@ -2558,44 +2558,69 @@ export default function Tickets() {
           {error && <div className="feedback error" style={{ marginBottom: '1.5rem', borderRadius: '12px' }}>{error}</div>}
           {feedback && <div className="feedback" style={{ marginBottom: '1.5rem', borderRadius: '12px', borderLeft: '4px solid #10b981' }}>{feedback}</div>}
 
-          {/* Tablero de Estadísticas Premium */}
+          {/* Tablero de Estadísticas Premium Compacto */}
           {canViewStats && (
-           <div style={{ display: 'flex', gap: '1rem', marginBottom: '2rem', flexWrap: 'wrap' }}>
-            {[
-              { id: 'ALL', label: 'Total', count: tickets.length, color: '#f8fafc', textColor: '#0f172a', borderColor: '#94a3b8', icon: 'fa-clipboard-list' },
-              { id: 'NEW', label: 'Nuevos', count: tickets.filter(t => t.status === 'NEW').length, color: '#fef3c7', textColor: '#92400e', borderColor: '#f59e0b', icon: 'fa-ticket-alt' },
-              { id: 'IN_PROGRESS', label: 'En Progreso', count: tickets.filter(t => t.status === 'IN_PROGRESS' || t.status === 'OPEN').length, color: '#e0f2fe', textColor: '#075985', borderColor: '#0ea5e9', icon: 'fa-spinner' },
-              { id: 'RESOLVED', label: 'Resueltos', count: tickets.filter(t => t.status === 'RESOLVED').length, color: '#dcfce7', textColor: '#166534', borderColor: '#22c55e', icon: 'fa-check-circle' },
-              { id: 'UNRESOLVED', label: 'No Resueltos', count: tickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length, color: '#f3f4f6', textColor: '#374151', borderColor: '#9ca3af', icon: 'fa-exclamation-circle' },
-              { id: 'OVERDUE', label: 'Vencidos', count: tickets.filter(t => getSlaInfo(t.createdAt, t.sla, t.resolvedAt || t.closedAt, t.status).isOverdue).length, color: '#fee2e2', textColor: '#991b1b', borderColor: '#ef4444', icon: 'fa-clock' },
-            ].map((stat, idx) => (
-              <div 
-                key={idx} 
-                onClick={() => setDashboardFilter(dashboardFilter === stat.id ? 'ALL' : stat.id)}
-                title={`Filtrar por ${stat.label}`}
-                style={{ 
-                flex: '1', 
-                minWidth: '160px', 
-                background: stat.color, 
-                padding: '1.2rem 1rem', 
-                borderRadius: '15px', 
-                border: `2px solid ${dashboardFilter === stat.id ? stat.textColor : stat.borderColor}`,
-                display: 'flex',
-                flexDirection: 'column',
-                alignItems: 'center',
-                boxShadow: dashboardFilter === stat.id ? `0 0 0 3px ${stat.color}, 0 4px 12px rgba(0, 0, 0, 0.1)` : '0 4px 12px rgba(0, 0, 0, 0.05)',
-                position: 'relative',
-                overflow: 'hidden',
-                cursor: 'pointer',
-                transform: dashboardFilter === stat.id ? 'scale(1.03)' : 'none',
-                transition: 'all 0.2s ease-in-out'
-              }}>
-                <i className={`fas ${stat.icon}`} style={{ position: 'absolute', right: '-10px', bottom: '-10px', fontSize: '3rem', opacity: 0.1, color: stat.textColor }}></i>
-                <span style={{ fontSize: '0.75rem', fontWeight: '800', color: stat.textColor, textTransform: 'uppercase', letterSpacing: '0.1em' }}>{stat.label}</span>
-                <span style={{ fontSize: '2.2rem', fontWeight: '900', color: stat.textColor, marginTop: '0.3rem', lineHeight: 1 }}>{stat.count}</span>
-              </div>
-            ))}
-          </div>
+            <div 
+              className="tickets-kpi-grid dashboard-kpi-grid"
+              style={{
+                display: 'grid',
+                gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+                gap: '0.55rem',
+                marginBottom: '1.15rem'
+              }}
+            >
+              {[
+                { id: 'ALL', label: 'Total', count: tickets.length, color: '#3b82f6', icon: '📑', subtitle: 'Registrados' },
+                { id: 'NEW', label: 'Nuevos', count: tickets.filter(t => t.status === 'NEW').length, color: '#f59e0b', icon: '🆕', subtitle: 'Por atender' },
+                { id: 'IN_PROGRESS', label: 'En Progreso', count: tickets.filter(t => t.status === 'IN_PROGRESS' || t.status === 'OPEN').length, color: '#8b5cf6', icon: '⚡', subtitle: 'En curso' },
+                { id: 'RESOLVED', label: 'Resueltos', count: tickets.filter(t => t.status === 'RESOLVED').length, color: '#10b981', icon: '✅', subtitle: 'Solucionados' },
+                { id: 'UNRESOLVED', label: 'No Resueltos', count: tickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length, color: '#64748b', icon: '⏳', subtitle: 'Pendientes' },
+                { id: 'OVERDUE', label: 'Vencidos', count: tickets.filter(t => getSlaInfo(t.createdAt, t.sla, t.resolvedAt || t.closedAt, t.status).isOverdue).length, color: '#dc2626', icon: '⚠️', subtitle: 'SLA excedido' },
+              ].map((stat) => {
+                const isSelected = dashboardFilter === stat.id;
+                return (
+                  <div 
+                    key={stat.id} 
+                    onClick={() => setDashboardFilter(isSelected ? 'ALL' : stat.id)}
+                    className="stat-card"
+                    title={`Filtrar por ${stat.label}`}
+                    style={{
+                      background: isSelected ? `${stat.color}10` : '#ffffff',
+                      borderRadius: '10px',
+                      padding: '0.55rem 0.75rem',
+                      border: isSelected ? `2px solid ${stat.color}` : '1px solid #e2e8f0',
+                      borderLeft: `3.5px solid ${stat.color}`,
+                      boxShadow: isSelected ? `0 0 0 2px ${stat.color}25, 0 4px 10px rgba(0,0,0,0.06)` : '0 1px 3px rgba(0,0,0,0.03)',
+                      cursor: 'pointer',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      justifyContent: 'center',
+                      gap: '0.12rem',
+                      minHeight: '54px',
+                      boxSizing: 'border-box',
+                      transition: 'all 0.15s ease'
+                    }}
+                    onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = `0 6px 14px -3px ${stat.color}30`; }}
+                    onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = isSelected ? `0 0 0 2px ${stat.color}25, 0 4px 10px rgba(0,0,0,0.06)` : '0 1px 3px rgba(0,0,0,0.03)'; }}
+                  >
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.3rem' }}>
+                      <span style={{ fontSize: '0.7rem', fontWeight: 700, color: stat.color, textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                        {stat.label}
+                      </span>
+                      <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>{stat.icon}</span>
+                    </div>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.35rem' }}>
+                      <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: stat.color, lineHeight: 1, letterSpacing: '-0.02em' }}>
+                        {stat.count}
+                      </strong>
+                      <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+                        {stat.subtitle}
+                      </span>
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
           )}
 
           <style>{`

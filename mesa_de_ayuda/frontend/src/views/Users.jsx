@@ -752,20 +752,22 @@ export default function Users() {
                             onClick={() => setUserToDelete(u)}
                             disabled={isSelf}
                             title={isSelf ? 'No puedes eliminar tu propia cuenta' : `Eliminar a ${u.name}`}
+                            aria-label={`Eliminar a ${u.name}`}
                             style={{
                               background: isSelf ? '#f8fafc' : '#fff1f2',
                               border: `1px solid ${isSelf ? '#e2e8f0' : '#fecdd3'}`,
                               borderRadius: '8px',
-                              padding: '0.4rem 0.75rem',
+                              width: '32px',
+                              height: '32px',
+                              padding: 0,
                               color: isSelf ? '#94a3b8' : '#e11d48',
-                              fontWeight: '600',
-                              fontSize: '0.8rem',
                               cursor: isSelf ? 'not-allowed' : 'pointer',
                               display: 'inline-flex',
                               alignItems: 'center',
-                              gap: '0.35rem',
+                              justifyContent: 'center',
                               transition: 'all 0.15s ease',
                               opacity: isSelf ? 0.6 : 1,
+                              flexShrink: 0,
                             }}
                             onMouseEnter={(e) => {
                               if (!isSelf) {
@@ -780,13 +782,12 @@ export default function Users() {
                               }
                             }}
                           >
-                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                            <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                               <polyline points="3 6 5 6 21 6" />
                               <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
                               <line x1="10" y1="11" x2="10" y2="17" />
                               <line x1="14" y1="11" x2="14" y2="17" />
                             </svg>
-                            Eliminar
                           </button>
                         </div>
                       </td>

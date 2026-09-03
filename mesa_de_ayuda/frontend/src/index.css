@@ -5161,6 +5161,178 @@ tbody tr:hover {
 }
 
 /* ==========================================================================
+   🖥️ COMPACT SPLIT SCREEN RESPONSIVE ENGINE (<= 1280px)
+   Especialmente optimizado para trabajo en pantalla dividida (Windows Split Screen).
+   Reduce el tamaño de encabezados, filtros, tarjetas KPI y gráficos para que
+   todo el contenido sea visible y compacto de forma proporcional.
+   ========================================================================== */
+
+@media screen and (max-width: 1280px) {
+  /* 🌟 Contenedor principal de la vista Dashboard */
+  .dashboard-view-container {
+    padding: 0.75rem 1rem !important;
+    max-width: 100% !important;
+  }
+
+  /* 🌟 Header del Dashboard */
+  .dashboard-hero-header {
+    padding: 0.75rem 1.15rem !important;
+    margin-bottom: 0.75rem !important;
+    border-radius: 12px !important;
+    gap: 0.75rem !important;
+  }
+
+  .dashboard-hero-header .dashboard-hero-icon {
+    width: 34px !important;
+    height: 34px !important;
+    font-size: 1.1rem !important;
+    border-radius: 9px !important;
+  }
+
+  .dashboard-hero-header h1,
+  .dashboard-hero-title {
+    font-size: 1.15rem !important;
+  }
+
+  .dashboard-hero-header p,
+  .dashboard-hero-subtitle {
+    font-size: 0.76rem !important;
+    margin-top: 0.1rem !important;
+  }
+
+  /* 🎛️ Barra de herramientas y filtros */
+  .dashboard-toolbar-container {
+    padding: 0.55rem 0.85rem !important;
+    margin-bottom: 0.75rem !important;
+    border-radius: 11px !important;
+    gap: 8px !important;
+  }
+
+  .dashboard-toolbar-label,
+  .dashboard-toolbar-container span[style*="textTransform: 'uppercase'"],
+  .dashboard-toolbar-container span[style*="text-transform: uppercase"] {
+    font-size: 0.62rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .dashboard-toolbar-input,
+  .dashboard-toolbar-container input[type="date"] {
+    padding: 4px 7px !important;
+    font-size: 0.74rem !important;
+    border-radius: 6px !important;
+  }
+
+  .dashboard-toolbar-select,
+  .dashboard-toolbar-container select {
+    padding: 4px 8px !important;
+    font-size: 0.74rem !important;
+    min-width: 150px !important;
+    border-radius: 6px !important;
+  }
+
+  .dashboard-export-btn,
+  .dashboard-toolbar-container button {
+    padding: 5px 11px !important;
+    font-size: 0.74rem !important;
+    border-radius: 6px !important;
+  }
+
+  /* 📊 Grilla de 8 Tarjetas KPI (4 columnas x 2 filas limpias y compactas) */
+  .dashboard-kpi-grid {
+    display: grid !important;
+    grid-template-columns: repeat(4, 1fr) !important;
+    gap: 0.4rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  /* Tarjetas KPI compactas */
+  .dashboard-kpi-grid .stat-card {
+    padding: 0.4rem 0.6rem !important;
+    min-height: 44px !important;
+    border-radius: 7px !important;
+    border-left-width: 3px !important;
+    gap: 0.05rem !important;
+  }
+
+  .dashboard-kpi-grid .stat-card span[style*="textTransform: 'uppercase'"],
+  .dashboard-kpi-grid .stat-card span[style*="text-transform: uppercase"],
+  .dashboard-kpi-grid .kpi-card-title {
+    font-size: 0.62rem !important;
+  }
+
+  .dashboard-kpi-grid .stat-card strong,
+  .dashboard-kpi-grid .kpi-card-val {
+    font-size: 1.1rem !important;
+  }
+
+  .dashboard-kpi-grid .stat-card span[style*="textAlign: 'right'"],
+  .dashboard-kpi-grid .stat-card span[style*="text-align: right"],
+  .dashboard-kpi-grid .kpi-card-sub {
+    font-size: 0.6rem !important;
+  }
+
+  /* 📈 Grillas y Tarjetas de Gráficos (Dashboard) */
+  .dashboard-chart-grid {
+    gap: 0.75rem !important;
+    margin-bottom: 0.75rem !important;
+  }
+
+  .dashboard-chart-card,
+  .dashboard-chart-grid > div {
+    padding: 0.75rem 0.9rem !important;
+    border-radius: 11px !important;
+  }
+
+  .dashboard-chart-card h3,
+  .dashboard-chart-grid h3 {
+    font-size: 0.88rem !important;
+    margin-bottom: 0.1rem !important;
+  }
+
+  .dashboard-chart-card p,
+  .dashboard-chart-grid p {
+    font-size: 0.7rem !important;
+    margin-bottom: 0.4rem !important;
+  }
+
+  /* Botones de métricas en gráficos */
+  .dashboard-chart-card button,
+  .dashboard-chart-grid button {
+    padding: 2px 6px !important;
+    font-size: 0.66rem !important;
+    border-radius: 5px !important;
+  }
+
+  /* Altura compacta para gráficos en pantalla dividida */
+  .dashboard-chart-grid .recharts-responsive-container,
+  .dashboard-chart-wrapper {
+    min-height: 190px !important;
+    max-height: 200px !important;
+  }
+
+  .dashboard-chart-wrapper > div {
+    min-height: 190px !important;
+  }
+}
+
+@media screen and (max-width: 960px) {
+  /* En división de pantalla estrecha o pantallas < 960px */
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(4, 1fr) !important;
+  }
+
+  .dashboard-chart-grid {
+    grid-template-columns: 1fr !important;
+  }
+}
+
+@media screen and (max-width: 720px) {
+  .dashboard-kpi-grid {
+    grid-template-columns: repeat(2, 1fr) !important;
+  }
+}
+
+/* ==========================================================================
    📱 COMPACT MOBILE RESPONSIVE ENGINE (SMARTPHONES: <= 768px & <= 480px)
    Optimized for all modules & sections (Dashboard, Tickets, Analytics,
    Assets, CMDB, Discovery, Roles, Organization, Categories, Users,

@@ -223,10 +223,10 @@ export default function Dashboard({ user }) {
   const maxStructureCount = Math.max(...currentStructureList.map(s => s.count), 1);
 
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+    <div className="dashboard-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
       {/* 🌟 1. HERO HEADER (Limpio y libre de controles internos) */}
-      <div style={{
+      <div className="dashboard-hero-header" style={{
         background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
         borderRadius: '16px',
         padding: '1.75rem 2rem',
@@ -238,7 +238,7 @@ export default function Dashboard({ user }) {
         alignItems: 'center',
         gap: '1rem'
       }}>
-        <div style={{
+        <div className="dashboard-hero-icon" style={{
           width: '48px',
           height: '48px',
           borderRadius: '14px',
@@ -255,11 +255,11 @@ export default function Dashboard({ user }) {
         </div>
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
-            <h1 style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+            <h1 className="dashboard-hero-title" style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
               Dashboard
             </h1>
           </div>
-          <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+          <p className="dashboard-hero-subtitle" style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
             {isPersonalScope 
               ? 'Control individual de tickets asignados, tiempos de respuesta y estados de atención.'
               : 'Métricas, estadísticas, tendencias anuales, distribución de severidad y control de acuerdos ANS.'
@@ -269,7 +269,7 @@ export default function Dashboard({ user }) {
       </div>
 
       {/* 🎛️ 2. BARRA DE HERRAMIENTAS & FILTROS UNIFICADA (Debajo del Header) */}
-      <div style={{
+      <div className="dashboard-toolbar-container" style={{
         background: '#ffffff',
         borderRadius: '16px',
         padding: '1.15rem 1.5rem',
@@ -285,11 +285,12 @@ export default function Dashboard({ user }) {
         <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '14px' }}>
           {/* Rango de Fechas: Desde */}
           <div>
-            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               Desde
             </span>
             <input
               type="date"
+              className="dashboard-toolbar-input"
               value={filters.startDate}
               onChange={(e) => handleFilterChange('startDate', e.target.value)}
               style={{
@@ -308,11 +309,12 @@ export default function Dashboard({ user }) {
 
           {/* Rango de Fechas: Hasta */}
           <div>
-            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               Hasta
             </span>
             <input
               type="date"
+              className="dashboard-toolbar-input"
               value={filters.endDate}
               onChange={(e) => handleFilterChange('endDate', e.target.value)}
               style={{
@@ -331,10 +333,11 @@ export default function Dashboard({ user }) {
 
           {/* Filtro Unificado de Búsqueda (Alcance & Técnico) */}
           <div>
-            <span style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
               Alcance / Técnico Asignado
             </span>
             <select
+              className="dashboard-toolbar-select"
               value={isLevel2 ? 'personal' : filters.unifiedScope}
               disabled={isLevel2}
               onChange={(e) => handleFilterChange('unifiedScope', e.target.value)}
@@ -379,6 +382,7 @@ export default function Dashboard({ user }) {
         <div>
           <button
             type="button"
+            className="dashboard-export-btn"
             onClick={handleExportPdf}
             disabled={isExporting}
             style={{

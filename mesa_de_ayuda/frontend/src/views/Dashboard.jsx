@@ -114,8 +114,8 @@ export default function Dashboard({ user }) {
   const [isExporting, setIsExporting] = useState(false);
   const [trendRange, setTrendRange] = useState('30d'); // '30d' | '12m'
   const [yearlyMetric, setYearlyMetric] = useState('creationVsResolution'); // 'creationVsResolution' | 'incidentsVsRequests'
-  const [structureTab, setStructureTab] = useState('jerarquia'); // 'jerarquia' | 'oficinas'
-  const [expandedDeps, setExpandedDeps] = useState({});
+  const [selectedSedeId, setSelectedSedeId] = useState(null);
+  const [selectedDepId, setSelectedDepId] = useState(null);
   const [selectedSeverity, setSelectedSeverity] = useState(null);
 
   const toggleDepExpanded = (depKey) => {
@@ -273,6 +273,37 @@ export default function Dashboard({ user }) {
 
   const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
   const maxStructureCount = Math.max(...topDependencias.map(s => s.count), 1);
+
+  // Jerarquía Completa para la tarjeta interactiva "Casos por Ubicación"
+  const sedesHierarchy = useMemo(() => {
+    return data?.sedesHierarchy || [];
+  }, [data?.sedesHierarchy]);
+
+  const activeSede = useMemo(() => {
+    if (!sedesHierarchy.length) return null;
+    if (selectedSedeId != null) {
+      const found = sedesHierarchy.find(s => s.id === selectedSedeId);
+      if (found) return found;
+    }
+    return sedesHierarchy[0];
+  }, [sedesHierarchy, selectedSedeId]);
+
+  const activeDependencias = useMemo(() => {
+    return activeSede?.dependencias || [];
+  }, [activeSede]);
+
+  const activeDep = useMemo(() => {
+    if (!activeDependencias.length) return null;
+    if (selectedDepId != null) {
+      const found = activeDependencias.find(d => d.id === selectedDepId);
+      if (found) return found;
+    }
+    return activeDependencias[0];
+  }, [activeDependencias, selectedDepId]);
+
+  const activeOficinas = useMemo(() => {
+    return activeDep?.oficinas || [];
+  }, [activeDep]);
 
   return (
     <div className="dashboard-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
@@ -1485,202 +1516,336 @@ export default function Dashboard({ user }) {
             </ResponsiveContainer>
           </div>
         </div>
+      </div>
 
-        {/* Chart 7: Principales Casos por Dependencias & Oficinas */}
-        <div className="dashboard-chart-card" style={{
+      {/* 📍 CARD INTERACTIVA: CASOS POR UBICACIÓN (SEDE -> DEPENDENCIA -> OFICINA) */}
+      <div 
+        className="dashboard-chart-card" 
+        style={{
           background: '#ffffff',
-          borderRadius: '12px',
-          padding: '0.9rem 1.15rem',
+          borderRadius: '16px',
+          padding: '1.25rem 1.5rem',
           border: '1px solid #e2e8f0',
-          boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
-        }}>
-          {/* Encabezado Compacto */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '6px' }}>
-            <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
-                  Casos por Dependencias & Oficinas
-                </h3>
-                <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '1px 6px', borderRadius: '4px' }}>
-                  Estructura
+          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          marginTop: '1.5rem'
+        }}
+      >
+        {/* Encabezado Principal de la Tarjeta */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '10px' }}>
+          <div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+                Casos por Ubicación
+              </h3>
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '6px' }}>
+                Interactiva 3D Drill-Down
+              </span>
+              {filters.startDate && filters.endDate && (
+                <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748b' }}>
+                  ({filters.startDate} a {filters.endDate})
                 </span>
-                {filters.startDate && filters.endDate && (
-                  <span style={{ fontSize: '0.62rem', fontWeight: 600, color: '#64748b' }}>
-                    ({filters.startDate} a {filters.endDate})
-                  </span>
-                )}
+              )}
+            </div>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Haz clic en una <strong>Sede</strong> para filtrar sus <strong>Dependencias</strong>, y en una <strong>Dependencia</strong> para ver sus <strong>Oficinas</strong>
+            </p>
+          </div>
+
+          {/* Breadcrumb de Selección Activa */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+            <span style={{ fontSize: '0.72rem', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: '#334155' }}>
+              🏛️ Sede: <strong>{activeSede ? activeSede.name : 'Todas'}</strong>
+            </span>
+            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>➔</span>
+            <span style={{ fontSize: '0.72rem', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '4px 10px', borderRadius: '8px', color: '#1d4ed8' }}>
+              📁 Dependencia: <strong>{activeDep ? activeDep.name : 'Todas'}</strong>
+            </span>
+            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>➔</span>
+            <span style={{ fontSize: '0.72rem', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '8px', color: '#15803d' }}>
+              🚪 <strong>{activeOficinas.length} {activeOficinas.length === 1 ? 'oficina' : 'oficinas'}</strong>
+            </span>
+          </div>
+        </div>
+
+        {/* Las 3 Gráficas Interactivas en Paralelo (Sede, Dependencia, Oficina) */}
+        <div 
+          style={{
+            display: 'grid',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+            gap: '1.25rem',
+            alignItems: 'stretch'
+          }}
+        >
+          {/* GRÁFICA 1: SEDE (Bar Chart Horizontal) */}
+          <div style={{
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '1rem',
+            background: '#fafafa',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1rem' }}>🏛️</span>
+                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
+                  SEDE
+                </h4>
               </div>
-              <p style={{ margin: '0.1rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
-                Distribución de tickets por áreas institucionales
-              </p>
+              <span style={{ fontSize: '0.7rem', color: '#64748b', fontStyle: 'italic' }}>
+                Selecciona una barra
+              </span>
             </div>
 
-            <div>
-              <button
-                type="button"
-                onClick={() => {
-                  const anyOpen = Object.values(expandedDeps).some(v => v);
-                  toggleAllExpanded(!anyOpen);
-                }}
-                style={{
-                  padding: '3px 8px',
-                  borderRadius: '5px',
-                  border: '1px solid #cbd5e1',
-                  background: '#f8fafc',
-                  fontSize: '0.68rem',
-                  fontWeight: 700,
-                  color: '#002D62',
-                  cursor: 'pointer',
-                  display: 'inline-flex',
-                  alignItems: 'center',
-                  gap: '3px'
-                }}
-              >
-                {Object.values(expandedDeps).some(v => v) ? '− Contraer todo' : '＋ Desplegar todo'}
-              </button>
+            {sedesHierarchy.length === 0 ? (
+              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
+                Sin sedes registradas
+              </div>
+            ) : (
+              <div style={{ width: '100%', height: 210 }}>
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart
+                    layout="vertical"
+                    data={sedesHierarchy}
+                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                    onClick={(state) => {
+                      if (state && state.activePayload && state.activePayload[0]) {
+                        const entry = state.activePayload[0].payload;
+                        setSelectedSedeId(entry.id);
+                        setSelectedDepId(null);
+                      }
+                    }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
+                    <XAxis type="number" stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+                    <YAxis
+                      dataKey="name"
+                      type="category"
+                      stroke="#475569"
+                      fontSize={11}
+                      width={100}
+                      tick={{ fill: '#334155', fontWeight: 600 }}
+                    />
+                    <Tooltip content={<CustomChartTooltip />} />
+                    <Bar dataKey="count" name="Tickets" radius={[0, 4, 4, 0]} cursor="pointer">
+                      {sedesHierarchy.map((entry, index) => {
+                        const isSelected = activeSede && entry.id === activeSede.id;
+                        return (
+                          <Cell
+                            key={`cell-sede-${index}`}
+                            fill={isSelected ? '#f97316' : '#0284c7'}
+                            stroke={isSelected ? '#ea580c' : '#0369a1'}
+                            strokeWidth={isSelected ? 2 : 1}
+                          />
+                        );
+                      })}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
+            )}
+
+            {/* Chips de Selección Rápida para Sedes */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto', paddingTop: '8px' }}>
+              {sedesHierarchy.map((s) => {
+                const isSelected = activeSede && s.id === activeSede.id;
+                return (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => { setSelectedSedeId(s.id); setSelectedDepId(null); }}
+                    style={{
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: isSelected ? '1px solid #ea580c' : '1px solid #cbd5e1',
+                      background: isSelected ? '#fff7ed' : '#ffffff',
+                      color: isSelected ? '#ea580c' : '#475569'
+                    }}
+                  >
+                    {s.name} ({s.count})
+                  </button>
+                );
+              })}
             </div>
           </div>
 
-          {/* Lista Compacta de Dependencias y Oficinas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
-            {topDependencias.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '1.25rem', color: '#94a3b8', fontSize: '0.78rem' }}>
-                No hay dependencias u oficinas registradas en la Estructura Organizacional
+          {/* GRÁFICA 2: DEPENDENCIA (Pie / Donut Chart) */}
+          <div style={{
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '1rem',
+            background: '#fafafa',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1rem' }}>📁</span>
+                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
+                  DEPENDENCIA
+                </h4>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 700, background: '#eff6ff', padding: '1px 6px', borderRadius: '4px' }}>
+                {activeSede?.name || 'Sede'}
+              </span>
+            </div>
+
+            {activeDependencias.length === 0 ? (
+              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+                No hay dependencias registradas en {activeSede?.name || 'esta sede'}
               </div>
             ) : (
-              topDependencias.map((dep, idx) => {
-                const depKey = dep.id != null ? String(dep.id) : (dep.name || String(idx));
-                const isExpanded = !!expandedDeps[depKey];
-                const oficinasList = dep.oficinas || [];
-                const hasOficinas = oficinasList.length > 0;
+              <div style={{ width: '100%', height: 210, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height={210}>
+                  <PieChart>
+                    <Pie
+                      data={activeDependencias.map(d => ({ ...d, value: Math.max(d.count, 0.001) }))}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={42}
+                      outerRadius={72}
+                      paddingAngle={3}
+                      cursor="pointer"
+                      onClick={(entry) => {
+                        if (entry && entry.id) {
+                          setSelectedDepId(entry.id);
+                        }
+                      }}
+                    >
+                      {activeDependencias.map((entry, index) => {
+                        const isSelected = activeDep && entry.id === activeDep.id;
+                        const colors = ['#00D1FF', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4'];
+                        const baseColor = colors[index % colors.length];
+                        return (
+                          <Cell
+                            key={`cell-dep-${index}`}
+                            fill={baseColor}
+                            stroke={isSelected ? '#0f172a' : '#ffffff'}
+                            strokeWidth={isSelected ? 3 : 1}
+                            style={{ filter: isSelected ? 'drop-shadow(0px 0px 4px rgba(0,0,0,0.3))' : 'none' }}
+                          />
+                        );
+                      })}
+                    </Pie>
+                    <Tooltip content={<CustomChartTooltip />} />
+                    {/* Texto Central de la Dona */}
+                    <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="15" fontWeight="800">
+                      {activeDep ? activeDep.count : activeDependencias.reduce((sum, d) => sum + d.count, 0)}
+                    </text>
+                    <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="10" fontWeight="600">
+                      Tickets
+                    </text>
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
+            )}
 
+            {/* Chips de Selección Rápida para Dependencias */}
+            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto', paddingTop: '8px' }}>
+              {activeDependencias.map((d, idx) => {
+                const isSelected = activeDep && d.id === activeDep.id;
+                const colors = ['#00D1FF', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4'];
+                const dotColor = colors[idx % colors.length];
                 return (
-                  <div 
-                    key={depKey}
+                  <button
+                    key={d.id}
+                    type="button"
+                    onClick={() => setSelectedDepId(d.id)}
                     style={{
-                      border: '1px solid #e2e8f0',
-                      borderRadius: '7px',
-                      background: '#ffffff',
-                      overflow: 'hidden',
-                      transition: 'border-color 0.15s ease'
+                      padding: '3px 8px',
+                      borderRadius: '6px',
+                      fontSize: '0.7rem',
+                      fontWeight: 700,
+                      cursor: 'pointer',
+                      border: isSelected ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
+                      background: isSelected ? '#eff6ff' : '#ffffff',
+                      color: '#1e293b',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '4px'
                     }}
                   >
-                    {/* Fila Compacta de la Dependencia */}
-                    <div 
-                      onClick={() => toggleDepExpanded(depKey)}
-                      style={{
-                        padding: '0.35rem 0.55rem',
-                        cursor: 'pointer',
-                        userSelect: 'none',
-                        background: isExpanded ? '#f8fafc' : '#ffffff',
-                        transition: 'background 0.15s ease'
-                      }}
-                      onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = '#f8fafc'; }}
-                      onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = '#ffffff'; }}
-                    >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                          <span style={{ 
-                            fontSize: '0.65rem', 
-                            color: '#0284c7', 
-                            display: 'inline-block', 
-                            transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.15s ease',
-                            lineHeight: 1
-                          }}>
-                            ▶
-                          </span>
-                          <span style={{ fontSize: '0.82rem', lineHeight: 1 }}>📁</span>
-                          <div style={{ minWidth: 0 }}>
-                            <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                              {dep.name}
-                            </span>
-                            <span style={{ fontSize: '0.65rem', color: '#64748b', marginLeft: '5px' }}>
-                              ({dep.sedeName || 'Sede'} · <strong style={{ color: '#0284c7' }}>{oficinasList.length} ofi.</strong>)
-                            </span>
-                          </div>
-                        </div>
-
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
-                          <strong style={{
-                            fontSize: '0.74rem',
-                            color: dep.count > 0 ? '#0284c7' : '#64748b'
-                          }}>
-                            {dep.count} {dep.count === 1 ? 'ticket' : 'tickets'} ({dep.percent}%)
-                          </strong>
-                          <span style={{ fontSize: '0.64rem', color: '#0284c7', fontWeight: 600 }}>
-                            {isExpanded ? '▲' : '▼'}
-                          </span>
-                        </div>
-                      </div>
-
-                      {/* Barra Delgada de Progreso (3px) */}
-                      <div style={{ width: '100%', height: '3.5px', background: '#f1f5f9', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
-                        <div style={{
-                          width: `${Math.min(100, Math.max(dep.count > 0 ? (dep.count / maxStructureCount) * 100 : 0, dep.percent))}%`,
-                          height: '100%',
-                          background: 'linear-gradient(90deg, #38bdf8 0%, #0284c7 100%)',
-                          borderRadius: '2px',
-                          transition: 'width 0.4s ease'
-                        }} />
-                      </div>
-                    </div>
-
-                    {/* Lista Desplegable Compacta de Oficinas (Sin Porcentajes, Solo Cantidad de Tickets) */}
-                    {isExpanded && (
-                      <div style={{
-                        borderTop: '1px solid #f1f5f9',
-                        background: '#f8fafc',
-                        padding: '0.25rem 0.55rem 0.35rem 1.4rem',
-                        borderLeft: '3px solid #38bdf8'
-                      }}>
-                        {!hasOficinas ? (
-                          <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic', padding: '2px 0' }}>
-                            Sin oficinas registradas en la estructura.
-                          </div>
-                        ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
-                            {oficinasList.map((ofi, oIdx) => (
-                              <div 
-                                key={ofi.id != null ? String(ofi.id) : oIdx} 
-                                style={{
-                                  display: 'flex',
-                                  justifyContent: 'space-between',
-                                  alignItems: 'center',
-                                  padding: '2px 0',
-                                  fontSize: '0.74rem'
-                                }}
-                              >
-                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
-                                  <span style={{ fontSize: '0.74rem', opacity: 0.8 }}>🚪</span>
-                                  <span style={{ fontWeight: 600, color: '#334155' }}>
-                                    {ofi.name}
-                                  </span>
-                                  {ofi.floor && (
-                                    <span style={{ fontSize: '0.6rem', color: '#64748b', background: '#e2e8f0', padding: '0 4px', borderRadius: '3px' }}>
-                                      P.{ofi.floor}
-                                    </span>
-                                  )}
-                                </div>
-
-                                {/* Solo Cantidad de Tickets (Sin porcentajes) */}
-                                <span style={{
-                                  fontSize: '0.72rem',
-                                  fontWeight: 700,
-                                  color: ofi.count > 0 ? '#0f172a' : '#94a3b8'
-                                }}>
-                                  {ofi.count} {ofi.count === 1 ? 'ticket' : 'tickets'}
-                                </span>
-                              </div>
-                            ))}
-                          </div>
-                        )}
-                      </div>
-                    )}
-                  </div>
+                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: dotColor }} />
+                    {d.name} ({d.count})
+                  </button>
                 );
-              })
+              })}
+            </div>
+          </div>
+
+          {/* GRÁFICA 3: OFICINA (Column Chart Vertical) */}
+          <div style={{
+            border: '1px solid #e2e8f0',
+            borderRadius: '12px',
+            padding: '1rem',
+            background: '#fafafa',
+            display: 'flex',
+            flexDirection: 'column'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                <span style={{ fontSize: '1rem' }}>🚪</span>
+                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
+                  OFICINA
+                </h4>
+              </div>
+              <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '1px 6px', borderRadius: '4px' }}>
+                {activeDep?.name || 'Dependencia'}
+              </span>
+            </div>
+
+            {activeOficinas.length === 0 ? (
+              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+                No hay oficinas registradas en {activeDep?.name || 'esta dependencia'}
+              </div>
+            ) : (
+              <div style={{ width: '100%', height: 210 }}>
+                <ResponsiveContainer width="100%" height={210}>
+                  <BarChart
+                    data={activeOficinas}
+                    margin={{ top: 15, right: 10, left: -20, bottom: 25 }}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#475569"
+                      fontSize={10}
+                      interval={0}
+                      angle={-25}
+                      textAnchor="end"
+                      tick={{ fill: '#475569', fontWeight: 600 }}
+                    />
+                    <YAxis
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      allowDecimals={false}
+                      domain={[0, (dataMax) => Math.max(dataMax + 1, 3)]}
+                    />
+                    <Tooltip content={<CustomChartTooltip />} />
+                    <Bar
+                      dataKey="count"
+                      name="Tickets"
+                      fill="#00c5a2"
+                      radius={[4, 4, 0, 0]}
+                    >
+                      {activeOficinas.map((entry, index) => (
+                        <Cell key={`cell-ofi-${index}`} fill="#00c5a2" />
+                      ))}
+                    </Bar>
+                  </BarChart>
+                </ResponsiveContainer>
+              </div>
             )}
+
+            {/* Resumen de Conteo Total para Oficinas */}
+            <div style={{ marginTop: 'auto', paddingTop: '8px', fontSize: '0.72rem', color: '#64748b', textAlign: 'center', borderTop: '1px solid #e2e8f0' }}>
+              Total: <strong style={{ color: '#0f172a' }}>{activeOficinas.reduce((sum, o) => sum + o.count, 0)} tickets</strong> en {activeOficinas.length} oficina(s)
+            </div>
           </div>
         </div>
       </div>

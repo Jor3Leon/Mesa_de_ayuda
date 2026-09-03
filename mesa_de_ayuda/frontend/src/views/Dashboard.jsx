@@ -70,6 +70,7 @@ const initialData = {
 };
 
 const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
+const CALLOUT_PIE_COLORS = ['#ef4444', '#00c5a2', '#1e293b', '#06b6d4', '#334155', '#f87171', '#3b82f6', '#f59e0b', '#8b5cf6'];
 
 function CustomChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
@@ -190,6 +191,29 @@ export default function Dashboard({ user }) {
   const activeOficinas = useMemo(() => {
     return activeDep?.oficinas || [];
   }, [activeDep]);
+
+  // Preparar datos para el Pie Chart con Líneas Conectoras Externas (Estilo Referencia)
+  const pieDependencias = useMemo(() => {
+    if (!activeDependencias.length) return [];
+    const total = activeDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0);
+    if (total > 0) {
+      return activeDependencias.map((d) => {
+        const count = Number(d?.count) || 0;
+        return {
+          ...d,
+          value: count > 0 ? count : 0.05,
+          realCount: count,
+          pct: Math.round((count / total) * 100)
+        };
+      });
+    }
+    return activeDependencias.map((d) => ({
+      ...d,
+      value: 1,
+      realCount: 0,
+      pct: 0
+    }));
+  }, [activeDependencias]);
 
   useEffect(() => {
     let ignore = false;
@@ -1722,19 +1746,35 @@ export default function Dashboard({ user }) {
               </div>
             ) : (
               <>
-                {/* Gráfica Tipo Dona */}
-                <div style={{ width: '100%', height: 160, position: 'relative' }}>
-                  <ResponsiveContainer width="100%" height={160}>
-                    <PieChart>
+                {/* Gráfica Circular Tipo Pie con Líneas Conectoras Externas (Estilo Imagen Referencia) */}
+                <div style={{ width: '100%', height: 200, position: 'relative' }}>
+                  <ResponsiveContainer width="100%" height={200}>
+                    <PieChart margin={{ top: 15, right: 30, bottom: 15, left: 30 }}>
                       <Pie
-                        data={activeDependencias.map(d => ({ ...d, value: Math.max(Number(d?.count) || 0, 0.001) }))}
+                        data={pieDependencias}
                         dataKey="value"
                         nameKey="name"
                         cx="50%"
                         cy="50%"
-                        innerRadius={45}
-                        outerRadius={70}
-                        paddingAngle={activeDependencias.length > 1 ? 3 : 0}
+                        outerRadius={65}
+                        innerRadius={0}
+                        labelLine={{ stroke: '#64748b', strokeWidth: 1.2 }}
+                        label={({ name, pct, x, y, cx }) => {
+                          const shortName = name.length > 13 ? `${name.slice(0, 12)}…` : name;
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill="#1e293b"
+                              textAnchor={x > cx ? 'start' : 'end'}
+                              dominantBaseline="central"
+                              fontSize={10}
+                              fontWeight={700}
+                            >
+                              {`${shortName} ${pct > 0 ? `(${pct}%)` : ''}`}
+                            </text>
+                          );
+                        }}
                         cursor="pointer"
                         onClick={(entry) => {
                           if (entry && entry.id) {
@@ -1742,42 +1782,33 @@ export default function Dashboard({ user }) {
                           }
                         }}
                       >
-                        {activeDependencias.map((entry, index) => {
+                        {pieDependencias.map((entry, index) => {
                           const isSelected = activeDep && entry.id === activeDep.id;
-                          const colors = ['#00D1FF', '#2563eb', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4', '#6366f1'];
-                          const baseColor = colors[index % colors.length];
+                          const color = CALLOUT_PIE_COLORS[index % CALLOUT_PIE_COLORS.length];
                           return (
                             <Cell
                               key={`cell-dep-${index}`}
-                              fill={baseColor}
+                              fill={color}
                               stroke={isSelected ? '#0f172a' : '#ffffff'}
-                              strokeWidth={isSelected ? 3 : 1}
-                              style={{ filter: isSelected ? 'drop-shadow(0px 0px 6px rgba(0,0,0,0.35))' : 'none' }}
+                              strokeWidth={isSelected ? 3 : 1.5}
+                              style={{
+                                filter: isSelected ? 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))' : 'none',
+                                transition: 'all 0.2s ease'
+                              }}
                             />
                           );
                         })}
                       </Pie>
                       <Tooltip content={<CustomChartTooltip />} />
-                      {/* Centro de la Dona: TOTAL EXACTO DE LA SEDE SELECCIONADA */}
-                      <text x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="9" fontWeight="700" letterSpacing="0.05em">
-                        TOTAL SEDE
-                      </text>
-                      <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="22" fontWeight="800">
-                        {activeSede ? (activeSede.count || 0) : 0}
-                      </text>
-                      <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="9" fontWeight="600">
-                        {activeSede?.count === 1 ? 'Ticket' : 'Tickets'}
-                      </text>
                     </PieChart>
                   </ResponsiveContainer>
                 </div>
 
-                {/* Lista Ejecutiva de Desglose (En reemplazo de las píldoras flotantes) */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '0.5rem', maxHeight: '100px', overflowY: 'auto', paddingRight: '2px' }}>
+                {/* Lista Ejecutiva de Desglose */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '0.25rem', maxHeight: '90px', overflowY: 'auto', paddingRight: '2px' }}>
                   {activeDependencias.map((d, idx) => {
                     const isSelected = activeDep && d.id === activeDep.id;
-                    const colors = ['#00D1FF', '#2563eb', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4', '#6366f1'];
-                    const dotColor = colors[idx % colors.length];
+                    const color = CALLOUT_PIE_COLORS[idx % CALLOUT_PIE_COLORS.length];
                     const sedeTotal = activeSede?.count || 0;
                     const pct = sedeTotal > 0 ? Math.round(((Number(d.count) || 0) / sedeTotal) * 100) : 0;
                     return (
@@ -1797,7 +1828,7 @@ export default function Dashboard({ user }) {
                         }}
                       >
                         <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
                           <span style={{ fontSize: '0.74rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#1d4ed8' : '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                             {d.name}
                           </span>

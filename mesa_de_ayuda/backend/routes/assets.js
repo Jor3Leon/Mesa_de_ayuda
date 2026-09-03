@@ -60,18 +60,22 @@ function getAssetRoutes(prisma) {
         });
       }
       
-      // Match by MAC address in networkSummary if serialNumber not found or not provided
-      if (!asset && networkSummary) {
+      let extractedMac = req.body.macAddress || req.body.mac || null;
+      if (!extractedMac && networkSummary) {
         const macMatch = String(networkSummary).match(/([0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2}[:-][0-9a-fA-F]{2})/i);
-        if (macMatch) {
-          const cleanMac = macMatch[1].toUpperCase();
-          asset = await prisma.asset.findFirst({
-            where: {
-              networkSummary: { contains: cleanMac },
-              ...(orgId ? { organizationId: orgId } : {})
-            }
-          });
-        }
+        if (macMatch) extractedMac = macMatch[1].toUpperCase();
+      }
+
+      if (!asset && extractedMac) {
+        asset = await prisma.asset.findFirst({
+          where: {
+            OR: [
+              { macAddress: extractedMac },
+              { networkSummary: { contains: extractedMac } }
+            ],
+            ...(orgId ? { organizationId: orgId } : {})
+          }
+        });
       }
 
       if (!asset) {
@@ -133,6 +137,7 @@ function getAssetRoutes(prisma) {
           : undefined),
         location: asset?.location || undefined,
         installedSoftware: serializedSoftware || asset?.installedSoftware || undefined,
+        macAddress: extractedMac || asset?.macAddress || undefined,
         lastSeenAt: new Date(),
         agentVersion: req.body.agentVersion || asset?.agentVersion || '1.0.0',
         organizationId: orgId || asset?.organizationId || null,

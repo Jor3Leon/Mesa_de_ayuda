@@ -53,7 +53,7 @@ function getCommonRoutes(prisma) {
           combined.push({
             id: `sede-${sede.id}`,
             name: sede.name,
-            description: `Sede: ${sede.address || ''} (${sede.city || 'Yopal'})`,
+            description: `Sede: ${sede.address || ''}${sede.city ? ` (${sede.city})` : ''}`,
             level: 'SEDE',
             sedeName: sede.name
           });

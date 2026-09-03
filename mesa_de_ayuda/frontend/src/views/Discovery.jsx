@@ -106,14 +106,7 @@ function getPrinterModelSpecs(brand, model) {
     ];
   }
 
-  const counters = {
-    totalPages: 42890,
-    monochromePages: isColor ? 24470 : 42890,
-    colorPages: isColor ? 18420 : 0,
-    scans: 12150
-  };
-
-  return { isColor, printTech, consumables, counters };
+  return { isColor, printTech, consumables, counters: null };
 }
 
 function generateSimulatedDiscovery(ip) {
@@ -790,12 +783,12 @@ export default function Discovery() {
               )}
 
               {/* Page Counters */}
-              {scanResult.counters && (
+              {scanResult.counters && scanResult.counters.totalPages ? (
                 <div className="discovery-counters-grid">
                   <div className="discovery-counter-card">
                     <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Total Páginas</small>
                     <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
-                      {scanResult.counters.totalPages ? scanResult.counters.totalPages.toLocaleString() : 'N/A'}
+                      {scanResult.counters.totalPages.toLocaleString()}
                     </div>
                   </div>
                   <div className="discovery-counter-card">
@@ -820,6 +813,13 @@ export default function Discovery() {
                       {scanResult.counters.scans ? scanResult.counters.scans.toLocaleString() : 'N/A'}
                     </div>
                   </div>
+                </div>
+              ) : (
+                <div style={{ marginBottom: '1.15rem', padding: '0.65rem 0.85rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
+                  <span style={{ fontSize: '0.9rem' }}>ℹ️</span>
+                  <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
+                    Contadores de Impresión: <strong>No disponible</strong> (Sin lectura SNMP reportada)
+                  </small>
                 </div>
               )}
 

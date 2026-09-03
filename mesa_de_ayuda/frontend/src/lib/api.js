@@ -62,6 +62,7 @@ export async function apiRequest(path, options = {}) {
 
   const response = await fetch(`${API_BASE_URL}${path}`, {
     ...restOptions,
+    credentials: 'include',
     body: finalBody,
     headers: {
       ...(finalBody !== undefined && !isFormData ? { 'Content-Type': 'application/json' } : {}),

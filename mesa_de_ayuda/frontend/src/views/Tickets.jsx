@@ -1179,7 +1179,7 @@ export default function Tickets() {
                 `).join('')}
               </tbody>
             </table>
-            <div class="footer">Este documento es un extracto del sistema Mesa de Ayuda Municipal.</div>
+            <div class="footer">Este documento es un extracto oficial del sistema Mesa de Ayuda.</div>
             <script>window.print(); window.close();</script>
           </body>
         </html>
@@ -2666,7 +2666,7 @@ export default function Tickets() {
               border-radius: 8px;
               border: 1px solid #cbd5e1;
             }
-            @media (max-width: 900px) {
+            @media (max-width: 768px) {
               .responsive-filters {
                 grid-template-columns: 1fr 1fr;
                 gap: 0.5rem;

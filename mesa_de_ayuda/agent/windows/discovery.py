@@ -369,14 +369,7 @@ def get_printer_model_specs(brand, model, sys_descr=""):
             {"name": "Unidad de Tambor / Imagen (Drum Unit)", "levelPercent": 90, "color": "#10b981"}
         ]
 
-    counters = {
-        "totalPages": 42890,
-        "monochromePages": 24470 if is_color else 42890,
-        "colorPages": 18420 if is_color else None,
-        "scans": 12150
-    }
-
-    return is_color, print_tech, consumables, counters
+    return is_color, print_tech, consumables, None
 
 
 def extract_vendor_and_model(text):
@@ -429,7 +422,8 @@ def discover_device(ip, community="public", timeout=2.0):
             "fax": False
         },
         "consumables": [],
-        "counters": {},
+        "counters": None,
+        "countersSource": "NO_DISPONIBLE",
         "webUrl": None,
         "protocolUsed": [],
         "discoveryDuration": 0,
@@ -463,9 +457,9 @@ def discover_device(ip, community="public", timeout=2.0):
     sys_descr = snmp_get(ip, OID_SYS_DESCR, community=community, timeout=0.8)
     sys_name = snmp_get(ip, OID_SYS_NAME, community=community, timeout=0.8)
     prt_serial = snmp_get(ip, OID_PRT_SERIAL, community=community, timeout=0.8)
-    page_count = snmp_get(ip, OID_PRT_PAGE_COUNT, community=community, timeout=0.8)
+    page_count = snmp_get(ip, OID_PRT_PAGE_COUNT, community=community, timeout=2.0)
 
-    if sys_descr or sys_name or prt_serial:
+    if sys_descr or sys_name or prt_serial or (page_count and isinstance(page_count, int)):
         snmp_success = True
         result["protocolUsed"].append("SNMP v2c")
         if sys_name and isinstance(sys_name, str):
@@ -475,7 +469,13 @@ def discover_device(ip, community="public", timeout=2.0):
             if clean_sn and clean_sn.lower() not in ("none", "unknown", "0", "n/a"):
                 result["serialNumber"] = clean_sn
         if page_count and isinstance(page_count, int):
-            result["counters"]["totalPages"] = page_count
+            result["counters"] = {
+                "totalPages": page_count,
+                "monochromePages": None,
+                "colorPages": None,
+                "scans": None
+            }
+            result["countersSource"] = "SNMP"
 
         # Query Consumables via SNMP
         for desc_oid, max_oid, cur_oid in SUPPLY_OIDS:
@@ -577,7 +577,7 @@ def discover_device(ip, community="public", timeout=2.0):
         result["status"] = "OFFLINE"
 
     # Apply authentic model specs (Monochrome vs Color)
-    is_color, print_tech, fallback_consumables, model_counters = get_printer_model_specs(
+    is_color, print_tech, fallback_consumables, _ = get_printer_model_specs(
         result["brand"], 
         result["model"], 
         str(result.get("rawDetails", {}).get("sysDescr", ""))
@@ -588,9 +588,7 @@ def discover_device(ip, community="public", timeout=2.0):
     if not result["consumables"]:
         result["consumables"] = fallback_consumables
 
-    if not result["counters"].get("totalPages"):
-        result["counters"] = model_counters
-    else:
+    if result["counters"] and result["counters"].get("totalPages"):
         if not is_color:
             result["counters"]["monochromePages"] = result["counters"]["totalPages"]
             result["counters"]["colorPages"] = None

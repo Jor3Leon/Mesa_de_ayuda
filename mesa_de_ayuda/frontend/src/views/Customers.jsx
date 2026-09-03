@@ -680,7 +680,7 @@ export default function Customers() {
                 <input
                   required
                   type="text"
-                  placeholder="Ej: Alcaldía Municipal de Yopal"
+                  placeholder="Ej: Sede Principal / Empresa"
                   value={form.name}
                   onChange={(e) => setForm({ ...form, name: e.target.value })}
                   style={{

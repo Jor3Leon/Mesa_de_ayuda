@@ -56,7 +56,7 @@ test('PATCH /api/users/:id/status updates active flag', async () => {
     id: 2,
     name: 'Tecnico Nivel 1',
     username: 'tecnico.n1',
-    email: 'nivel1@yopal.gov.co',
+    email: 'nivel1@test.local',
     organizationId: authUser.organizationId,
     isActive: false,
     location: null,
@@ -339,7 +339,7 @@ test('GET /api/organization-structure returns hierarchical tree of sedes, depend
       name: 'Palacio Municipal (Sede Central)',
       code: 'SED-01',
       address: 'Diagonal 15 No. 13-35',
-      city: 'Yopal',
+      city: 'Sede Central',
       dependencias: [
         {
           id: 10,
@@ -810,7 +810,7 @@ test('PASSWORD RESET FLOW: Generates HMAC token and updates password securely', 
   const testUser = {
     id: 55,
     name: 'Usuario Reset',
-    email: 'reset.user@yopal.gov.co',
+    email: 'reset.user@test.local',
     username: 'reset.user',
     passwordHash: initialHash,
     isActive: true,

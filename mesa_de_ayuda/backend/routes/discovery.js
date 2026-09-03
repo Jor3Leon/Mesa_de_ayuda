@@ -110,23 +110,12 @@ function getPrinterModelSpecs(brand, model, sysDescr = '') {
     ];
   }
 
-  // Counters
-  const counters = {
-    totalPages: 42890,
-    monochromePages: 42890,
-    colorPages: isColor ? 18420 : 0,
-    scans: 12150
-  };
-
-  if (isColor) {
-    counters.monochromePages = 24470;
-  }
-
   return {
     isColor,
     printTech,
     consumables,
-    counters
+    counters: null,
+    countersSource: 'NO_DISPONIBLE'
   };
 }
 
@@ -388,12 +377,13 @@ function getDiscoveryRoutes(prisma) {
       });
 
       // Run parallel lightweight port and service probes
-      const [pJetDirect, pIpp, pHttp, pHttps, snmpDescr] = await Promise.all([
+      const [pJetDirect, pIpp, pHttp, pHttps, snmpDescr, snmpPageCount] = await Promise.all([
         probePort(ip, 9100, 1000),
         probePort(ip, 631, 1000),
         probeHttp(ip, 80, false, 1200),
         probeHttp(ip, 443, true, 1200),
-        snmpGetNode(ip, '1.3.6.1.2.1.1.1.0', community, 1000)
+        snmpGetNode(ip, '1.3.6.1.2.1.1.1.0', community, 1000),
+        snmpGetNode(ip, '1.3.6.1.2.1.43.10.2.1.4.1.1', community, 2000)
       ]);
 
       const protocols = [];
@@ -511,8 +501,22 @@ function getDiscoveryRoutes(prisma) {
         isColor: false,
         printTech: 'Láser',
         consumables: [],
-        counters: []
+        counters: null,
+        countersSource: 'NO_DISPONIBLE'
       };
+
+      let counters = null;
+      let countersSource = 'NO_DISPONIBLE';
+      if (snmpPageCount !== null && !isNaN(Number(snmpPageCount))) {
+        const total = Number(snmpPageCount);
+        counters = {
+          totalPages: total,
+          monochromePages: modelSpecs.isColor ? null : total,
+          colorPages: null,
+          scans: null
+        };
+        countersSource = 'SNMP';
+      }
 
       const isIdentified = Boolean(brand || model || serialNumber || mac || matchedExistingAsset);
 
@@ -533,7 +537,8 @@ function getDiscoveryRoutes(prisma) {
         isColor: modelSpecs.isColor,
         printTech: modelSpecs.printTech,
         consumables: modelSpecs.consumables,
-        counters: modelSpecs.counters,
+        counters,
+        countersSource,
         discoveryDuration: durationSec,
         isIdentified,
         detectionSource,
@@ -575,7 +580,8 @@ function getDiscoveryRoutes(prisma) {
         agentVersion,
         capabilities,
         consumables,
-        counters
+        counters,
+        printTech
       } = req.body;
 
       if (!isValidIpv4(ipAddress)) {
@@ -602,7 +608,10 @@ function getDiscoveryRoutes(prisma) {
       if (!existingAsset && cleanMac) {
         existingAsset = await prisma.asset.findFirst({
           where: {
-            networkSummary: { contains: cleanMac },
+            OR: [
+              { macAddress: cleanMac },
+              { networkSummary: { contains: cleanMac } }
+            ],
             ...(orgId ? { organizationId: orgId } : {})
           }
         });
@@ -639,7 +648,7 @@ function getDiscoveryRoutes(prisma) {
             data: {
               name: 'General / Corporativo',
               organizationId: orgId || null,
-              email: `general-${Date.now()}@yopal.gov.co`
+              email: `general-${Date.now()}@soporte.local`
             }
           });
           validCustomerId = newCust.id;
@@ -659,15 +668,19 @@ function getDiscoveryRoutes(prisma) {
       if (capabilities) {
         notesParts.push(`Capacidades: Impresión (${capabilities.printing ? 'Sí' : 'No'}), Escaneo (${capabilities.scanning ? 'Sí' : 'No'}), Copia (${capabilities.copying ? 'Sí' : 'No'})`);
       }
-      if (Array.isArray(consumables) && consumables.length > 0) {
-        notesParts.push(`Consumibles: ${consumables.map(c => `${c.name}: ${c.levelPercent}%`).join(', ')}`);
+      if (printTech) {
+        notesParts.push(`Tecnología: ${printTech}`);
+      }
+      if (consumables && Array.isArray(consumables) && consumables.length > 0) {
+        const cText = consumables.map(c => `${c.name}: ${c.levelPercent}%`).join(', ');
+        notesParts.push(`Consumibles detectados: ${cText}`);
       }
       if (counters?.totalPages) {
         notesParts.push(`Contador: ${counters.totalPages.toLocaleString()} págs`);
       }
-      const fullNotes = notesParts.join(' \n');
+      const fullNotes = notesParts.join(' | ');
 
-      let savedAsset = null;
+      let savedAsset;
       let isNew = false;
       let ipChanged = false;
 
@@ -681,6 +694,7 @@ function getDiscoveryRoutes(prisma) {
           data: {
             hostname: validHostname,
             ipAddress,
+            macAddress: cleanMac || existingAsset.macAddress,
             serialNumber: cleanSerial || existingAsset.serialNumber,
             brand: normalizeOptionalString(brand) || existingAsset.brand,
             model: normalizeOptionalString(model) || existingAsset.model,
@@ -703,6 +717,7 @@ function getDiscoveryRoutes(prisma) {
           data: {
             hostname: validHostname,
             ipAddress,
+            macAddress: cleanMac || null,
             serialNumber: cleanSerial || `SN-PRN-${ipAddress.replace(/\./g, '-')}`,
             brand: normalizeOptionalString(brand) || 'Generico',
             model: normalizeOptionalString(model) || 'Dispositivo de Red',

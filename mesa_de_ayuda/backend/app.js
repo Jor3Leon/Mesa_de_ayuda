@@ -5,6 +5,9 @@ const { PrismaClient } = require('@prisma/client');
 const { createHttpError } = require('./lib/utils');
 const { rateLimit } = require('./lib/rate-limit');
 
+const path = require('path');
+const fs = require('fs');
+
 // Import modular routes
 const getAuthRoutes = require('./routes/auth');
 const getTicketRoutes = require('./routes/tickets');
@@ -61,6 +64,21 @@ function buildApp(prisma = new PrismaClient()) {
   app.use(express.json({ limit: '2mb' }));
   app.use(express.urlencoded({ extended: true, limit: '2mb' }));
 
+  // Cookie parser middleware (for httpOnly session tokens)
+  app.use((req, res, next) => {
+    req.cookies = {};
+    const cookieHeader = req.headers.cookie;
+    if (cookieHeader) {
+      cookieHeader.split(';').forEach((c) => {
+        const parts = c.split('=');
+        const name = parts[0].trim();
+        const val = parts.slice(1).join('=').trim();
+        if (name) req.cookies[name] = decodeURIComponent(val);
+      });
+    }
+    next();
+  });
+
   if (process.env.NODE_ENV !== 'production') {
     app.use(morgan('dev'));
   }
@@ -88,6 +106,19 @@ function buildApp(prisma = new PrismaClient()) {
   app.use('/api/organization-structure', getOrgStructureRoutes(prisma));
   app.use('/organization-structure', getOrgStructureRoutes(prisma));
   app.use('/api', getCommonRoutes(prisma));
+
+  // Serve static frontend build if dist exists
+  const frontendDist = path.resolve(__dirname, '../frontend/dist');
+  if (fs.existsSync(frontendDist)) {
+    app.use(express.static(frontendDist));
+    app.use((req, res, next) => {
+      if (req.method !== 'GET') return next();
+      if (req.url.startsWith('/api') || req.url.startsWith('/discovery') || req.url.startsWith('/organization-structure')) {
+        return next();
+      }
+      res.sendFile(path.join(frontendDist, 'index.html'));
+    });
+  }
 
   // 404 handler
   app.use((req, res, next) => {

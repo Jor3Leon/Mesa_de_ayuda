@@ -24,7 +24,7 @@ export default function OrganizationStructure() {
   const [saving, setSaving] = useState(false);
 
   // Forms state
-  const [sedeForm, setSedeForm] = useState({ name: '', code: '', address: '', city: 'Yopal', phone: '', managerName: '' });
+  const [sedeForm, setSedeForm] = useState({ name: '', code: '', address: '', city: '', phone: '', managerName: '' });
   const [depForm, setDepForm] = useState({ name: '', code: '', sedeId: '', managerName: '', email: '' });
   const [ofiForm, setOfiForm] = useState({ name: '', code: '', sedeId: '', dependenciaId: '', floor: '', responsibleUser: '' });
 
@@ -106,12 +106,12 @@ export default function OrganizationStructure() {
         name: sede.name || '',
         code: sede.code || '',
         address: sede.address || '',
-        city: sede.city || 'Yopal',
+        city: sede.city || '',
         phone: sede.phone || '',
         managerName: sede.managerName || '',
       });
     } else {
-      setSedeForm({ name: '', code: '', address: '', city: 'Yopal', phone: '', managerName: '' });
+      setSedeForm({ name: '', code: '', address: '', city: '', phone: '', managerName: '' });
     }
     setModalType('sede');
   };
@@ -895,7 +895,7 @@ export default function OrganizationStructure() {
                             </span>
                           )}
                           <span style={{ fontSize: '0.75rem', padding: '0.15rem 0.5rem', borderRadius: '9999px', background: '#ecfdf5', color: '#047857', fontWeight: '600' }}>
-                            {sede.city || 'Yopal'}
+                            {sede.city || 'Principal'}
                           </span>
                         </div>
                         <div style={{ fontSize: '0.8rem', color: '#64748b', marginTop: '0.15rem' }}>
@@ -1209,7 +1209,7 @@ export default function OrganizationStructure() {
                       </label>
                       <input
                         type="text"
-                        placeholder="Ej: Yopal"
+                        placeholder="Ej: Ciudad Principal"
                         value={sedeForm.city}
                         onChange={(e) => setSedeForm({ ...sedeForm, city: e.target.value })}
                         style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}
@@ -1326,7 +1326,7 @@ export default function OrganizationStructure() {
                     </label>
                     <input
                       type="email"
-                      placeholder="Ej: tic@yopal.gov.co"
+                      placeholder="Ej: contacto@empresa.com"
                       value={depForm.email}
                       onChange={(e) => setDepForm({ ...depForm, email: e.target.value })}
                       style={{ width: '100%', padding: '0.65rem 0.85rem', borderRadius: '8px', border: '1px solid #cbd5e1', fontSize: '0.875rem', boxSizing: 'border-box' }}

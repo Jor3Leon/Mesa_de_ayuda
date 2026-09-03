@@ -66,13 +66,34 @@ function getAuthRoutes(prisma) {
         throw createHttpError(403, 'La organización se encuentra inactiva o suspendida.');
       }
 
+      const token = createToken(user);
+
+      // Set secure httpOnly cookie
+      res.cookie('token', token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV === 'production',
+        sameSite: 'strict',
+        path: '/',
+        maxAge: 7 * 24 * 60 * 60 * 1000 // 7 days
+      });
+
       res.json({
-        token: createToken(user),
+        token,
         user: sanitizeUser(user),
       });
     } catch (error) {
       next(error);
     }
+  });
+
+  router.post('/logout', (req, res) => {
+    res.clearCookie('token', {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'strict',
+      path: '/'
+    });
+    res.json({ ok: true, message: 'Sesión finalizada correctamente.' });
   });
 
   router.post('/forgot-password', async (req, res, next) => {

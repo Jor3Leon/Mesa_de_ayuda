@@ -13,7 +13,7 @@ function parseBearerToken(headerValue) {
 function requireAuth(prisma) {
   return async (req, res, next) => {
     try {
-      const token = parseBearerToken(req.headers.authorization);
+      const token = parseBearerToken(req.headers.authorization) || req.cookies?.token;
       if (!token) {
         throw createHttpError(401, 'Authentication token is required.');
       }

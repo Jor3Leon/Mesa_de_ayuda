@@ -166,7 +166,7 @@ function getOrgStructureRoutes(prisma) {
       const name = requireNonEmptyString(req.body?.name, 'nombre de la sede');
       const code = normalizeOptionalString(req.body?.code);
       const address = normalizeOptionalString(req.body?.address);
-      const city = normalizeOptionalString(req.body?.city) || 'Yopal';
+      const city = normalizeOptionalString(req.body?.city);
       const phone = normalizeOptionalString(req.body?.phone);
       const managerName = normalizeOptionalString(req.body?.managerName);
       const orgId = req.auth?.organizationId || null;

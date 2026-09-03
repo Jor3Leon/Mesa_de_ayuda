@@ -11,17 +11,16 @@ function getActivityRoutes(prisma) {
   router.put('/:id', async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const activity = await prisma.ticketActivity.findUnique({
-        where: { id },
+      const activity = await prisma.ticketActivity.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {})
+        },
         include: { ticket: true }
       });
 
       if (!activity) {
         throw createHttpError(404, 'Actividad no encontrada.');
-      }
-
-      if (req.auth.organizationId && activity.ticket?.organizationId && activity.ticket.organizationId !== req.auth.organizationId) {
-        throw createHttpError(403, 'No tienes permiso para modificar esta actividad.');
       }
 
       // REGLA GENERAL: Mensajes automáticos del sistema no se pueden editar
@@ -47,17 +46,16 @@ function getActivityRoutes(prisma) {
   router.delete('/:id', async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
-      const activity = await prisma.ticketActivity.findUnique({
-        where: { id },
+      const activity = await prisma.ticketActivity.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {})
+        },
         include: { ticket: true }
       });
 
       if (!activity) {
         throw createHttpError(404, 'Actividad no encontrada.');
-      }
-
-      if (req.auth.organizationId && activity.ticket?.organizationId && activity.ticket.organizationId !== req.auth.organizationId) {
-        throw createHttpError(403, 'No tienes permiso para eliminar esta actividad.');
       }
 
       // REGLA GENERAL: Mensajes automáticos del sistema no se pueden eliminar

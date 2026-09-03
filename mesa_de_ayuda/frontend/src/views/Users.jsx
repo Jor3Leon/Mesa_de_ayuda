@@ -868,7 +868,7 @@ export default function Users() {
                   <input
                     required
                     type="email"
-                    placeholder="cperez@yopal.gov.co"
+                    placeholder="cperez@empresa.com"
                     value={form.email}
                     onChange={(e) => setForm({ ...form, email: e.target.value })}
                     style={{

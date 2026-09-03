@@ -814,7 +814,7 @@ export default function Assets() {
                 `).join('')}
               </tbody>
             </table>
-            <div class="footer">Este documento es un extracto del sistema de gestion de inventarios - Mesa de Ayuda Municipal.</div>
+            <div class="footer">Este documento es un extracto oficial del sistema de gestión de activos - Mesa de Ayuda.</div>
             <script>window.print();</script>
           </body>
         </html>

@@ -69,6 +69,43 @@ const initialData = {
 
 const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
 
+function CustomChartTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div style={{
+      background: '#001D40',
+      border: '1px solid rgba(0, 209, 255, 0.45)',
+      borderRadius: '8px',
+      padding: '8px 12px',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+      fontSize: '12px',
+      minWidth: '130px'
+    }}>
+      <div style={{ color: '#00D1FF', fontWeight: 800, marginBottom: '6px', fontSize: '13px', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '3px' }}>
+        {label}
+      </div>
+      {payload.map((item, idx) => {
+        let dotColor = item.color || item.fill || item.stroke;
+        if (dotColor === '#002D62') dotColor = '#00D1FF';
+        if (dotColor === '#64748b') dotColor = '#94a3b8';
+        return (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', margin: '3px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0, boxShadow: `0 0 6px ${dotColor}` }} />
+              <span style={{ color: '#cbd5e1', fontSize: '12px', fontWeight: 500 }}>
+                {item.name}:
+              </span>
+            </div>
+            <strong style={{ color: '#ffffff', fontSize: '12px', fontWeight: 800 }}>
+              {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
+            </strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Dashboard({ user }) {
   const navigate = useNavigate();
   const [data, setData] = useState(initialData);
@@ -813,10 +850,7 @@ export default function Dashboard({ user }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
-                />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                 {yearlyMetric === 'creationVsResolution' ? (
                   <>
@@ -900,20 +934,17 @@ export default function Dashboard({ user }) {
                     <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
                   </linearGradient>
                   <linearGradient id="trendReqGrad" x1="0" y1="0" x2="0" y2="1">
-                    <stop offset="5%" stopColor="#002D62" stopOpacity={0.45}/>
-                    <stop offset="95%" stopColor="#002D62" stopOpacity={0.0}/>
+                    <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.45}/>
+                    <stop offset="95%" stopColor="#00D1FF" stopOpacity={0.0}/>
                   </linearGradient>
                 </defs>
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey={trendRange === '30d' ? 'name' : 'shortMonth'} stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
-                />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                 <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#trendIncGrad)" />
-                <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#002D62" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
+                <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#trendReqGrad)" />
               </AreaChart>
             </ResponsiveContainer>
           </div>
@@ -955,10 +986,7 @@ export default function Dashboard({ user }) {
                 <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
                 <XAxis dataKey="shortMonth" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
                 <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-                <Tooltip 
-                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                  labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
-                />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '8px' }} />
                 <Bar isAnimationActive={false} dataKey="new" name="Nuevos / Abiertos" stackId="a" fill="#00D1FF" radius={[0, 0, 0, 0]} />
                 <Bar isAnimationActive={false} dataKey="inProgress" name="En Progreso" stackId="a" fill="#8b5cf6" />
@@ -1430,9 +1458,7 @@ export default function Dashboard({ user }) {
                     <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
                   ))}
                 </Pie>
-                <Tooltip 
-                  contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                />
+                <Tooltip content={<CustomChartTooltip />} />
                 <Legend iconType="circle" wrapperStyle={{ fontSize: '11px', paddingTop: '4px' }} />
               </PieChart>
             </ResponsiveContainer>

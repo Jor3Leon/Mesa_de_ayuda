@@ -16,6 +16,43 @@ import {
   Legend
 } from 'recharts';
 
+function CustomChartTooltip({ active, payload, label }) {
+  if (!active || !payload || !payload.length) return null;
+  return (
+    <div style={{
+      background: '#001D40',
+      border: '1px solid rgba(0, 209, 255, 0.45)',
+      borderRadius: '8px',
+      padding: '8px 12px',
+      boxShadow: '0 8px 24px rgba(0, 0, 0, 0.45)',
+      fontSize: '12px',
+      minWidth: '130px'
+    }}>
+      <div style={{ color: '#00D1FF', fontWeight: 800, marginBottom: '6px', fontSize: '13px', borderBottom: '1px solid rgba(255, 255, 255, 0.12)', paddingBottom: '3px' }}>
+        {label}
+      </div>
+      {payload.map((item, idx) => {
+        let dotColor = item.color || item.fill || item.stroke;
+        if (dotColor === '#002D62') dotColor = '#00D1FF';
+        if (dotColor === '#64748b') dotColor = '#94a3b8';
+        return (
+          <div key={idx} style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '10px', margin: '3px 0' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0, boxShadow: `0 0 6px ${dotColor}` }} />
+              <span style={{ color: '#cbd5e1', fontSize: '12px', fontWeight: 500 }}>
+                {item.name}:
+              </span>
+            </div>
+            <strong style={{ color: '#ffffff', fontSize: '12px', fontWeight: 800 }}>
+              {typeof item.value === 'number' ? item.value.toLocaleString() : item.value}
+            </strong>
+          </div>
+        );
+      })}
+    </div>
+  );
+}
+
 export default function Analytics({ user }) {
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
@@ -336,10 +373,7 @@ export default function Analytics({ user }) {
               <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
               <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
               <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-              <Tooltip 
-                contentStyle={{ background: '#001D40', border: '1px solid rgba(0, 209, 255, 0.3)', borderRadius: '8px', color: '#fff', fontSize: '12px' }}
-                labelStyle={{ color: '#00D1FF', fontWeight: '700' }}
-              />
+              <Tooltip content={<CustomChartTooltip />} />
               <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
               <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
               <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />

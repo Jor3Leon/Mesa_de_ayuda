@@ -15,7 +15,8 @@ import {
   CartesianGrid, 
   Tooltip, 
   ResponsiveContainer,
-  Legend
+  Legend,
+  LabelList
 } from 'recharts';
 
 const initialData = {
@@ -1510,90 +1511,104 @@ export default function Dashboard({ user }) {
         style={{
           background: '#ffffff',
           borderRadius: '16px',
-          padding: '1.25rem 1.5rem',
+          padding: '1.5rem',
           border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
+          boxShadow: '0 4px 20px -2px rgba(15, 23, 42, 0.05)',
           marginTop: '1.5rem'
         }}
       >
         {/* Encabezado Principal de la Tarjeta */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.2rem', flexWrap: 'wrap', gap: '10px' }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
           <div>
             <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: 800, color: '#0f172a' }}>
+              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
                 Casos por Ubicación
               </h3>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '6px' }}>
-                Interactiva 3D Drill-Down
+              <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+                Jerarquía Dinámica
               </span>
               {filters.startDate && filters.endDate && (
-                <span style={{ fontSize: '0.68rem', fontWeight: 600, color: '#64748b' }}>
-                  ({filters.startDate} a {filters.endDate})
+                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', background: '#f8fafc', padding: '2px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
+                  📅 {filters.startDate} a {filters.endDate}
                 </span>
               )}
             </div>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Haz clic en una <strong>Sede</strong> para filtrar sus <strong>Dependencias</strong>, y en una <strong>Dependencia</strong> para ver sus <strong>Oficinas</strong>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Interactúa directamente con las gráficas: haz clic en una <strong>Sede</strong> para filtrar sus <strong>Dependencias</strong>, y en una <strong>Dependencia</strong> para auditar sus <strong>Oficinas</strong>.
             </p>
           </div>
 
-          {/* Breadcrumb de Selección Activa */}
+          {/* Breadcrumb Ejecutivo de Navegación Jerárquica */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <span style={{ fontSize: '0.72rem', background: '#f8fafc', border: '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: '#334155' }}>
-              🏛️ Sede: <strong>{activeSede ? activeSede.name : 'Todas'}</strong>
-            </span>
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>➔</span>
-            <span style={{ fontSize: '0.72rem', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '4px 10px', borderRadius: '8px', color: '#1d4ed8' }}>
-              📁 Dependencia: <strong>{activeDep ? activeDep.name : 'Todas'}</strong>
-            </span>
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem' }}>➔</span>
-            <span style={{ fontSize: '0.72rem', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '8px', color: '#15803d' }}>
-              🚪 <strong>{activeOficinas.length} {activeOficinas.length === 1 ? 'oficina' : 'oficinas'}</strong>
-            </span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: activeSede ? '#fff7ed' : '#f8fafc', border: activeSede ? '1px solid #fed7aa' : '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: activeSede ? '#c2410c' : '#475569', fontWeight: 700 }}>
+              <span>🏛️ Sede:</span>
+              <strong style={{ color: activeSede ? '#ea580c' : '#0f172a' }}>{activeSede ? activeSede.name : 'Todas'} ({activeSede ? activeSede.count : 0})</strong>
+            </div>
+            <span style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: activeDep ? '#eff6ff' : '#f8fafc', border: activeDep ? '1px solid #bfdbfe' : '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: activeDep ? '#1d4ed8' : '#475569', fontWeight: 700 }}>
+              <span>📁 Dependencia:</span>
+              <strong style={{ color: activeDep ? '#2563eb' : '#0f172a' }}>{activeDep ? activeDep.name : 'Todas'} ({activeDep ? activeDep.count : 0})</strong>
+            </div>
+            <span style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '8px', color: '#15803d', fontWeight: 700 }}>
+              <span>🚪 Oficinas:</span>
+              <strong>{activeOficinas.length}</strong>
+            </div>
           </div>
         </div>
 
-        {/* Las 3 Gráficas Interactivas en Paralelo (Sede, Dependencia, Oficina) */}
+        {/* Las 3 Gráficas Empresariales en Paralelo (Sede, Dependencia, Oficina) */}
         <div 
           style={{
             display: 'grid',
-            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
+            gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 340px), 1fr))',
             gap: '1.25rem',
             alignItems: 'stretch'
           }}
         >
-          {/* GRÁFICA 1: SEDE (Bar Chart Horizontal) */}
+          {/* ============================================================ */}
+          {/* GRÁFICA 1: SEDE (Horizontal Bar Chart con Barras Delgadas)   */}
+          {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem',
-            background: '#fafafa',
+            borderRadius: '14px',
+            padding: '1.2rem',
+            background: '#ffffff',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1rem' }}>🏛️</span>
-                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
-                  SEDE
-                </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#e0f2fe', color: '#0369a1', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                  🏛️
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.02em' }}>
+                    SEDE
+                  </h4>
+                  <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                    {sedesHierarchy.length} {sedesHierarchy.length === 1 ? 'sede registrada' : 'sedes registradas'}
+                  </span>
+                </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#64748b', fontStyle: 'italic' }}>
-                Selecciona una barra
+              <span style={{ fontSize: '0.7rem', color: '#ea580c', fontWeight: 700, background: '#fff7ed', border: '1px solid #fed7aa', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeSede ? activeSede.name : 'Selecciona una sede'}
               </span>
             </div>
 
             {sedesHierarchy.length === 0 ? (
-              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem' }}>
-                Sin sedes registradas
+              <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
+                Sin sedes registradas en la organización
               </div>
             ) : (
-              <div style={{ width: '100%', height: 210 }}>
-                <ResponsiveContainer width="100%" height={210}>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart
                     layout="vertical"
                     data={sedesHierarchy}
-                    margin={{ top: 5, right: 30, left: 10, bottom: 5 }}
+                    margin={{ top: 10, right: 60, left: 10, bottom: 10 }}
+                    barSize={14}
                     onClick={(state) => {
                       if (state && state.activePayload && state.activePayload[0]) {
                         const entry = state.activePayload[0].payload;
@@ -1602,18 +1617,42 @@ export default function Dashboard({ user }) {
                       }
                     }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#e2e8f0" />
-                    <XAxis type="number" stroke="#94a3b8" fontSize={11} allowDecimals={false} />
+                    <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
+                    <XAxis type="number" stroke="#94a3b8" fontSize={10} allowDecimals={false} domain={[0, (dataMax) => (Number.isFinite(dataMax) ? Math.max(dataMax + 1, 2) : 2)]} />
                     <YAxis
                       dataKey="name"
                       type="category"
                       stroke="#475569"
                       fontSize={11}
-                      width={100}
-                      tick={{ fill: '#334155', fontWeight: 600 }}
+                      width={110}
+                      tick={({ x, y, payload }) => {
+                        const isSelected = activeSede && payload.value === activeSede.name;
+                        return (
+                          <g transform={`translate(${x},${y})`}>
+                            <text
+                              x={-8}
+                              y={4}
+                              textAnchor="end"
+                              fill={isSelected ? '#ea580c' : '#334155'}
+                              fontWeight={isSelected ? 800 : 600}
+                              fontSize={11}
+                              cursor="pointer"
+                              onClick={() => {
+                                const found = sedesHierarchy.find(s => s.name === payload.value);
+                                if (found) {
+                                  setSelectedSedeId(found.id);
+                                  setSelectedDepId(null);
+                                }
+                              }}
+                            >
+                              {payload.value.length > 14 ? `${payload.value.slice(0, 13)}…` : payload.value}
+                            </text>
+                          </g>
+                        );
+                      }}
                     />
                     <Tooltip content={<CustomChartTooltip />} />
-                    <Bar dataKey="count" name="Tickets" radius={[0, 4, 4, 0]} cursor="pointer">
+                    <Bar dataKey="count" name="Tickets" radius={[0, 8, 8, 0]} cursor="pointer">
                       {sedesHierarchy.map((entry, index) => {
                         const isSelected = activeSede && entry.id === activeSede.id;
                         return (
@@ -1622,189 +1661,235 @@ export default function Dashboard({ user }) {
                             fill={isSelected ? '#f97316' : '#0284c7'}
                             stroke={isSelected ? '#ea580c' : '#0369a1'}
                             strokeWidth={isSelected ? 2 : 1}
+                            style={{ filter: isSelected ? 'drop-shadow(0 2px 6px rgba(249, 115, 22, 0.4))' : 'none' }}
                           />
                         );
                       })}
+                      <LabelList 
+                        dataKey="count" 
+                        position="right" 
+                        fill="#475569" 
+                        fontSize={10} 
+                        fontWeight={700}
+                        formatter={(val) => `${val} ${val === 1 ? 'ticket' : 'tickets'}`}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
 
-            {/* Chips de Selección Rápida para Sedes */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto', paddingTop: '8px' }}>
-              {sedesHierarchy.map((s) => {
-                const isSelected = activeSede && s.id === activeSede.id;
-                return (
-                  <button
-                    key={s.id}
-                    type="button"
-                    onClick={() => { setSelectedSedeId(s.id); setSelectedDepId(null); }}
-                    style={{
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: isSelected ? '1px solid #ea580c' : '1px solid #cbd5e1',
-                      background: isSelected ? '#fff7ed' : '#ffffff',
-                      color: isSelected ? '#ea580c' : '#475569'
-                    }}
-                  >
-                    {s.name} ({s.count})
-                  </button>
-                );
-              })}
+            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
+              <span>👆 Haz clic en la barra o nombre</span>
+              <strong style={{ color: '#0f172a' }}>{sedesHierarchy.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets totales</strong>
             </div>
           </div>
 
-          {/* GRÁFICA 2: DEPENDENCIA (Pie / Donut Chart) */}
+          {/* ============================================================ */}
+          {/* GRÁFICA 2: DEPENDENCIA (Donut Chart y Breakdown List)        */}
+          {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem',
-            background: '#fafafa',
+            borderRadius: '14px',
+            padding: '1.2rem',
+            background: '#ffffff',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1rem' }}>📁</span>
-                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
-                  DEPENDENCIA
-                </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                  📁
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.02em' }}>
+                    DEPENDENCIA
+                  </h4>
+                  <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                    Distribución en {activeSede?.name || 'Sede'}
+                  </span>
+                </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 700, background: '#eff6ff', padding: '1px 6px', borderRadius: '4px' }}>
+              <span style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 700, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px' }}>
                 {activeSede?.name || 'Sede'}
               </span>
             </div>
 
             {activeDependencias.length === 0 ? (
-              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                No hay dependencias registradas en {activeSede?.name || 'esta sede'}
+              <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+                No hay dependencias vinculadas a {activeSede?.name || 'esta sede'}
               </div>
             ) : (
-              <div style={{ width: '100%', height: 210, position: 'relative' }}>
-                <ResponsiveContainer width="100%" height={210}>
-                  <PieChart>
-                    <Pie
-                      data={activeDependencias.map(d => ({ ...d, value: Math.max(Number(d?.count) || 0, 0.001) }))}
-                      dataKey="value"
-                      nameKey="name"
-                      cx="50%"
-                      cy="50%"
-                      innerRadius={42}
-                      outerRadius={72}
-                      paddingAngle={3}
-                      cursor="pointer"
-                      onClick={(entry) => {
-                        if (entry && entry.id) {
-                          setSelectedDepId(entry.id);
-                        }
-                      }}
-                    >
-                      {activeDependencias.map((entry, index) => {
-                        const isSelected = activeDep && entry.id === activeDep.id;
-                        const colors = ['#00D1FF', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4'];
-                        const baseColor = colors[index % colors.length];
-                        return (
-                          <Cell
-                            key={`cell-dep-${index}`}
-                            fill={baseColor}
-                            stroke={isSelected ? '#0f172a' : '#ffffff'}
-                            strokeWidth={isSelected ? 3 : 1}
-                            style={{ filter: isSelected ? 'drop-shadow(0px 0px 4px rgba(0,0,0,0.3))' : 'none' }}
-                          />
-                        );
-                      })}
-                    </Pie>
-                    <Tooltip content={<CustomChartTooltip />} />
-                    {/* Texto Central de la Dona */}
-                    <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="15" fontWeight="800">
-                      {activeDep ? (activeDep.count || 0) : activeDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0)}
-                    </text>
-                    <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="10" fontWeight="600">
-                      Tickets
-                    </text>
-                  </PieChart>
-                </ResponsiveContainer>
-              </div>
+              <>
+                {/* Gráfica Tipo Dona */}
+                <div style={{ width: '100%', height: 160, position: 'relative' }}>
+                  <ResponsiveContainer width="100%" height={160}>
+                    <PieChart>
+                      <Pie
+                        data={activeDependencias.map(d => ({ ...d, value: Math.max(Number(d?.count) || 0, 0.001) }))}
+                        dataKey="value"
+                        nameKey="name"
+                        cx="50%"
+                        cy="50%"
+                        innerRadius={45}
+                        outerRadius={70}
+                        paddingAngle={activeDependencias.length > 1 ? 3 : 0}
+                        cursor="pointer"
+                        onClick={(entry) => {
+                          if (entry && entry.id) {
+                            setSelectedDepId(entry.id);
+                          }
+                        }}
+                      >
+                        {activeDependencias.map((entry, index) => {
+                          const isSelected = activeDep && entry.id === activeDep.id;
+                          const colors = ['#00D1FF', '#2563eb', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4', '#6366f1'];
+                          const baseColor = colors[index % colors.length];
+                          return (
+                            <Cell
+                              key={`cell-dep-${index}`}
+                              fill={baseColor}
+                              stroke={isSelected ? '#0f172a' : '#ffffff'}
+                              strokeWidth={isSelected ? 3 : 1}
+                              style={{ filter: isSelected ? 'drop-shadow(0px 0px 6px rgba(0,0,0,0.35))' : 'none' }}
+                            />
+                          );
+                        })}
+                      </Pie>
+                      <Tooltip content={<CustomChartTooltip />} />
+                      {/* Centro de la Dona: TOTAL EXACTO DE LA SEDE SELECCIONADA */}
+                      <text x="50%" y="38%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="9" fontWeight="700" letterSpacing="0.05em">
+                        TOTAL SEDE
+                      </text>
+                      <text x="50%" y="54%" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="22" fontWeight="800">
+                        {activeSede ? (activeSede.count || 0) : 0}
+                      </text>
+                      <text x="50%" y="68%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="9" fontWeight="600">
+                        {activeSede?.count === 1 ? 'Ticket' : 'Tickets'}
+                      </text>
+                    </PieChart>
+                  </ResponsiveContainer>
+                </div>
+
+                {/* Lista Ejecutiva de Desglose (En reemplazo de las píldoras flotantes) */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '0.5rem', maxHeight: '100px', overflowY: 'auto', paddingRight: '2px' }}>
+                  {activeDependencias.map((d, idx) => {
+                    const isSelected = activeDep && d.id === activeDep.id;
+                    const colors = ['#00D1FF', '#2563eb', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4', '#6366f1'];
+                    const dotColor = colors[idx % colors.length];
+                    const sedeTotal = activeSede?.count || 0;
+                    const pct = sedeTotal > 0 ? Math.round(((Number(d.count) || 0) / sedeTotal) * 100) : 0;
+                    return (
+                      <div
+                        key={d.id}
+                        onClick={() => setSelectedDepId(d.id)}
+                        style={{
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          padding: '5px 8px',
+                          borderRadius: '6px',
+                          cursor: 'pointer',
+                          background: isSelected ? '#eff6ff' : '#f8fafc',
+                          border: isSelected ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
+                          transition: 'all 0.15s ease'
+                        }}
+                      >
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
+                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: dotColor, flexShrink: 0 }} />
+                          <span style={{ fontSize: '0.74rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#1d4ed8' : '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+                            {d.name}
+                          </span>
+                        </div>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: d.count > 0 ? '#0f172a' : '#94a3b8' }}>
+                            {d.count} {d.count === 1 ? 'ticket' : 'tickets'}
+                          </span>
+                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#2563eb', background: '#dbeafe', padding: '1px 5px', borderRadius: '4px' }}>
+                            {pct}%
+                          </span>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
             )}
 
-            {/* Chips de Selección Rápida para Dependencias */}
-            <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', marginTop: 'auto', paddingTop: '8px' }}>
-              {activeDependencias.map((d, idx) => {
-                const isSelected = activeDep && d.id === activeDep.id;
-                const colors = ['#00D1FF', '#3b82f6', '#f59e0b', '#10b981', '#ec4899', '#8b5cf6', '#06b6d4'];
-                const dotColor = colors[idx % colors.length];
-                return (
-                  <button
-                    key={d.id}
-                    type="button"
-                    onClick={() => setSelectedDepId(d.id)}
-                    style={{
-                      padding: '3px 8px',
-                      borderRadius: '6px',
-                      fontSize: '0.7rem',
-                      fontWeight: 700,
-                      cursor: 'pointer',
-                      border: isSelected ? '1.5px solid #0f172a' : '1px solid #cbd5e1',
-                      background: isSelected ? '#eff6ff' : '#ffffff',
-                      color: '#1e293b',
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: '4px'
-                    }}
-                  >
-                    <span style={{ width: '7px', height: '7px', borderRadius: '50%', background: dotColor }} />
-                    {d.name} ({d.count})
-                  </button>
-                );
-              })}
+            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
+              <span>👆 Selecciona en la dona o lista</span>
+              <strong style={{ color: '#0f172a' }}>{activeDep ? `${activeDep.name} (${activeDep.count})` : 'Ninguna seleccionada'}</strong>
             </div>
           </div>
 
-          {/* GRÁFICA 3: OFICINA (Column Chart Vertical) */}
+          {/* ============================================================ */}
+          {/* GRÁFICA 3: OFICINA (Column Chart Vertical con Barras Delgadas)*/}
+          {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
-            borderRadius: '12px',
-            padding: '1rem',
-            background: '#fafafa',
+            borderRadius: '14px',
+            padding: '1.2rem',
+            background: '#ffffff',
             display: 'flex',
-            flexDirection: 'column'
+            flexDirection: 'column',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
           }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                <span style={{ fontSize: '1rem' }}>🚪</span>
-                <h4 style={{ margin: 0, fontSize: '0.9rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.04em' }}>
-                  OFICINA
-                </h4>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#f0fdf4', color: '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                  🚪
+                </div>
+                <div>
+                  <h4 style={{ margin: 0, fontSize: '0.92rem', fontWeight: 800, color: '#0f172a', letterSpacing: '0.02em' }}>
+                    OFICINA
+                  </h4>
+                  <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
+                    {activeOficinas.length} {activeOficinas.length === 1 ? 'oficina registrada' : 'oficinas registradas'}
+                  </span>
+                </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', padding: '1px 6px', borderRadius: '4px' }}>
+              <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px' }}>
                 {activeDep?.name || 'Dependencia'}
               </span>
             </div>
 
             {activeOficinas.length === 0 ? (
-              <div style={{ height: 210, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.8rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
+              <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
                 No hay oficinas registradas en {activeDep?.name || 'esta dependencia'}
               </div>
             ) : (
-              <div style={{ width: '100%', height: 210 }}>
-                <ResponsiveContainer width="100%" height={210}>
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height={260}>
                   <BarChart
                     data={activeOficinas}
-                    margin={{ top: 15, right: 10, left: -20, bottom: 25 }}
+                    margin={{ top: 20, right: 15, left: -20, bottom: 25 }}
+                    barSize={16}
                   >
-                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#e2e8f0" />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                     <XAxis
                       dataKey="name"
                       stroke="#475569"
                       fontSize={10}
                       interval={0}
-                      angle={-25}
+                      angle={-20}
                       textAnchor="end"
-                      tick={{ fill: '#475569', fontWeight: 600 }}
+                      tick={({ x, y, payload }) => (
+                        <g transform={`translate(${x},${y})`}>
+                          <text
+                            x={0}
+                            y={0}
+                            dy={12}
+                            textAnchor="end"
+                            fill="#475569"
+                            fontSize={10}
+                            fontWeight={600}
+                            transform="rotate(-20)"
+                          >
+                            {payload.value.length > 14 ? `${payload.value.slice(0, 13)}…` : payload.value}
+                          </text>
+                        </g>
+                      )}
                     />
                     <YAxis
                       stroke="#94a3b8"
@@ -1817,20 +1902,28 @@ export default function Dashboard({ user }) {
                       dataKey="count"
                       name="Tickets"
                       fill="#00c5a2"
-                      radius={[4, 4, 0, 0]}
+                      radius={[6, 6, 0, 0]}
                     >
                       {activeOficinas.map((entry, index) => (
                         <Cell key={`cell-ofi-${index}`} fill="#00c5a2" />
                       ))}
+                      <LabelList 
+                        dataKey="count" 
+                        position="top" 
+                        fill="#0f172a" 
+                        fontSize={10} 
+                        fontWeight={700}
+                        formatter={(val) => (val > 0 ? val : '')}
+                      />
                     </Bar>
                   </BarChart>
                 </ResponsiveContainer>
               </div>
             )}
 
-            {/* Resumen de Conteo Total para Oficinas */}
-            <div style={{ marginTop: 'auto', paddingTop: '8px', fontSize: '0.72rem', color: '#64748b', textAlign: 'center', borderTop: '1px solid #e2e8f0' }}>
-              Total: <strong style={{ color: '#0f172a' }}>{activeOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong> en {activeOficinas.length} oficina(s)
+            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
+              <span>Dependencia: {activeDep?.name || 'General'}</span>
+              <strong style={{ color: '#0f172a' }}>Total: {activeOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong>
             </div>
           </div>
         </div>

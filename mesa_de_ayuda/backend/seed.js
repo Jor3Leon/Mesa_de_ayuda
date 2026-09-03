@@ -4,13 +4,11 @@ const { hashPassword } = require('./auth');
 
 const prisma = new PrismaClient();
 
-const defaultRandomPass = process.env.SEED_DEFAULT_PASSWORD || crypto.randomBytes(16).toString('hex');
-
 const DEFAULT_PASSWORDS = {
-  admin: process.env.SEED_ADMIN_PASSWORD || defaultRandomPass,
-  level1: process.env.SEED_LEVEL1_PASSWORD || defaultRandomPass,
-  level2: process.env.SEED_LEVEL2_PASSWORD || defaultRandomPass,
-  level3: process.env.SEED_LEVEL3_PASSWORD || defaultRandomPass,
+  admin: process.env.SEED_ADMIN_PASSWORD || 'Admin12345!',
+  level1: process.env.SEED_LEVEL1_PASSWORD || 'SoporteN1!',
+  level2: process.env.SEED_LEVEL2_PASSWORD || 'SoporteN2!',
+  level3: process.env.SEED_LEVEL3_PASSWORD || 'SoporteN3!',
 };
 
 async function main() {

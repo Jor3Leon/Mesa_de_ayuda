@@ -102,6 +102,24 @@ export default function Dashboard({ user }) {
     setFilters(prev => ({ ...prev, [field]: value }));
   };
 
+  const techniciansList = useMemo(() => {
+    const raw = data?.technicians || [];
+    return raw.filter((t) => {
+      const role = (t.role || '').toUpperCase();
+      // Excluir usuarios estándar
+      if (role.includes('ESTANDAR') || role.includes('ESTÁNDAR') || role.includes('STANDARD')) return false;
+      // Solo incluir roles evaluables: Administrador, Nivel 1, Nivel 2, Nivel 3
+      return (
+        role.includes('ADMIN') ||
+        role.includes('1') ||
+        role.includes('2') ||
+        role.includes('3') ||
+        role.includes('TECNICO') ||
+        role.includes('TÉCNICO')
+      );
+    });
+  }, [data?.technicians]);
+
   useEffect(() => {
     let ignore = false;
 
@@ -187,23 +205,6 @@ export default function Dashboard({ user }) {
 
   const k = data?.kpis || initialData.kpis;
   const isPersonalScope = isLevel2 || isStandardUser || filters.unifiedScope === 'personal';
-  const techniciansList = useMemo(() => {
-    const raw = data?.technicians || [];
-    return raw.filter((t) => {
-      const role = (t.role || '').toUpperCase();
-      // Excluir usuarios estándar
-      if (role.includes('ESTANDAR') || role.includes('ESTÁNDAR') || role.includes('STANDARD')) return false;
-      // Solo incluir roles evaluables: Administrador, Nivel 1, Nivel 2, Nivel 3
-      return (
-        role.includes('ADMIN') ||
-        role.includes('1') ||
-        role.includes('2') ||
-        role.includes('3') ||
-        role.includes('TECNICO') ||
-        role.includes('TÉCNICO')
-      );
-    });
-  }, [data?.technicians]);
   const yearlyTrend = data?.yearlyTrend || [];
   const thirtyDaysTrend = data?.thirtyDaysTrend || [];
   const monthlyStatus = data?.monthlyStatusDistribution || [];

@@ -5161,47 +5161,72 @@ tbody tr:hover {
 }
 
 /* ==========================================================================
-   🖥️ COMPACT SPLIT SCREEN RESPONSIVE ENGINE (<= 1280px)
+   🖥️ COMPACT SPLIT SCREEN RESPONSIVE ENGINE (<= 1280px & <= 960px)
    Especialmente optimizado para trabajo en pantalla dividida (Windows Split Screen).
-   Reduce el tamaño de encabezados, filtros, tarjetas KPI y gráficos para que
-   todo el contenido sea visible y compacto de forma proporcional.
+   Aplica a TODOS los módulos: Dashboard, Tickets, Analytics, Activos, CMDB,
+   Discovery, Usuarios, Roles, Estructura, Categorías, Respuestas Rápidas, etc.
+   Reduce el tamaño de encabezados, filtros, tarjetas KPI, gráficos y tablas
+   para que todo el contenido sea visible, compacto y proporcional.
    ========================================================================== */
 
 @media screen and (max-width: 1280px) {
-  /* 🌟 Contenedor principal de la vista Dashboard */
-  .dashboard-view-container {
+  /* 🌟 Contenedores principales de vistas */
+  .dashboard-view-container,
+  .view-container,
+  .main-content {
     padding: 0.75rem 1rem !important;
     max-width: 100% !important;
   }
 
-  /* 🌟 Header del Dashboard */
-  .dashboard-hero-header {
+  /* 🌟 Banners Institucionales / Hero Headers en TODOS los módulos */
+  div[style*="linear-gradient(135deg, #001D40"],
+  section[style*="linear-gradient(135deg, #001D40"],
+  .dashboard-hero-header,
+  .tickets-hero,
+  .analytics-hero,
+  .cmdb-hero,
+  .discovery-hero,
+  .corporate-hero {
     padding: 0.75rem 1.15rem !important;
     margin-bottom: 0.75rem !important;
     border-radius: 12px !important;
     gap: 0.75rem !important;
   }
 
-  .dashboard-hero-header .dashboard-hero-icon {
+  div[style*="linear-gradient(135deg, #001D40"] h1,
+  section[style*="linear-gradient(135deg, #001D40"] h1,
+  .dashboard-hero-title {
+    font-size: 1.15rem !important;
+  }
+
+  div[style*="linear-gradient(135deg, #001D40"] p,
+  section[style*="linear-gradient(135deg, #001D40"] p,
+  .dashboard-hero-subtitle {
+    font-size: 0.76rem !important;
+    margin-top: 0.1rem !important;
+  }
+
+  /* Ícono institucional del hero en todos los módulos */
+  div[style*="linear-gradient(135deg, #001D40"] div[style*="width: '42px'"],
+  div[style*="linear-gradient(135deg, #001D40"] div[style*="width: '48px'"],
+  div[style*="linear-gradient(135deg, #001D40"] div[style*="width: 42px"],
+  div[style*="linear-gradient(135deg, #001D40"] div[style*="width: 48px"],
+  .dashboard-hero-icon {
     width: 34px !important;
     height: 34px !important;
     font-size: 1.1rem !important;
     border-radius: 9px !important;
   }
 
-  .dashboard-hero-header h1,
-  .dashboard-hero-title {
-    font-size: 1.15rem !important;
-  }
-
-  .dashboard-hero-header p,
-  .dashboard-hero-subtitle {
-    font-size: 0.76rem !important;
-    margin-top: 0.1rem !important;
-  }
-
-  /* 🎛️ Barra de herramientas y filtros */
-  .dashboard-toolbar-container {
+  /* 🎛️ Barras de herramientas, filtros y buscadores en TODOS los módulos */
+  .toolbar,
+  .filter-toolbar,
+  .inventory-toolbar,
+  .cmdb-search-bar,
+  .dashboard-toolbar-container,
+  .responsive-filters,
+  .discovery-card-header,
+  div[style*="justifyContent: 'space-between'"][style*="background: '#ffffff'"] {
     padding: 0.55rem 0.85rem !important;
     margin-bottom: 0.75rem !important;
     border-radius: 11px !important;
@@ -5209,44 +5234,74 @@ tbody tr:hover {
   }
 
   .dashboard-toolbar-label,
-  .dashboard-toolbar-container span[style*="textTransform: 'uppercase'"],
-  .dashboard-toolbar-container span[style*="text-transform: uppercase"] {
+  .responsive-filters label,
+  .filter-label,
+  span[style*="textTransform: 'uppercase'"][style*="fontSize: '0.7rem'"],
+  span[style*="text-transform: uppercase"][style*="font-size: 0.7rem"] {
     font-size: 0.62rem !important;
     margin-bottom: 2px !important;
   }
 
   .dashboard-toolbar-input,
-  .dashboard-toolbar-container input[type="date"] {
+  .responsive-filters input,
+  .toolbar input,
+  .filter-toolbar input,
+  .inventory-toolbar input,
+  .cmdb-search-bar input,
+  .search-input {
     padding: 4px 7px !important;
     font-size: 0.74rem !important;
     border-radius: 6px !important;
+    height: 32px !important;
   }
 
   .dashboard-toolbar-select,
-  .dashboard-toolbar-container select {
+  .responsive-filters select,
+  .toolbar select,
+  .filter-toolbar select,
+  .inventory-toolbar select {
     padding: 4px 8px !important;
     font-size: 0.74rem !important;
-    min-width: 150px !important;
+    min-width: 140px !important;
     border-radius: 6px !important;
+    height: 32px !important;
   }
 
   .dashboard-export-btn,
-  .dashboard-toolbar-container button {
-    padding: 5px 11px !important;
+  .toolbar button,
+  .filter-toolbar button,
+  .inventory-toolbar button,
+  .btn-primary,
+  .btn-secondary {
+    padding: 4px 11px !important;
     font-size: 0.74rem !important;
     border-radius: 6px !important;
+    height: 32px !important;
   }
 
-  /* 📊 Grilla de 8 Tarjetas KPI (4 columnas x 2 filas limpias y compactas) */
-  .dashboard-kpi-grid {
+  /* 📊 Grillas de Tarjetas KPI en TODOS los módulos */
+  .dashboard-kpi-grid,
+  .tickets-kpi-grid,
+  .analytics-kpi-grid,
+  .asset-kpi-grid,
+  .cmdb-stats-grid,
+  .bento-grid,
+  .stat-grid,
+  .compact-grid,
+  .discovery-counters-grid {
     display: grid !important;
-    grid-template-columns: repeat(4, 1fr) !important;
+    grid-template-columns: repeat(auto-fit, minmax(min(100%, 125px), 1fr)) !important;
     gap: 0.4rem !important;
     margin-bottom: 0.75rem !important;
   }
 
   /* Tarjetas KPI compactas */
-  .dashboard-kpi-grid .stat-card {
+  .stat-card,
+  .asset-kpi-card,
+  .cmdb-stat-box,
+  .analytics-stat-card,
+  .bento-item,
+  .discovery-counter-card {
     padding: 0.4rem 0.6rem !important;
     min-height: 44px !important;
     border-radius: 7px !important;
@@ -5254,50 +5309,75 @@ tbody tr:hover {
     gap: 0.05rem !important;
   }
 
-  .dashboard-kpi-grid .stat-card span[style*="textTransform: 'uppercase'"],
-  .dashboard-kpi-grid .stat-card span[style*="text-transform: uppercase"],
-  .dashboard-kpi-grid .kpi-card-title {
+  .stat-card span[style*="textTransform: 'uppercase'"],
+  .stat-card span[style*="text-transform: uppercase"],
+  .asset-kpi-card-title,
+  .cmdb-stat-lbl,
+  .analytics-stat-title,
+  .kpi-card-title {
     font-size: 0.62rem !important;
   }
 
-  .dashboard-kpi-grid .stat-card strong,
-  .dashboard-kpi-grid .kpi-card-val {
+  .stat-card strong,
+  .asset-kpi-card-value,
+  .cmdb-stat-box strong,
+  .analytics-stat-value,
+  .kpi-card-val {
     font-size: 1.1rem !important;
+    line-height: 1.1 !important;
   }
 
-  .dashboard-kpi-grid .stat-card span[style*="textAlign: 'right'"],
-  .dashboard-kpi-grid .stat-card span[style*="text-align: right"],
-  .dashboard-kpi-grid .kpi-card-sub {
+  .stat-card span[style*="textAlign: 'right'"],
+  .stat-card span[style*="text-align: right"],
+  .asset-kpi-card-subtitle,
+  .analytics-stat-footer,
+  .kpi-card-sub {
     font-size: 0.6rem !important;
   }
 
-  /* 📈 Grillas y Tarjetas de Gráficos (Dashboard) */
-  .dashboard-chart-grid {
+  /* 📈 Grillas y Tarjetas de Contenido / Gráficos / Paneles en TODOS los módulos */
+  .dashboard-chart-grid,
+  .analytics-chart-grid,
+  .cmdb-grid {
     gap: 0.75rem !important;
     margin-bottom: 0.75rem !important;
   }
 
   .dashboard-chart-card,
-  .dashboard-chart-grid > div {
+  .dashboard-chart-grid > div,
+  .analytics-chart-card,
+  .card,
+  .card-elevated,
+  .panel,
+  .discovery-card {
     padding: 0.75rem 0.9rem !important;
     border-radius: 11px !important;
+    margin-bottom: 0.75rem !important;
   }
 
+  .card h2,
+  .card h3,
   .dashboard-chart-card h3,
-  .dashboard-chart-grid h3 {
+  .dashboard-chart-grid h3,
+  .analytics-chart-card h3,
+  .panel-title {
     font-size: 0.88rem !important;
     margin-bottom: 0.1rem !important;
   }
 
+  .card p,
   .dashboard-chart-card p,
-  .dashboard-chart-grid p {
+  .dashboard-chart-grid p,
+  .analytics-chart-card p,
+  .panel-subtitle {
     font-size: 0.7rem !important;
     margin-bottom: 0.4rem !important;
   }
 
-  /* Botones de métricas en gráficos */
+  /* Botones de filtros internos en gráficos */
   .dashboard-chart-card button,
-  .dashboard-chart-grid button {
+  .dashboard-chart-grid button,
+  .analytics-chart-card button {
     padding: 2px 6px !important;
     font-size: 0.66rem !important;
     border-radius: 5px !important;
@@ -5305,6 +5385,7 @@ tbody tr:hover {
 
   /* Altura compacta para gráficos en pantalla dividida */
   .dashboard-chart-grid .recharts-responsive-container,
+  .analytics-chart-grid .recharts-responsive-container,
   .dashboard-chart-wrapper {
     min-height: 190px !important;
     max-height: 200px !important;
@@ -5313,21 +5394,86 @@ tbody tr:hover {
   .dashboard-chart-wrapper > div {
     min-height: 190px !important;
   }
+
+  /* 📋 Tablas de datos en TODOS los módulos */
+  table th {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.68rem !important;
+    letter-spacing: 0.02em !important;
+  }
+
+  table td {
+    padding: 0.4rem 0.6rem !important;
+    font-size: 0.76rem !important;
+  }
+
+  /* Badges y estados en tablas */
+  .status-badge,
+  .priority-badge,
+  .role-badge,
+  span[style*="borderRadius: '9999px'"],
+  span[style*="border-radius: 9999px"] {
+    padding: 2px 6px !important;
+    font-size: 0.64rem !important;
+  }
+
+  /* Botones de acción en tablas */
+  table td button {
+    padding: 3px 6px !important;
+    font-size: 0.72rem !important;
+  }
+
+  /* 🎫 Distribución en pantalla dividida para Tickets (Lista + Formulario) */
+  .responsive-split-card {
+    gap: 0.85rem !important;
+  }
+
+  .responsive-list {
+    flex: 1 1 360px !important;
+  }
+
+  .responsive-form {
+    flex: 1 1 270px !important;
+  }
+
+  .responsive-form .field label,
+  .responsive-form .form-group label {
+    font-size: 0.72rem !important;
+    margin-bottom: 2px !important;
+  }
+
+  .responsive-form .field input,
+  .responsive-form .field select,
+  .responsive-form .field textarea,
+  .responsive-form .form-group input,
+  .responsive-form .form-group select,
+  .responsive-form .form-group textarea {
+    padding: 4px 7px !important;
+    font-size: 0.76rem !important;
+    border-radius: 6px !important;
+  }
 }
 
 @media screen and (max-width: 960px) {
-  /* En división de pantalla estrecha o pantallas < 960px */
-  .dashboard-kpi-grid {
+  /* En división de pantalla estrecha (< 960px) */
+  .dashboard-kpi-grid,
+  .tickets-kpi-grid {
     grid-template-columns: repeat(4, 1fr) !important;
   }
 
-  .dashboard-chart-grid {
+  .dashboard-chart-grid,
+  .analytics-chart-grid {
     grid-template-columns: 1fr !important;
+  }
+
+  .responsive-split-card {
+    flex-direction: column !important;
   }
 }
 
 @media screen and (max-width: 720px) {
-  .dashboard-kpi-grid {
+  .dashboard-kpi-grid,
+  .tickets-kpi-grid {
     grid-template-columns: repeat(2, 1fr) !important;
   }
 }

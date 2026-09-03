@@ -1,0 +1,5 @@
+{
+  "name": "frontend-server",
+  "private": true,
+  "type": "commonjs"
+}

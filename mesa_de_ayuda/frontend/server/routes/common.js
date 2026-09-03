@@ -863,36 +863,61 @@ function getCommonRoutes(prisma) {
 
       // 9. Calculate Technician Workload & Productivity Pulse
       const techniciansWorkload = await Promise.all(technicians.map(async (tech) => {
-        const [activeCount, inProgressCount, resolvedCount] = await Promise.all([
-          prisma.ticket.count({ where: { OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }], status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
-          prisma.ticket.count({ where: { OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }], status: { in: ['IN_PROGRESS', 'PLANIFICADO'] } } }).catch(() => 0),
-          prisma.ticket.count({ where: { OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }], status: 'RESOLVED' } }).catch(() => 0),
+        const [assignedCount, unresolvedCount, inProgressCount, pendingCount, resolvedCount] = await Promise.all([
+          // Total de tickets asignados
+          prisma.ticket.count({
+            where: {
+              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }]
+            }
+          }).catch(() => 0),
+          // De esos cuáles están sin resolver
+          prisma.ticket.count({
+            where: {
+              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
+              status: { notIn: ['CLOSED', 'RESOLVED'] }
+            }
+          }).catch(() => 0),
+          // Cuáles están en progreso
+          prisma.ticket.count({
+            where: {
+              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
+              status: { in: ['IN_PROGRESS', 'PLANIFICADO', 'OPEN'] }
+            }
+          }).catch(() => 0),
+          // Cuáles están en espera
+          prisma.ticket.count({
+            where: {
+              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
+              status: { in: ['PENDING', 'EN_ESPERA', 'ESPERA_CLIENTE', 'ESPERA_REPUESTO'] }
+            }
+          }).catch(() => 0),
+          // Resueltos / cerrados
+          prisma.ticket.count({
+            where: {
+              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
+              status: { in: ['RESOLVED', 'CLOSED'] }
+            }
+          }).catch(() => 0)
         ]);
 
-        let loadStatus = 'Balanceada';
-        let loadColor = '#10b981';
-        let loadBadge = 'Óptimo';
-        if (activeCount === 0) {
-          loadStatus = 'Disponible';
-          loadColor = '#64748b';
-          loadBadge = 'Libre';
-        } else if (activeCount > 8) {
-          loadStatus = 'Sobrecargado';
-          loadColor = '#dc2626';
-          loadBadge = 'Crítico';
-        } else if (activeCount > 4) {
-          loadStatus = 'Alta';
-          loadColor = '#f59e0b';
-          loadBadge = 'Atención';
-        }
+        // Definición de disponibilidad según la carga operativa
+        const isAvailable = unresolvedCount === 0;
+        const loadStatus = isAvailable ? 'Disponible' : 'No Disponible';
+        const loadColor = isAvailable ? '#10b981' : (unresolvedCount > 2 ? '#dc2626' : '#f59e0b');
+        const loadBadge = isAvailable ? 'Libre' : `${unresolvedCount} pendiente${unresolvedCount > 1 ? 's' : ''}`;
 
         return {
           id: tech.id,
           name: tech.name,
           email: tech.email,
-          activeCount,
+          role: tech.role?.name || tech.role || 'Técnico',
+          assignedCount,
+          unresolvedCount,
+          activeCount: unresolvedCount,
           inProgressCount,
+          pendingCount,
           resolvedCount,
+          isAvailable,
           loadStatus,
           loadColor,
           loadBadge

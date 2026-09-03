@@ -1143,45 +1143,51 @@ export default function Dashboard({ user }) {
                       {tech.name?.charAt(0)?.toUpperCase() || 'T'}
                     </div>
                     <div>
-                      <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#0f172a' }}>
-                        {tech.name}
-                      </span>
-                      <span style={{ display: 'block', fontSize: '0.72rem', color: '#64748b' }}>
-                        {tech.activeCount} activos · {tech.inProgressCount} en progreso · {tech.resolvedCount} resueltos
-                      </span>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                        <span style={{ fontWeight: 800, fontSize: '0.875rem', color: '#0f172a' }}>
+                          {tech.name}
+                        </span>
+                        {tech.role && (
+                          <span style={{ fontSize: '0.66rem', color: '#002D62', background: '#eff6ff', border: '1px solid #bfdbfe', padding: '1px 6px', borderRadius: '4px', fontWeight: 700 }}>
+                            {typeof tech.role === 'string' ? tech.role : tech.role?.name}
+                          </span>
+                        )}
+                      </div>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap', marginTop: '3px', fontSize: '0.72rem', color: '#475569' }}>
+                        <span><strong>{tech.assignedCount ?? (tech.unresolvedCount != null && tech.resolvedCount != null ? tech.unresolvedCount + tech.resolvedCount : tech.activeCount ?? 0)}</strong> asignados</span>
+                        <span style={{ color: '#cbd5e1' }}>•</span>
+                        <span style={{ color: (tech.unresolvedCount ?? tech.activeCount ?? 0) > 0 ? '#dc2626' : '#475569' }}>
+                          <strong>{tech.unresolvedCount ?? tech.activeCount ?? 0}</strong> sin resolver
+                        </span>
+                        <span style={{ color: '#cbd5e1' }}>•</span>
+                        <span style={{ color: (tech.inProgressCount || 0) > 0 ? '#7c3aed' : '#475569' }}>
+                          <strong>{tech.inProgressCount ?? 0}</strong> en progreso
+                        </span>
+                        <span style={{ color: '#cbd5e1' }}>•</span>
+                        <span style={{ color: (tech.pendingCount || 0) > 0 ? '#d97706' : '#475569' }}>
+                          <strong>{tech.pendingCount ?? 0}</strong> en espera
+                        </span>
+                      </div>
                     </div>
                   </div>
 
-                  <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
                     <span style={{
-                      fontSize: '0.7rem',
+                      fontSize: '0.72rem',
                       fontWeight: 800,
-                      padding: '3px 8px',
+                      padding: '4px 10px',
                       borderRadius: '6px',
-                      background: tech.loadColor === '#dc2626' ? '#fee2e2' : tech.loadColor === '#f59e0b' ? '#fef3c7' : '#ecfdf5',
-                      color: tech.loadColor
+                      background: (tech.unresolvedCount ?? tech.activeCount ?? 0) === 0 ? '#ecfdf5' : '#fef2f2',
+                      color: (tech.unresolvedCount ?? tech.activeCount ?? 0) === 0 ? '#059669' : '#dc2626',
+                      border: (tech.unresolvedCount ?? tech.activeCount ?? 0) === 0 ? '1px solid #a7f3d0' : '1px solid #fecaca',
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: '5px',
+                      whiteSpace: 'nowrap'
                     }}>
-                      {tech.loadStatus}
+                      <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: (tech.unresolvedCount ?? tech.activeCount ?? 0) === 0 ? '#10b981' : '#ef4444' }} />
+                      {(tech.unresolvedCount ?? tech.activeCount ?? 0) === 0 ? 'Disponible' : 'No Disponible'}
                     </span>
-                    {!isLevel2 && (
-                      <button
-                        type="button"
-                        onClick={() => handleFilterChange('unifiedScope', String(tech.id))}
-                        style={{
-                          padding: '4px 8px',
-                          borderRadius: '6px',
-                          border: '1px solid #cbd5e1',
-                          background: '#fff',
-                          fontSize: '0.72rem',
-                          fontWeight: 700,
-                          color: '#002D62',
-                          cursor: 'pointer'
-                        }}
-                        title="Auditar técnico en Dashboard"
-                      >
-                        Filtrar 🔍
-                      </button>
-                    )}
                   </div>
                 </div>
               ))

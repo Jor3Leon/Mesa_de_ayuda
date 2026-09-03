@@ -1487,34 +1487,35 @@ export default function Dashboard({ user }) {
         </div>
 
         {/* Chart 7: Principales Casos por Dependencias & Oficinas */}
-        <div style={{
+        <div className="dashboard-chart-card" style={{
           background: '#ffffff',
-          borderRadius: '16px',
-          padding: '1.5rem',
+          borderRadius: '12px',
+          padding: '0.9rem 1.15rem',
           border: '1px solid #e2e8f0',
-          boxShadow: '0 2px 8px rgba(0,0,0,0.03)'
+          boxShadow: '0 1px 4px rgba(0,0,0,0.02)'
         }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
+          {/* Encabezado Compacto */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.65rem', flexWrap: 'wrap', gap: '6px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-                <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
+                <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#0f172a' }}>
                   Casos por Dependencias & Oficinas
                 </h3>
-                <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '6px' }}>
-                  Jerarquía Institucional
+                <span style={{ fontSize: '0.62rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '1px 6px', borderRadius: '4px' }}>
+                  Estructura
                 </span>
                 {filters.startDate && filters.endDate && (
-                  <span style={{ fontSize: '0.66rem', fontWeight: 700, background: '#f1f5f9', color: '#002D62', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '5px' }}>
-                    📅 {filters.startDate} al {filters.endDate}
+                  <span style={{ fontSize: '0.62rem', fontWeight: 600, color: '#64748b' }}>
+                    ({filters.startDate} a {filters.endDate})
                   </span>
                 )}
               </div>
-              <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-                Demanda y porcentaje de tickets por dependencia y sus oficinas asociadas
+              <p style={{ margin: '0.1rem 0 0 0', fontSize: '0.72rem', color: '#64748b' }}>
+                Distribución de tickets por áreas institucionales
               </p>
             </div>
 
-            <div style={{ display: 'flex', gap: '6px', alignItems: 'center' }}>
+            <div>
               <button
                 type="button"
                 onClick={() => {
@@ -1522,27 +1523,28 @@ export default function Dashboard({ user }) {
                   toggleAllExpanded(!anyOpen);
                 }}
                 style={{
-                  padding: '4px 10px',
-                  borderRadius: '6px',
+                  padding: '3px 8px',
+                  borderRadius: '5px',
                   border: '1px solid #cbd5e1',
                   background: '#f8fafc',
-                  fontSize: '0.74rem',
+                  fontSize: '0.68rem',
                   fontWeight: 700,
                   color: '#002D62',
                   cursor: 'pointer',
                   display: 'inline-flex',
                   alignItems: 'center',
-                  gap: '4px'
+                  gap: '3px'
                 }}
               >
-                {Object.values(expandedDeps).some(v => v) ? '− Contraer todo' : '＋ Desplegar todas las oficinas'}
+                {Object.values(expandedDeps).some(v => v) ? '− Contraer todo' : '＋ Desplegar todo'}
               </button>
             </div>
           </div>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px', marginTop: '0.5rem' }}>
+          {/* Lista Compacta de Dependencias y Oficinas */}
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '5px' }}>
             {topDependencias.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
+              <div style={{ textAlign: 'center', padding: '1.25rem', color: '#94a3b8', fontSize: '0.78rem' }}>
                 No hay dependencias u oficinas registradas en la Estructura Organizacional
               </div>
             ) : (
@@ -1556,147 +1558,121 @@ export default function Dashboard({ user }) {
                   <div 
                     key={depKey}
                     style={{
-                      border: isExpanded ? '1px solid #93c5fd' : '1px solid #e2e8f0',
-                      borderRadius: '10px',
-                      background: isExpanded ? '#f8fafc' : '#ffffff',
+                      border: '1px solid #e2e8f0',
+                      borderRadius: '7px',
+                      background: '#ffffff',
                       overflow: 'hidden',
-                      transition: 'all 0.2s ease',
-                      boxShadow: isExpanded ? '0 3px 10px rgba(0, 45, 98, 0.05)' : 'none'
+                      transition: 'border-color 0.15s ease'
                     }}
                   >
-                    {/* Fila Principal de la Dependencia (Clic para expandir/contraer sus oficinas) */}
+                    {/* Fila Compacta de la Dependencia */}
                     <div 
                       onClick={() => toggleDepExpanded(depKey)}
                       style={{
-                        padding: '0.7rem 0.9rem',
+                        padding: '0.35rem 0.55rem',
                         cursor: 'pointer',
                         userSelect: 'none',
-                        display: 'flex',
-                        flexDirection: 'column',
-                        gap: '6px',
-                        background: isExpanded ? '#f1f5f9' : '#ffffff',
+                        background: isExpanded ? '#f8fafc' : '#ffffff',
                         transition: 'background 0.15s ease'
                       }}
                       onMouseEnter={(e) => { if (!isExpanded) e.currentTarget.style.background = '#f8fafc'; }}
                       onMouseLeave={(e) => { if (!isExpanded) e.currentTarget.style.background = '#ffffff'; }}
                     >
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px' }}>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '6px' }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
                           <span style={{ 
-                            fontSize: '0.75rem', 
+                            fontSize: '0.65rem', 
                             color: '#0284c7', 
                             display: 'inline-block', 
                             transform: isExpanded ? 'rotate(90deg)' : 'rotate(0deg)',
-                            transition: 'transform 0.2s ease'
+                            transition: 'transform 0.15s ease',
+                            lineHeight: 1
                           }}>
                             ▶
                           </span>
-                          <span style={{ fontSize: '1rem' }}>📁</span>
-                          <div>
-                            <span style={{ fontWeight: 800, fontSize: '0.85rem', color: '#0f172a' }}>
+                          <span style={{ fontSize: '0.82rem', lineHeight: 1 }}>📁</span>
+                          <div style={{ minWidth: 0 }}>
+                            <span style={{ fontWeight: 700, fontSize: '0.78rem', color: '#0f172a', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                               {dep.name}
                             </span>
-                            <span style={{ display: 'block', fontSize: '0.7rem', color: '#64748b' }}>
-                              {dep.sedeName || 'Sede Principal'} · <span style={{ color: '#0284c7', fontWeight: 600 }}>{oficinasList.length} {oficinasList.length === 1 ? 'oficina' : 'oficinas'}</span>
+                            <span style={{ fontSize: '0.65rem', color: '#64748b', marginLeft: '5px' }}>
+                              ({dep.sedeName || 'Sede'} · <strong style={{ color: '#0284c7' }}>{oficinasList.length} ofi.</strong>)
                             </span>
                           </div>
                         </div>
 
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                          <span style={{
-                            fontWeight: 800,
-                            fontSize: '0.8125rem',
-                            color: dep.count > 0 ? '#0284c7' : '#64748b',
-                            background: dep.count > 0 ? '#eff6ff' : '#f1f5f9',
-                            padding: '3px 8px',
-                            borderRadius: '6px'
+                        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexShrink: 0 }}>
+                          <strong style={{
+                            fontSize: '0.74rem',
+                            color: dep.count > 0 ? '#0284c7' : '#64748b'
                           }}>
                             {dep.count} {dep.count === 1 ? 'ticket' : 'tickets'} ({dep.percent}%)
-                          </span>
-                          <span style={{ fontSize: '0.72rem', color: '#0284c7', fontWeight: 700 }}>
-                            {isExpanded ? 'Ocultar ▲' : 'Ver oficinas ▼'}
+                          </strong>
+                          <span style={{ fontSize: '0.64rem', color: '#0284c7', fontWeight: 600 }}>
+                            {isExpanded ? '▲' : '▼'}
                           </span>
                         </div>
                       </div>
 
-                      {/* Barra de Progreso de la Dependencia (% sobre el total de tickets) */}
-                      <div style={{ width: '100%', height: '7px', background: '#e2e8f0', borderRadius: '4px', overflow: 'hidden' }}>
+                      {/* Barra Delgada de Progreso (3px) */}
+                      <div style={{ width: '100%', height: '3.5px', background: '#f1f5f9', borderRadius: '2px', overflow: 'hidden', marginTop: '4px' }}>
                         <div style={{
                           width: `${Math.min(100, Math.max(dep.count > 0 ? (dep.count / maxStructureCount) * 100 : 0, dep.percent))}%`,
                           height: '100%',
-                          background: 'linear-gradient(90deg, #00D1FF 0%, #0284c7 100%)',
-                          borderRadius: '4px',
-                          transition: 'width 0.5s ease'
+                          background: 'linear-gradient(90deg, #38bdf8 0%, #0284c7 100%)',
+                          borderRadius: '2px',
+                          transition: 'width 0.4s ease'
                         }} />
                       </div>
                     </div>
 
-                    {/* Sub-panel Desplegable: Oficinas que pertenecen a esta Dependencia */}
+                    {/* Lista Desplegable Compacta de Oficinas (Sin Porcentajes, Solo Cantidad de Tickets) */}
                     {isExpanded && (
                       <div style={{
-                        borderTop: '1px solid #e2e8f0',
-                        background: '#ffffff',
-                        padding: '0.75rem 1rem 0.85rem 1.75rem',
-                        borderLeft: '3.5px solid #00D1FF'
+                        borderTop: '1px solid #f1f5f9',
+                        background: '#f8fafc',
+                        padding: '0.25rem 0.55rem 0.35rem 1.4rem',
+                        borderLeft: '3px solid #38bdf8'
                       }}>
                         {!hasOficinas ? (
-                          <div style={{ fontSize: '0.75rem', color: '#94a3b8', fontStyle: 'italic', padding: '0.35rem 0' }}>
-                            ℹ️ Esta dependencia no tiene oficinas registradas en la Estructura Organizacional.
+                          <div style={{ fontSize: '0.7rem', color: '#94a3b8', fontStyle: 'italic', padding: '2px 0' }}>
+                            Sin oficinas registradas en la estructura.
                           </div>
                         ) : (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                            <div style={{ fontSize: '0.68rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                              Oficinas asociadas ({oficinasList.length}):
-                            </div>
-                            {oficinasList.map((ofi, oIdx) => {
-                              return (
-                                <div key={ofi.id != null ? String(ofi.id) : oIdx} style={{ padding: '4px 0' }}>
-                                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.78rem', marginBottom: '3px', flexWrap: 'wrap', gap: '4px' }}>
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <span style={{ fontSize: '0.85rem' }}>🚪</span>
-                                      <span style={{ fontWeight: 700, color: '#1e293b' }}>
-                                        {ofi.name}
-                                      </span>
-                                      {ofi.floor && (
-                                        <span style={{ fontSize: '0.64rem', color: '#64748b', background: '#f1f5f9', padding: '1px 5px', borderRadius: '4px' }}>
-                                          Piso {ofi.floor}
-                                        </span>
-                                      )}
-                                    </div>
-
-                                    <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-                                      <span style={{ fontWeight: 700, color: ofi.count > 0 ? '#0284c7' : '#64748b' }}>
-                                        {ofi.count} {ofi.count === 1 ? 'ticket' : 'tickets'}
-                                      </span>
-                                      <span style={{
-                                        fontSize: '0.66rem',
-                                        fontWeight: 800,
-                                        padding: '2px 6px',
-                                        borderRadius: '4px',
-                                        background: ofi.count > 0 ? '#ede9fe' : '#f1f5f9',
-                                        color: ofi.count > 0 ? '#7c3aed' : '#64748b'
-                                      }}>
-                                        {ofi.percentOfDependencia}% de la dependencia
-                                      </span>
-                                      <span style={{ fontSize: '0.66rem', color: '#64748b' }}>
-                                        ({ofi.percentOfTotal}% del total)
-                                      </span>
-                                    </div>
-                                  </div>
-
-                                  {/* Mini barra de progreso de la oficina */}
-                                  <div style={{ width: '100%', height: '5px', background: '#f1f5f9', borderRadius: '3px', overflow: 'hidden' }}>
-                                    <div style={{
-                                      width: `${Math.min(100, Math.max(ofi.percentOfDependencia, 0))}%`,
-                                      height: '100%',
-                                      background: 'linear-gradient(90deg, #a78bfa 0%, #7c3aed 100%)',
-                                      borderRadius: '3px',
-                                      transition: 'width 0.5s ease'
-                                    }} />
-                                  </div>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '2px' }}>
+                            {oficinasList.map((ofi, oIdx) => (
+                              <div 
+                                key={ofi.id != null ? String(ofi.id) : oIdx} 
+                                style={{
+                                  display: 'flex',
+                                  justifyContent: 'space-between',
+                                  alignItems: 'center',
+                                  padding: '2px 0',
+                                  fontSize: '0.74rem'
+                                }}
+                              >
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '5px' }}>
+                                  <span style={{ fontSize: '0.74rem', opacity: 0.8 }}>🚪</span>
+                                  <span style={{ fontWeight: 600, color: '#334155' }}>
+                                    {ofi.name}
+                                  </span>
+                                  {ofi.floor && (
+                                    <span style={{ fontSize: '0.6rem', color: '#64748b', background: '#e2e8f0', padding: '0 4px', borderRadius: '3px' }}>
+                                      P.{ofi.floor}
+                                    </span>
+                                  )}
                                 </div>
-                              );
-                            })}
+
+                                {/* Solo Cantidad de Tickets (Sin porcentajes) */}
+                                <span style={{
+                                  fontSize: '0.72rem',
+                                  fontWeight: 700,
+                                  color: ofi.count > 0 ? '#0f172a' : '#94a3b8'
+                                }}>
+                                  {ofi.count} {ofi.count === 1 ? 'ticket' : 'tickets'}
+                                </span>
+                              </div>
+                            ))}
                           </div>
                         )}
                       </div>

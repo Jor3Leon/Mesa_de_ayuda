@@ -782,46 +782,6 @@ export default function Discovery() {
                 </div>
               )}
 
-              {/* Page Counters */}
-              {scanResult.counters && scanResult.counters.totalPages ? (
-                <div className="discovery-counters-grid">
-                  <div className="discovery-counter-card">
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Total Páginas</small>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0f172a', marginTop: '2px' }}>
-                      {scanResult.counters.totalPages.toLocaleString()}
-                    </div>
-                  </div>
-                  <div className="discovery-counter-card">
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Páginas Color</small>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#0284c7', marginTop: '2px' }}>
-                      {scanResult.counters.colorPages !== null && scanResult.counters.colorPages !== undefined
-                        ? (typeof scanResult.counters.colorPages === 'number'
-                            ? scanResult.counters.colorPages.toLocaleString()
-                            : scanResult.counters.colorPages)
-                        : '0'}
-                    </div>
-                  </div>
-                  <div className="discovery-counter-card">
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Monocromo</small>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#334155', marginTop: '2px' }}>
-                      {scanResult.counters.monochromePages ? scanResult.counters.monochromePages.toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                  <div className="discovery-counter-card">
-                    <small style={{ color: '#64748b', fontSize: '0.68rem', fontWeight: 700, textTransform: 'uppercase' }}>Escaneos</small>
-                    <div style={{ fontSize: '1.05rem', fontWeight: 800, color: '#16a34a', marginTop: '2px' }}>
-                      {scanResult.counters.scans ? scanResult.counters.scans.toLocaleString() : 'N/A'}
-                    </div>
-                  </div>
-                </div>
-              ) : (
-                <div style={{ marginBottom: '1.15rem', padding: '0.65rem 0.85rem', background: '#f8fafc', borderRadius: '8px', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                  <span style={{ fontSize: '0.9rem' }}>ℹ️</span>
-                  <small style={{ color: '#64748b', fontSize: '0.75rem' }}>
-                    Contadores de Impresión: <strong>No disponible</strong> (Sin lectura SNMP reportada)
-                  </small>
-                </div>
-              )}
 
               {/* Registration Form Accordion with MAC Field Included */}
               <div style={{ borderTop: '1.5px solid #f1f5f9', paddingTop: '1rem' }}>

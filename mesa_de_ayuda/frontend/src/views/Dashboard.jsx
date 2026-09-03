@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
 import { generateDashboardReport } from '../lib/reports';
@@ -187,7 +187,23 @@ export default function Dashboard({ user }) {
 
   const k = data?.kpis || initialData.kpis;
   const isPersonalScope = isLevel2 || isStandardUser || filters.unifiedScope === 'personal';
-  const techniciansList = data?.technicians || [];
+  const techniciansList = useMemo(() => {
+    const raw = data?.technicians || [];
+    return raw.filter((t) => {
+      const role = (t.role || '').toUpperCase();
+      // Excluir usuarios estándar
+      if (role.includes('ESTANDAR') || role.includes('ESTÁNDAR') || role.includes('STANDARD')) return false;
+      // Solo incluir roles evaluables: Administrador, Nivel 1, Nivel 2, Nivel 3
+      return (
+        role.includes('ADMIN') ||
+        role.includes('1') ||
+        role.includes('2') ||
+        role.includes('3') ||
+        role.includes('TECNICO') ||
+        role.includes('TÉCNICO')
+      );
+    });
+  }, [data?.technicians]);
   const yearlyTrend = data?.yearlyTrend || [];
   const thirtyDaysTrend = data?.thirtyDaysTrend || [];
   const monthlyStatus = data?.monthlyStatusDistribution || [];
@@ -239,27 +255,8 @@ export default function Dashboard({ user }) {
         <div>
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
             <h1 style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-              {isLevel2 
-                ? 'Panel de Control de Tickets · Técnico Nivel 2' 
-                : isLevel1
-                ? 'Centro de Gestión & Coordinación de Tickets · Nivel 1'
-                : isLevel3
-                ? 'Supervisión de Casos & Acuerdos ANS · Nivel 3'
-                : 'Centro de Inteligencia & Gestión de Tickets (Power BI)'
-              }
+              Dashboard
             </h1>
-            <span style={{ 
-              fontSize: '0.75rem', 
-              fontWeight: '800', 
-              padding: '0.2rem 0.65rem', 
-              borderRadius: '9999px', 
-              background: 'rgba(0, 209, 255, 0.18)', 
-              color: '#00D1FF', 
-              border: '1px solid rgba(0, 209, 255, 0.4)',
-              textTransform: 'uppercase'
-            }}>
-              {isPersonalScope ? '👤 Mis Tickets' : '🌐 Vista Global'}
-            </span>
           </div>
           <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
             {isPersonalScope 

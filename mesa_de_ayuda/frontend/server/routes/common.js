@@ -345,11 +345,17 @@ function getCommonRoutes(prisma) {
         orderBy: { name: 'asc' }
       }).catch(() => []);
 
-      const technicians = techniciansRaw.map(t => ({
-        id: t.id,
-        name: t.name,
-        role: t.role?.name || 'Técnico'
-      }));
+      const technicians = techniciansRaw
+        .filter(t => {
+          const r = (t.role?.name || '').toUpperCase();
+          if (r.includes('ESTANDAR') || r.includes('ESTÁNDAR') || r.includes('STANDARD')) return false;
+          return r.includes('ADMIN') || r.includes('NIVEL 1') || r.includes('NIVEL 2') || r.includes('NIVEL 3') || r.includes('TECNICO') || r.includes('TÉCNICO');
+        })
+        .map(t => ({
+          id: t.id,
+          name: t.name,
+          role: t.role?.name || 'Técnico'
+        }));
 
       const now = new Date();
       const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);

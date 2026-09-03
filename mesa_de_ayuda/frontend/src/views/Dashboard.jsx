@@ -70,7 +70,7 @@ const initialData = {
 };
 
 const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#ec4899'];
-const CALLOUT_PIE_COLORS = ['#ef4444', '#00c5a2', '#1e293b', '#06b6d4', '#334155', '#f87171', '#3b82f6', '#f59e0b', '#8b5cf6'];
+const CALLOUT_PIE_COLORS = ['#0284c7', '#00D1FF', '#00c5a2', '#3b82f6', '#6366f1', '#f59e0b', '#10b981', '#0ea5e9'];
 
 function CustomChartTooltip({ active, payload, label }) {
   if (!active || !payload || !payload.length) return null;
@@ -119,6 +119,7 @@ export default function Dashboard({ user }) {
   const [yearlyMetric, setYearlyMetric] = useState('creationVsResolution'); // 'creationVsResolution' | 'incidentsVsRequests'
   const [selectedSedeId, setSelectedSedeId] = useState(null);
   const [selectedDepId, setSelectedDepId] = useState(null);
+  const [selectedOficinaId, setSelectedOficinaId] = useState(null);
   const [selectedSeverity, setSelectedSeverity] = useState(null);
 
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
@@ -161,38 +162,51 @@ export default function Dashboard({ user }) {
     });
   }, [data?.technicians]);
 
-  // Jerarquía Completa para la tarjeta interactiva "Casos por Ubicación" (Hooks Incondicionales)
+  // Jerarquía Completa para la tarjeta "Casos por Ubicación"
   const sedesHierarchy = useMemo(() => {
     return data?.sedesHierarchy || [];
   }, [data?.sedesHierarchy]);
 
   const activeSede = useMemo(() => {
     if (!sedesHierarchy.length) return null;
-    if (selectedSedeId != null) {
-      const found = sedesHierarchy.find(s => s.id === selectedSedeId);
+    if (selectedSedeId != null && selectedSedeId !== 'ALL') {
+      const found = sedesHierarchy.find(s => String(s.id) === String(selectedSedeId));
       if (found) return found;
     }
-    return sedesHierarchy[0];
+    return null;
   }, [sedesHierarchy, selectedSedeId]);
 
   const activeDependencias = useMemo(() => {
-    return activeSede?.dependencias || [];
-  }, [activeSede]);
+    if (activeSede) {
+      return activeSede.dependencias || [];
+    }
+    return sedesHierarchy.flatMap(s => s.dependencias || []);
+  }, [activeSede, sedesHierarchy]);
 
   const activeDep = useMemo(() => {
     if (!activeDependencias.length) return null;
-    if (selectedDepId != null) {
-      const found = activeDependencias.find(d => d.id === selectedDepId);
+    if (selectedDepId != null && selectedDepId !== 'ALL') {
+      const found = activeDependencias.find(d => String(d.id) === String(selectedDepId));
       if (found) return found;
     }
-    return activeDependencias[0];
+    return null;
   }, [activeDependencias, selectedDepId]);
 
   const activeOficinas = useMemo(() => {
-    return activeDep?.oficinas || [];
-  }, [activeDep]);
+    if (activeDep) {
+      return activeDep.oficinas || [];
+    }
+    return activeDependencias.flatMap(d => d.oficinas || []);
+  }, [activeDep, activeDependencias]);
 
-  // Preparar datos para el Pie Chart con Líneas Conectoras Externas (Estilo Referencia)
+  const filteredOficinas = useMemo(() => {
+    if (selectedOficinaId != null && selectedOficinaId !== 'ALL') {
+      return activeOficinas.filter(o => String(o.id) === String(selectedOficinaId));
+    }
+    return activeOficinas;
+  }, [activeOficinas, selectedOficinaId]);
+
+  // Preparar datos para el Pie Chart con Líneas Conectoras Externas
   const pieDependencias = useMemo(() => {
     if (!activeDependencias.length) return [];
     const total = activeDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0);
@@ -1529,7 +1543,7 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* 📍 CARD INTERACTIVA: CASOS POR UBICACIÓN (SEDE -> DEPENDENCIA -> OFICINA) */}
+      {/* 📍 SECCIÓN: CASOS POR UBICACIÓN (CON FILTROS DINÁMICOS SUPERIORES Y GRÁFICAS PLANAS SIMÉTRICAS) */}
       <div 
         className="dashboard-chart-card" 
         style={{
@@ -1541,47 +1555,152 @@ export default function Dashboard({ user }) {
           marginTop: '1.5rem'
         }}
       >
-        {/* Encabezado Principal de la Tarjeta */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '12px' }}>
+        {/* Encabezado Principal de la Tarjeta con Filtros Dinámicos */}
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '14px' }}>
           <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
-              <h3 style={{ margin: 0, fontSize: '1.2rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
-                Casos por Ubicación
-              </h3>
-              <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#f0fdf4', color: '#15803d', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
-                Jerarquía Dinámica
-              </span>
-              {filters.startDate && filters.endDate && (
-                <span style={{ fontSize: '0.72rem', fontWeight: 600, color: '#64748b', background: '#f8fafc', padding: '2px 8px', borderRadius: '6px', border: '1px solid #e2e8f0' }}>
-                  📅 {filters.startDate} a {filters.endDate}
-                </span>
-              )}
-            </div>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Interactúa directamente con las gráficas: haz clic en una <strong>Sede</strong> para filtrar sus <strong>Dependencias</strong>, y en una <strong>Dependencia</strong> para auditar sus <strong>Oficinas</strong>.
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+              Casos por Ubicación
+            </h3>
+            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+              Filtra dinámicamente por Sede, Dependencia y Oficina para visualizar la distribución en tiempo real.
             </p>
           </div>
 
-          {/* Breadcrumb Ejecutivo de Navegación Jerárquica */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexWrap: 'wrap' }}>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: activeSede ? '#fff7ed' : '#f8fafc', border: activeSede ? '1px solid #fed7aa' : '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: activeSede ? '#c2410c' : '#475569', fontWeight: 700 }}>
-              <span>🏛️ Sede:</span>
-              <strong style={{ color: activeSede ? '#ea580c' : '#0f172a' }}>{activeSede ? activeSede.name : 'Todas'} ({activeSede ? activeSede.count : 0})</strong>
+          {/* Barra de Filtros Dinámicos Superiores (Sede ➔ Dependencia ➔ Oficina) */}
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+            {/* Filtro 1: Sede */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+              <span style={{ fontSize: '0.9rem' }}>🏛️</span>
+              <label htmlFor="filter-sede-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Sede:</label>
+              <select
+                id="filter-sede-select"
+                value={selectedSedeId || 'ALL'}
+                onChange={(e) => {
+                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  setSelectedSedeId(val);
+                  setSelectedDepId(null);
+                  setSelectedOficinaId(null);
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  padding: '3px 0'
+                }}
+              >
+                <option value="ALL">Todas las Sedes ({sedesHierarchy.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets)</option>
+                {sedesHierarchy.map((s) => (
+                  <option key={s.id} value={s.id}>
+                    {s.name} ({s.count} {s.count === 1 ? 'ticket' : 'tickets'})
+                  </option>
+                ))}
+              </select>
             </div>
-            <span style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: activeDep ? '#eff6ff' : '#f8fafc', border: activeDep ? '1px solid #bfdbfe' : '1px solid #e2e8f0', padding: '4px 10px', borderRadius: '8px', color: activeDep ? '#1d4ed8' : '#475569', fontWeight: 700 }}>
-              <span>📁 Dependencia:</span>
-              <strong style={{ color: activeDep ? '#2563eb' : '#0f172a' }}>{activeDep ? activeDep.name : 'Todas'} ({activeDep ? activeDep.count : 0})</strong>
+
+            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+
+            {/* Filtro 2: Dependencia */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+              <span style={{ fontSize: '0.9rem' }}>📁</span>
+              <label htmlFor="filter-dep-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Dependencia:</label>
+              <select
+                id="filter-dep-select"
+                value={selectedDepId || 'ALL'}
+                onChange={(e) => {
+                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  setSelectedDepId(val);
+                  setSelectedOficinaId(null);
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  padding: '3px 0',
+                  maxWidth: '190px'
+                }}
+              >
+                <option value="ALL">Todas las Dependencias ({activeDependencias.length})</option>
+                {activeDependencias.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name} ({d.count} tickets)
+                  </option>
+                ))}
+              </select>
             </div>
-            <span style={{ color: '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
-            <div style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.74rem', background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '4px 10px', borderRadius: '8px', color: '#15803d', fontWeight: 700 }}>
-              <span>🚪 Oficinas:</span>
-              <strong>{activeOficinas.length}</strong>
+
+            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+
+            {/* Filtro 3: Oficina */}
+            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+              <span style={{ fontSize: '0.9rem' }}>🚪</span>
+              <label htmlFor="filter-ofi-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Oficina:</label>
+              <select
+                id="filter-ofi-select"
+                value={selectedOficinaId || 'ALL'}
+                onChange={(e) => {
+                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  setSelectedOficinaId(val);
+                }}
+                style={{
+                  border: 'none',
+                  background: 'transparent',
+                  fontSize: '0.75rem',
+                  fontWeight: 700,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  padding: '3px 0',
+                  maxWidth: '170px'
+                }}
+              >
+                <option value="ALL">Todas las Oficinas ({activeOficinas.length})</option>
+                {activeOficinas.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name} ({o.count} tickets)
+                  </option>
+                ))}
+              </select>
             </div>
+
+            {/* Botón Restablecer si hay algún filtro activo */}
+            {(selectedSedeId != null || selectedDepId != null || selectedOficinaId != null) && (
+              <button
+                type="button"
+                onClick={() => {
+                  setSelectedSedeId(null);
+                  setSelectedDepId(null);
+                  setSelectedOficinaId(null);
+                }}
+                title="Restablecer filtros a Todas"
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '6px',
+                  padding: '4px 8px',
+                  fontSize: '0.7rem',
+                  fontWeight: 700,
+                  color: '#475569',
+                  cursor: 'pointer',
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: '4px'
+                }}
+              >
+                ↺ Limpiar
+              </button>
+            )}
           </div>
         </div>
 
-        {/* Las 3 Gráficas Empresariales en Paralelo (Sede, Dependencia, Oficina) */}
+        {/* Las 3 Gráficas Planas y Simétricas en Paralelo (Sede, Dependencia, Oficina) */}
         <div 
           style={{
             display: 'grid',
@@ -1591,16 +1710,17 @@ export default function Dashboard({ user }) {
           }}
         >
           {/* ============================================================ */}
-          {/* GRÁFICA 1: SEDE (Horizontal Bar Chart con Barras Delgadas)   */}
+          {/* GRÁFICA 1: SEDE (Horizontal Bar Chart Plana y Simétrica)     */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
             borderRadius: '14px',
-            padding: '1.2rem',
+            padding: '1.25rem',
             background: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            minHeight: '360px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1616,14 +1736,14 @@ export default function Dashboard({ user }) {
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#ea580c', fontWeight: 700, background: '#fff7ed', border: '1px solid #fed7aa', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeSede ? activeSede.name : 'Selecciona una sede'}
+              <span style={{ fontSize: '0.7rem', color: activeSede ? '#0284c7' : '#64748b', fontWeight: 700, background: activeSede ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeSede ? activeSede.name : 'Todas las sedes'}
               </span>
             </div>
 
             {sedesHierarchy.length === 0 ? (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem' }}>
-                Sin sedes registradas en la organización
+                Sin sedes registradas
               </div>
             ) : (
               <div style={{ width: '100%', height: 260 }}>
@@ -1633,13 +1753,6 @@ export default function Dashboard({ user }) {
                     data={sedesHierarchy}
                     margin={{ top: 10, right: 60, left: 10, bottom: 10 }}
                     barSize={14}
-                    onClick={(state) => {
-                      if (state && state.activePayload && state.activePayload[0]) {
-                        const entry = state.activePayload[0].payload;
-                        setSelectedSedeId(entry.id);
-                        setSelectedDepId(null);
-                      }
-                    }}
                   >
                     <CartesianGrid strokeDasharray="3 3" horizontal={false} stroke="#f1f5f9" />
                     <XAxis type="number" stroke="#94a3b8" fontSize={10} allowDecimals={false} domain={[0, (dataMax) => (Number.isFinite(dataMax) ? Math.max(dataMax + 1, 2) : 2)]} />
@@ -1657,17 +1770,9 @@ export default function Dashboard({ user }) {
                               x={-8}
                               y={4}
                               textAnchor="end"
-                              fill={isSelected ? '#ea580c' : '#334155'}
+                              fill={isSelected ? '#0284c7' : '#334155'}
                               fontWeight={isSelected ? 800 : 600}
                               fontSize={11}
-                              cursor="pointer"
-                              onClick={() => {
-                                const found = sedesHierarchy.find(s => s.name === payload.value);
-                                if (found) {
-                                  setSelectedSedeId(found.id);
-                                  setSelectedDepId(null);
-                                }
-                              }}
                             >
                               {payload.value.length > 14 ? `${payload.value.slice(0, 13)}…` : payload.value}
                             </text>
@@ -1676,16 +1781,15 @@ export default function Dashboard({ user }) {
                       }}
                     />
                     <Tooltip content={<CustomChartTooltip />} />
-                    <Bar dataKey="count" name="Tickets" radius={[0, 8, 8, 0]} cursor="pointer">
+                    <Bar dataKey="count" name="Tickets" radius={[0, 8, 8, 0]}>
                       {sedesHierarchy.map((entry, index) => {
                         const isSelected = activeSede && entry.id === activeSede.id;
                         return (
                           <Cell
                             key={`cell-sede-${index}`}
-                            fill={isSelected ? '#f97316' : '#0284c7'}
-                            stroke={isSelected ? '#ea580c' : '#0369a1'}
+                            fill={isSelected ? '#00D1FF' : '#0284c7'}
+                            stroke={isSelected ? '#002D62' : '#0369a1'}
                             strokeWidth={isSelected ? 2 : 1}
-                            style={{ filter: isSelected ? 'drop-shadow(0 2px 6px rgba(249, 115, 22, 0.4))' : 'none' }}
                           />
                         );
                       })}
@@ -1703,23 +1807,24 @@ export default function Dashboard({ user }) {
               </div>
             )}
 
-            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
-              <span>👆 Haz clic en la barra o nombre</span>
-              <strong style={{ color: '#0f172a' }}>{sedesHierarchy.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets totales</strong>
+            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
+              <span>Total en sedes:</span>
+              <strong style={{ color: '#0f172a' }}>{sedesHierarchy.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets</strong>
             </div>
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 2: DEPENDENCIA (Donut Chart y Breakdown List)        */}
+          {/* GRÁFICA 2: DEPENDENCIA (Pie Chart Plana con Callout Lines)   */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
             borderRadius: '14px',
-            padding: '1.2rem',
+            padding: '1.25rem',
             background: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            minHeight: '360px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1731,140 +1836,89 @@ export default function Dashboard({ user }) {
                     DEPENDENCIA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    Distribución en {activeSede?.name || 'Sede'}
+                    {activeDependencias.length} {activeDependencias.length === 1 ? 'dependencia' : 'dependencias'}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#0284c7', fontWeight: 700, background: '#eff6ff', border: '1px solid #bfdbfe', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeSede?.name || 'Sede'}
+              <span style={{ fontSize: '0.7rem', color: activeDep ? '#0284c7' : '#64748b', fontWeight: 700, background: activeDep ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeDep ? activeDep.name : (activeSede ? activeSede.name : 'Todas')}
               </span>
             </div>
 
             {activeDependencias.length === 0 ? (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                No hay dependencias vinculadas a {activeSede?.name || 'esta sede'}
+                No hay dependencias registradas para la sede seleccionada
               </div>
             ) : (
-              <>
-                {/* Gráfica Circular Tipo Pie con Líneas Conectoras Externas (Estilo Imagen Referencia) */}
-                <div style={{ width: '100%', height: 200, position: 'relative' }}>
-                  <ResponsiveContainer width="100%" height={200}>
-                    <PieChart margin={{ top: 15, right: 30, bottom: 15, left: 30 }}>
-                      <Pie
-                        data={pieDependencias}
-                        dataKey="value"
-                        nameKey="name"
-                        cx="50%"
-                        cy="50%"
-                        outerRadius={65}
-                        innerRadius={0}
-                        labelLine={{ stroke: '#64748b', strokeWidth: 1.2 }}
-                        label={({ name, pct, x, y, cx }) => {
-                          const shortName = name.length > 13 ? `${name.slice(0, 12)}…` : name;
-                          return (
-                            <text
-                              x={x}
-                              y={y}
-                              fill="#1e293b"
-                              textAnchor={x > cx ? 'start' : 'end'}
-                              dominantBaseline="central"
-                              fontSize={10}
-                              fontWeight={700}
-                            >
-                              {`${shortName} ${pct > 0 ? `(${pct}%)` : ''}`}
-                            </text>
-                          );
-                        }}
-                        cursor="pointer"
-                        onClick={(entry) => {
-                          if (entry && entry.id) {
-                            setSelectedDepId(entry.id);
-                          }
-                        }}
-                      >
-                        {pieDependencias.map((entry, index) => {
-                          const isSelected = activeDep && entry.id === activeDep.id;
-                          const color = CALLOUT_PIE_COLORS[index % CALLOUT_PIE_COLORS.length];
-                          return (
-                            <Cell
-                              key={`cell-dep-${index}`}
-                              fill={color}
-                              stroke={isSelected ? '#0f172a' : '#ffffff'}
-                              strokeWidth={isSelected ? 3 : 1.5}
-                              style={{
-                                filter: isSelected ? 'drop-shadow(0px 0px 8px rgba(0,0,0,0.4))' : 'none',
-                                transition: 'all 0.2s ease'
-                              }}
-                            />
-                          );
-                        })}
-                      </Pie>
-                      <Tooltip content={<CustomChartTooltip />} />
-                    </PieChart>
-                  </ResponsiveContainer>
-                </div>
-
-                {/* Lista Ejecutiva de Desglose */}
-                <div style={{ display: 'flex', flexDirection: 'column', gap: '5px', marginTop: '0.25rem', maxHeight: '90px', overflowY: 'auto', paddingRight: '2px' }}>
-                  {activeDependencias.map((d, idx) => {
-                    const isSelected = activeDep && d.id === activeDep.id;
-                    const color = CALLOUT_PIE_COLORS[idx % CALLOUT_PIE_COLORS.length];
-                    const sedeTotal = activeSede?.count || 0;
-                    const pct = sedeTotal > 0 ? Math.round(((Number(d.count) || 0) / sedeTotal) * 100) : 0;
-                    return (
-                      <div
-                        key={d.id}
-                        onClick={() => setSelectedDepId(d.id)}
-                        style={{
-                          display: 'flex',
-                          alignItems: 'center',
-                          justifyContent: 'space-between',
-                          padding: '5px 8px',
-                          borderRadius: '6px',
-                          cursor: 'pointer',
-                          background: isSelected ? '#eff6ff' : '#f8fafc',
-                          border: isSelected ? '1.5px solid #2563eb' : '1px solid #e2e8f0',
-                          transition: 'all 0.15s ease'
-                        }}
-                      >
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', minWidth: 0 }}>
-                          <span style={{ width: '8px', height: '8px', borderRadius: '50%', background: color, flexShrink: 0 }} />
-                          <span style={{ fontSize: '0.74rem', fontWeight: isSelected ? 800 : 600, color: isSelected ? '#1d4ed8' : '#334155', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                            {d.name}
-                          </span>
-                        </div>
-                        <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
-                          <span style={{ fontSize: '0.7rem', fontWeight: 800, color: d.count > 0 ? '#0f172a' : '#94a3b8' }}>
-                            {d.count} {d.count === 1 ? 'ticket' : 'tickets'}
-                          </span>
-                          <span style={{ fontSize: '0.65rem', fontWeight: 700, color: '#2563eb', background: '#dbeafe', padding: '1px 5px', borderRadius: '4px' }}>
-                            {pct}%
-                          </span>
-                        </div>
-                      </div>
-                    );
-                  })}
-                </div>
-              </>
+              <div style={{ width: '100%', height: 260, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart margin={{ top: 20, right: 35, bottom: 20, left: 35 }}>
+                    <Pie
+                      data={pieDependencias}
+                      dataKey="value"
+                      nameKey="name"
+                      cx="50%"
+                      cy="50%"
+                      outerRadius={75}
+                      innerRadius={0}
+                      labelLine={{ stroke: '#64748b', strokeWidth: 1.2 }}
+                      label={({ name, pct, x, y, cx }) => {
+                        const shortName = name.length > 14 ? `${name.slice(0, 13)}…` : name;
+                        return (
+                          <text
+                            x={x}
+                            y={y}
+                            fill="#1e293b"
+                            textAnchor={x > cx ? 'start' : 'end'}
+                            dominantBaseline="central"
+                            fontSize={10}
+                            fontWeight={700}
+                          >
+                            {`${shortName} ${pct > 0 ? `(${pct}%)` : ''}`}
+                          </text>
+                        );
+                      }}
+                    >
+                      {pieDependencias.map((entry, index) => {
+                        const isSelected = activeDep && entry.id === activeDep.id;
+                        const color = CALLOUT_PIE_COLORS[index % CALLOUT_PIE_COLORS.length];
+                        return (
+                          <Cell
+                            key={`cell-dep-${index}`}
+                            fill={color}
+                            stroke={isSelected ? '#0f172a' : '#ffffff'}
+                            strokeWidth={isSelected ? 3 : 1.5}
+                            style={{
+                              filter: isSelected ? 'drop-shadow(0px 0px 8px rgba(0,0,0,0.35))' : 'none'
+                            }}
+                          />
+                        );
+                      })}
+                    </Pie>
+                    <Tooltip content={<CustomChartTooltip />} />
+                  </PieChart>
+                </ResponsiveContainer>
+              </div>
             )}
 
-            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
-              <span>👆 Selecciona en la dona o lista</span>
-              <strong style={{ color: '#0f172a' }}>{activeDep ? `${activeDep.name} (${activeDep.count})` : 'Ninguna seleccionada'}</strong>
+            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
+              <span>Total en dependencias:</span>
+              <strong style={{ color: '#0f172a' }}>{activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets</strong>
             </div>
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 3: OFICINA (Column Chart Vertical con Barras Delgadas)*/}
+          {/* GRÁFICA 3: OFICINA (Column Chart Vertical Plana y Simétrica) */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
             borderRadius: '14px',
-            padding: '1.2rem',
+            padding: '1.25rem',
             background: '#ffffff',
             display: 'flex',
             flexDirection: 'column',
-            boxShadow: '0 1px 3px rgba(0,0,0,0.02)'
+            boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+            minHeight: '360px'
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
@@ -1876,24 +1930,24 @@ export default function Dashboard({ user }) {
                     OFICINA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {activeOficinas.length} {activeOficinas.length === 1 ? 'oficina registrada' : 'oficinas registradas'}
+                    {filteredOficinas.length} {filteredOficinas.length === 1 ? 'oficina' : 'oficinas'}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: '#15803d', fontWeight: 700, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeDep?.name || 'Dependencia'}
+              <span style={{ fontSize: '0.7rem', color: selectedOficinaId ? '#0284c7' : '#15803d', fontWeight: 700, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeDep?.name || (activeSede ? activeSede.name : 'Todas')}
               </span>
             </div>
 
-            {activeOficinas.length === 0 ? (
+            {filteredOficinas.length === 0 ? (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                No hay oficinas registradas en {activeDep?.name || 'esta dependencia'}
+                No hay oficinas registradas en esta selección
               </div>
             ) : (
               <div style={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height={260}>
                   <BarChart
-                    data={activeOficinas}
+                    data={filteredOficinas}
                     margin={{ top: 20, right: 15, left: -20, bottom: 25 }}
                     barSize={16}
                   >
@@ -1935,9 +1989,17 @@ export default function Dashboard({ user }) {
                       fill="#00c5a2"
                       radius={[6, 6, 0, 0]}
                     >
-                      {activeOficinas.map((entry, index) => (
-                        <Cell key={`cell-ofi-${index}`} fill="#00c5a2" />
-                      ))}
+                      {filteredOficinas.map((entry, index) => {
+                        const isSelected = selectedOficinaId && String(entry.id) === String(selectedOficinaId);
+                        return (
+                          <Cell 
+                            key={`cell-ofi-${index}`} 
+                            fill={isSelected ? '#0284c7' : '#00c5a2'} 
+                            stroke={isSelected ? '#002D62' : '#059669'}
+                            strokeWidth={isSelected ? 2 : 1}
+                          />
+                        );
+                      })}
                       <LabelList 
                         dataKey="count" 
                         position="top" 
@@ -1952,9 +2014,9 @@ export default function Dashboard({ user }) {
               </div>
             )}
 
-            <div style={{ marginTop: 'auto', paddingTop: '8px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.72rem', color: '#64748b' }}>
-              <span>Dependencia: {activeDep?.name || 'General'}</span>
-              <strong style={{ color: '#0f172a' }}>Total: {activeOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong>
+            <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
+              <span>Total en oficinas:</span>
+              <strong style={{ color: '#0f172a' }}>{filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong>
             </div>
           </div>
         </div>

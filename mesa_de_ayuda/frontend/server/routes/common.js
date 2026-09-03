@@ -797,32 +797,7 @@ function getCommonRoutes(prisma) {
           }
         });
         const sumDepTickets = sede.dependencias.reduce((sum, d) => sum + d.count, 0);
-        if (directSedeCount > sumDepTickets) {
-          const diff = directSedeCount - sumDepTickets;
-          sede.dependencias.push({
-            id: `sede-${sede.id}-general`,
-            name: 'Sede Central / General',
-            label: 'Sede Central / General',
-            code: 'SCG',
-            sedeId: sede.id,
-            sedeName: sede.name,
-            count: diff,
-            percent: totalTickets > 0 ? Math.round((diff / totalTickets) * 100) : 0,
-            percentOfSede: Math.round((diff / directSedeCount) * 100),
-            oficinas: [
-              {
-                id: `sede-${sede.id}-general-ofi`,
-                name: 'Área General de Sede',
-                label: 'Área General de Sede',
-                code: 'GEN',
-                count: diff,
-                percentOfDependencia: 100,
-                percentOfTotal: totalTickets > 0 ? Math.round((diff / totalTickets) * 100) : 0
-              }
-            ]
-          });
-        }
-        sede.count = Math.max(directSedeCount, sede.dependencias.reduce((s, d) => s + d.count, 0));
+        sede.count = Math.max(directSedeCount, sumDepTickets);
         sede.percent = totalTickets > 0 ? Math.round((sede.count / totalTickets) * 100) : 0;
         sede.dependencias.forEach(d => {
           d.percentOfSede = sede.count > 0 ? Math.round((d.count / sede.count) * 100) : 0;

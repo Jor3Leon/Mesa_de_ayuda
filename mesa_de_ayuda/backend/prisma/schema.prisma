@@ -33,18 +33,18 @@ model Organization {
 }
 
 model Sede {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
   code           String?
   address        String?
-  city           String?
+  city           String?       @default("Yopal")
   phone          String?
   managerName    String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   dependencias   Dependencia[]
   oficinas       Oficina[]
 
@@ -53,18 +53,18 @@ model Sede {
 }
 
 model Dependencia {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
   code           String?
   managerName    String?
   email          String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   sedeId         Int?
-  sede           Sede?        @relation(fields: [sedeId], references: [id], onDelete: SetNull)
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sede           Sede?         @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   oficinas       Oficina[]
 
   @@unique([name, organizationId, sedeId])
@@ -73,20 +73,20 @@ model Dependencia {
 }
 
 model Oficina {
-  id              Int          @id @default(autoincrement())
+  id              Int           @id @default(autoincrement())
   name            String
   code            String?
   floor           String?
   responsibleUser String?
-  isActive        Boolean      @default(true)
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
+  isActive        Boolean       @default(true)
+  createdAt       DateTime      @default(now())
+  updatedAt       DateTime      @updatedAt
   dependenciaId   Int?
-  dependencia     Dependencia? @relation(fields: [dependenciaId], references: [id], onDelete: Cascade)
+  dependencia     Dependencia?  @relation(fields: [dependenciaId], references: [id], onDelete: Cascade)
   sedeId          Int?
-  sede            Sede?        @relation(fields: [sedeId], references: [id], onDelete: SetNull)
-  organizationId  String
-  organization    Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  sede            Sede?         @relation(fields: [sedeId], references: [id], onDelete: SetNull)
+  organizationId  String?
+  organization    Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@unique([name, organizationId, dependenciaId])
   @@index([organizationId])
@@ -95,11 +95,11 @@ model Oficina {
 }
 
 model Customer {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
   email          String
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   assets         Asset[]
   tickets        Ticket[]
 
@@ -108,17 +108,16 @@ model Customer {
 }
 
 model Location {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   name           String
   description    String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   tickets        Ticket[]
   users          User[]
-  assets         Asset[]
 
   @@unique([name, organizationId])
   @@index([organizationId])
@@ -131,8 +130,8 @@ model Role {
   isActive       Boolean          @default(true)
   createdAt      DateTime         @default(now())
   updatedAt      DateTime         @updatedAt
-  organizationId String
-  organization   Organization     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId String?
+  organization   Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   permissions    RolePermission[]
   users          User[]
 
@@ -158,30 +157,26 @@ model RolePermission {
 }
 
 model User {
-  id                       Int                 @id @default(autoincrement())
+  id                       Int           @id @default(autoincrement())
   name                     String
   username                 String
   email                    String
-  isActive                 Boolean             @default(true)
+  isActive                 Boolean       @default(true)
   phone                    String?
   locationId               Int?
   roleId                   Int
-  organizationId           String
-  organization             Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  organizationId           String?
+  organization             Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   passwordHash             String
-  createdAt                DateTime            @default(now())
-  updatedAt                DateTime            @updatedAt
+  createdAt                DateTime      @default(now())
+  updatedAt                DateTime      @updatedAt
   avatarUrl                String?
-  observedTickets          Ticket[]            @relation("TicketObserver")
-  secondaryAssignedTickets Ticket[]            @relation("TicketSecondaryAssignee")
-  assignedTickets          Ticket[]            @relation("TicketAssignee")
-  tickets                  Ticket[]            @relation("TicketCreator")
-  role                     Role                @relation(fields: [roleId], references: [id])
-  location                 Location?           @relation(fields: [locationId], references: [id])
-  ticketActivities         TicketActivity[]
-  assignedAssets           Asset[]             @relation("AssetAssignedUser")
-  maintenances             Maintenance[]       @relation("MaintenanceTechnician")
-  ticketResponsibles       TicketResponsible[]
+  observedTickets          Ticket[]      @relation("TicketObserver")
+  secondaryAssignedTickets Ticket[]      @relation("TicketSecondaryAssignee")
+  assignedTickets          Ticket[]      @relation("TicketAssignee")
+  tickets                  Ticket[]      @relation("TicketCreator")
+  role                     Role          @relation(fields: [roleId], references: [id])
+  location                 Location?     @relation(fields: [locationId], references: [id])
 
   @@unique([username, organizationId])
   @@unique([email, organizationId])
@@ -191,17 +186,17 @@ model User {
 }
 
 model Ticket {
-  id                    Int                 @id @default(autoincrement())
+  id                    Int              @id @default(autoincrement())
   title                 String
   description           String
   priority              String
   status                String
-  ticketType            String?             @default("Incidencia")
+  ticketType            String?          @default("Incidencia")
   category              String?
-  createdAt             DateTime            @default(now())
-  updatedAt             DateTime            @updatedAt
-  organizationId        String
-  organization          Organization        @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  createdAt             DateTime         @default(now())
+  updatedAt             DateTime         @updatedAt
+  organizationId        String?
+  organization          Organization?    @relation(fields: [organizationId], references: [id], onDelete: Cascade)
   customerId            Int
   assetId               Int?
   locationId            Int?
@@ -215,15 +210,14 @@ model Ticket {
   sla                   String?
   responsibleUserIds    String?
   maintenances          Maintenance[]
-  observer              User?               @relation("TicketObserver", fields: [observerId], references: [id])
-  secondaryAssignedTo   User?               @relation("TicketSecondaryAssignee", fields: [secondaryAssignedToId], references: [id])
-  assignedTo            User?               @relation("TicketAssignee", fields: [assignedToId], references: [id])
-  createdBy             User?               @relation("TicketCreator", fields: [createdById], references: [id])
-  location              Location?           @relation(fields: [locationId], references: [id])
-  asset                 Asset?              @relation(fields: [assetId], references: [id])
-  customer              Customer            @relation(fields: [customerId], references: [id])
+  observer              User?            @relation("TicketObserver", fields: [observerId], references: [id])
+  secondaryAssignedTo   User?            @relation("TicketSecondaryAssignee", fields: [secondaryAssignedToId], references: [id])
+  assignedTo            User?            @relation("TicketAssignee", fields: [assignedToId], references: [id])
+  createdBy             User?            @relation("TicketCreator", fields: [createdById], references: [id])
+  location              Location?        @relation(fields: [locationId], references: [id])
+  asset                 Asset?           @relation(fields: [assetId], references: [id])
+  customer              Customer         @relation(fields: [customerId], references: [id])
   activities            TicketActivity[]
-  responsibles          TicketResponsible[]
 
   @@index([organizationId])
   @@index([status])
@@ -232,24 +226,9 @@ model Ticket {
   @@index([createdById])
 }
 
-model TicketResponsible {
-  id        Int      @id @default(autoincrement())
-  ticketId  Int
-  userId    Int
-  createdAt DateTime @default(now())
-  ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
-  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
-
-  @@unique([ticketId, userId])
-  @@index([ticketId])
-  @@index([userId])
-}
-
 model TicketActivity {
   id        Int      @id @default(autoincrement())
   ticketId  Int
-  userId    Int?
-  userRef   User?    @relation(fields: [userId], references: [id], onDelete: SetNull)
   user      String?
   action    String
   field     String?
@@ -259,54 +238,42 @@ model TicketActivity {
   ticket    Ticket   @relation(fields: [ticketId], references: [id], onDelete: Cascade)
 
   @@index([ticketId])
-  @@index([userId])
 }
 
 model Asset {
-  id                Int           @id @default(autoincrement())
-  hostname          String
-  ipAddress         String
-  osType            String
-  osVersion         String
-  status            String
-  serialNumber      String?
-  brand             String?
-  model             String?
-  deviceType        String?
-  assignedUser      String?
-  assignedUserId    Int?
-  assignedUserRel   User?         @relation("AssetAssignedUser", fields: [assignedUserId], references: [id], onDelete: SetNull)
-  location          String?
-  locationId        Int?
-  locationRel       Location?     @relation(fields: [locationId], references: [id], onDelete: SetNull)
-  agentVersion      String?
-  lastSeenAt        DateTime?
-  motherboard       String?
-  cpuModel          String?
-  ramSummary        String?
-  storageSummary    String?
-  networkSummary    String?
-  graphicsInfo      String?
-  displayInfo       String?
-  notes             String?
-  installedSoftware String?
-  macAddress        String?
-  organizationId    String
-  organization      Organization  @relation(fields: [organizationId], references: [id], onDelete: Cascade)
-  customerId        Int
-  customer          Customer      @relation(fields: [customerId], references: [id])
-  maintenances      Maintenance[]
-  metrics           Metric[]
-  tickets           Ticket[]
+  id             Int           @id @default(autoincrement())
+  hostname       String
+  ipAddress      String
+  osType         String
+  osVersion      String
+  status         String
+  serialNumber   String?
+  brand          String?
+  model          String?
+  deviceType     String?
+  assignedUser   String?
+  location       String?
+  agentVersion   String?
+  lastSeenAt     DateTime?
+  motherboard    String?
+  cpuModel       String?
+  ramSummary     String?
+  storageSummary String?
+  networkSummary String?
+  graphicsInfo   String?
+  displayInfo    String?
+  notes          String?
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  customerId     Int
+  customer       Customer      @relation(fields: [customerId], references: [id])
+  maintenances   Maintenance[]
+  metrics        Metric[]
+  tickets        Ticket[]
 
   @@unique([hostname, organizationId])
   @@index([organizationId])
   @@index([customerId])
-  @@index([macAddress])
-  @@index([ipAddress])
-  @@index([serialNumber])
-  @@index([assignedUserId])
-  @@index([locationId])
 }
 
 model Metric {
@@ -321,52 +288,48 @@ model Metric {
 }
 
 model Maintenance {
-  id             Int       @id @default(autoincrement())
-  date           DateTime  @default(now())
-  type           String
-  description    String
-  technician     String
-  technicianId   Int?
-  technicianUser User?     @relation("MaintenanceTechnician", fields: [technicianId], references: [id], onDelete: SetNull)
-  assetId        Int
-  ticketId       Int?
-  createdAt      DateTime  @default(now())
-  updatedAt      DateTime  @updatedAt
-  ticket         Ticket?   @relation(fields: [ticketId], references: [id], onDelete: SetNull)
-  asset          Asset     @relation(fields: [assetId], references: [id], onDelete: Cascade)
+  id          Int      @id @default(autoincrement())
+  date        DateTime @default(now())
+  type        String
+  description String
+  technician  String
+  assetId     Int
+  ticketId    Int?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+  ticket      Ticket?  @relation(fields: [ticketId], references: [id], onDelete: SetNull)
+  asset       Asset    @relation(fields: [assetId], references: [id], onDelete: Cascade)
 
   @@index([assetId])
   @@index([ticketId])
-  @@index([technicianId])
 }
 
 model CannedResponse {
-  id             Int          @id @default(autoincrement())
+  id             Int           @id @default(autoincrement())
   title          String
   content        String
-  category       String?      @default("General")
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
+  category       String?       @default("General")
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
   shortcut       String?
-  ticketType     String?      @default("Incidencia")
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  ticketType     String?       @default("Incidencia")
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
 }
 
 model TicketCategory {
-  id             Int          @id @default(autoincrement())
-  group          String       @default("General")
+  id             Int           @id @default(autoincrement())
+  group          String        @default("General")
   name           String
   ticketType     String
   sla            String?
-  isActive       Boolean      @default(true)
-  createdAt      DateTime     @default(now())
-  updatedAt      DateTime     @updatedAt
-  organizationId String
-  organization   Organization @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  isActive       Boolean       @default(true)
+  createdAt      DateTime      @default(now())
+  updatedAt      DateTime      @updatedAt
+  organizationId String?
+  organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
-  @@unique([name, ticketType, organizationId])
   @@index([organizationId])
 }

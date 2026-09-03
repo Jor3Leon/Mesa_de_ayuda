@@ -608,10 +608,7 @@ function getDiscoveryRoutes(prisma) {
       if (!existingAsset && cleanMac) {
         existingAsset = await prisma.asset.findFirst({
           where: {
-            OR: [
-              { macAddress: cleanMac },
-              { networkSummary: { contains: cleanMac } }
-            ],
+            networkSummary: { contains: cleanMac },
             ...(orgId ? { organizationId: orgId } : {})
           }
         });
@@ -694,7 +691,6 @@ function getDiscoveryRoutes(prisma) {
           data: {
             hostname: validHostname,
             ipAddress,
-            macAddress: cleanMac || existingAsset.macAddress,
             serialNumber: cleanSerial || existingAsset.serialNumber,
             brand: normalizeOptionalString(brand) || existingAsset.brand,
             model: normalizeOptionalString(model) || existingAsset.model,
@@ -717,7 +713,6 @@ function getDiscoveryRoutes(prisma) {
           data: {
             hostname: validHostname,
             ipAddress,
-            macAddress: cleanMac || null,
             serialNumber: cleanSerial || `SN-PRN-${ipAddress.replace(/\./g, '-')}`,
             brand: normalizeOptionalString(brand) || 'Generico',
             model: normalizeOptionalString(model) || 'Dispositivo de Red',

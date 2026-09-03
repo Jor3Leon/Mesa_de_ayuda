@@ -109,19 +109,11 @@ function getTicketRoutes(prisma) {
         },
       });
 
-      if (prisma.ticketResponsible && responsibleUserIds.length > 0) {
-        await prisma.ticketResponsible.createMany({
-          data: responsibleUserIds.map((userId) => ({ ticketId: ticket.id, userId })),
-          skipDuplicates: true,
-        }).catch(() => {});
-      }
-
       const initialStatus = responsibleUserIds.length > 0 ? 'IN_PROGRESS' : 'NEW';
       if (initialStatus !== 'NEW') {
         await prisma.ticketActivity.create({
           data: {
             ticketId: ticket.id,
-            userId: req.auth.user?.id || null,
             user: req.auth.user.name,
             action: 'IN_PROGRESS',
             field: 'Estado',
@@ -506,17 +498,6 @@ function getTicketRoutes(prisma) {
         await prisma.ticketActivity.createMany({ data: activitiesToCreate });
       }
 
-      if (prisma.ticketResponsible && req.body.responsibleUserIds !== undefined) {
-        const newRespIds = parseResponsibleUserIds(updateData.responsibleUserIds);
-        await prisma.ticketResponsible.deleteMany({ where: { ticketId: id } }).catch(() => {});
-        if (newRespIds.length > 0) {
-          await prisma.ticketResponsible.createMany({
-            data: newRespIds.map((userId) => ({ ticketId: id, userId })),
-            skipDuplicates: true
-          }).catch(() => {});
-        }
-      }
-
       res.json(await attachResponsibleUsers(prisma, updatedTicket));
     } catch (error) {
       next(error);
@@ -605,7 +586,6 @@ function getTicketRoutes(prisma) {
       const activity = await prisma.ticketActivity.create({
         data: {
           ticketId,
-          userId: req.auth.user?.id || null,
           user: req.auth.user.name,
           action: type === 'COMMENT' ? 'COMMENTED' : 'UPDATED',
           field: type === 'COMMENT' ? 'Comentario' : 'Estado',

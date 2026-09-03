@@ -8,7 +8,7 @@ if (!CONN_STRING) {
   process.exit(1);
 }
 
-const defaultSeedPass = process.env.SEED_DEFAULT_PASSWORD || 'Admin12345!';
+const defaultSeedPass = process.env.SEED_DEFAULT_PASSWORD || crypto.randomBytes(16).toString('hex');
 
 async function sql(query, params = []) {
   if (!NEON_HTTP_URL) {

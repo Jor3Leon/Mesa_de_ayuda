@@ -167,39 +167,32 @@ export default function Dashboard({ user }) {
     return data?.sedesHierarchy || [];
   }, [data?.sedesHierarchy]);
 
+  // Sede activa: SÓLO si el usuario seleccionó una sede en el filtro
   const activeSede = useMemo(() => {
-    if (!sedesHierarchy.length) return null;
-    if (selectedSedeId != null && selectedSedeId !== 'ALL') {
-      const found = sedesHierarchy.find(s => String(s.id) === String(selectedSedeId));
-      if (found) return found;
-    }
-    return null;
+    if (!sedesHierarchy.length || !selectedSedeId || selectedSedeId === 'ALL') return null;
+    return sedesHierarchy.find(s => String(s.id) === String(selectedSedeId)) || null;
   }, [sedesHierarchy, selectedSedeId]);
 
+  // Dependencias: SÓLO se cargan las dependencias de la sede seleccionada (en blanco si no hay sede)
   const activeDependencias = useMemo(() => {
-    if (activeSede) {
-      return activeSede.dependencias || [];
-    }
-    return sedesHierarchy.flatMap(s => s.dependencias || []);
-  }, [activeSede, sedesHierarchy]);
+    if (!activeSede) return [];
+    return activeSede.dependencias || [];
+  }, [activeSede]);
 
+  // Dependencia activa: SÓLO si hay sede activa y el usuario seleccionó una dependencia
   const activeDep = useMemo(() => {
-    if (!activeDependencias.length) return null;
-    if (selectedDepId != null && selectedDepId !== 'ALL') {
-      const found = activeDependencias.find(d => String(d.id) === String(selectedDepId));
-      if (found) return found;
-    }
-    return null;
+    if (!activeDependencias.length || !selectedDepId || selectedDepId === 'ALL') return null;
+    return activeDependencias.find(d => String(d.id) === String(selectedDepId)) || null;
   }, [activeDependencias, selectedDepId]);
 
+  // Oficinas: SÓLO se cargan las oficinas de la dependencia seleccionada (en blanco si no hay dependencia)
   const activeOficinas = useMemo(() => {
-    if (activeDep) {
-      return activeDep.oficinas || [];
-    }
-    return activeDependencias.flatMap(d => d.oficinas || []);
-  }, [activeDep, activeDependencias]);
+    if (!activeDep) return [];
+    return activeDep.oficinas || [];
+  }, [activeDep]);
 
   const filteredOficinas = useMemo(() => {
+    if (!activeOficinas.length) return [];
     if (selectedOficinaId != null && selectedOficinaId !== 'ALL') {
       return activeOficinas.filter(o => String(o.id) === String(selectedOficinaId));
     }
@@ -1566,17 +1559,17 @@ export default function Dashboard({ user }) {
             </p>
           </div>
 
-          {/* Barra de Filtros Dinámicos Superiores (Sede ➔ Dependencia ➔ Oficina) */}
+          {/* Barra de Filtros Dinámicos Superiores (Cascada: Sede ➔ Dependencia ➔ Oficina) */}
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
             {/* Filtro 1: Sede */}
-            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: selectedSedeId ? '1.5px solid #0284c7' : '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
               <span style={{ fontSize: '0.9rem' }}>🏛️</span>
               <label htmlFor="filter-sede-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Sede:</label>
               <select
                 id="filter-sede-select"
-                value={selectedSedeId || 'ALL'}
+                value={selectedSedeId || ''}
                 onChange={(e) => {
-                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  const val = e.target.value || null;
                   setSelectedSedeId(val);
                   setSelectedDepId(null);
                   setSelectedOficinaId(null);
@@ -1592,7 +1585,7 @@ export default function Dashboard({ user }) {
                   padding: '3px 0'
                 }}
               >
-                <option value="ALL">Todas las Sedes ({sedesHierarchy.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets)</option>
+                <option value="">-- Seleccionar Sede --</option>
                 {sedesHierarchy.map((s) => (
                   <option key={s.id} value={s.id}>
                     {s.name} ({s.count} {s.count === 1 ? 'ticket' : 'tickets'})
@@ -1601,17 +1594,27 @@ export default function Dashboard({ user }) {
               </select>
             </div>
 
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+            <span style={{ color: activeSede ? '#0284c7' : '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
 
-            {/* Filtro 2: Dependencia */}
-            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+            {/* Filtro 2: Dependencia (Solo dependencias de la sede seleccionada) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: !activeSede ? '#f1f5f9' : '#f8fafc',
+              border: selectedDepId ? '1.5px solid #0284c7' : (!activeSede ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
+              borderRadius: '8px',
+              padding: '3px 10px',
+              gap: '6px',
+              opacity: !activeSede ? 0.6 : 1
+            }}>
               <span style={{ fontSize: '0.9rem' }}>📁</span>
               <label htmlFor="filter-dep-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Dependencia:</label>
               <select
                 id="filter-dep-select"
-                value={selectedDepId || 'ALL'}
+                disabled={!activeSede}
+                value={selectedDepId || ''}
                 onChange={(e) => {
-                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  const val = e.target.value || null;
                   setSelectedDepId(val);
                   setSelectedOficinaId(null);
                 }}
@@ -1620,33 +1623,49 @@ export default function Dashboard({ user }) {
                   background: 'transparent',
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  color: '#0f172a',
-                  cursor: 'pointer',
+                  color: !activeSede ? '#94a3b8' : '#0f172a',
+                  cursor: !activeSede ? 'not-allowed' : 'pointer',
                   outline: 'none',
                   padding: '3px 0',
                   maxWidth: '190px'
                 }}
               >
-                <option value="ALL">Todas las Dependencias ({activeDependencias.length})</option>
-                {activeDependencias.map((d) => (
-                  <option key={d.id} value={d.id}>
-                    {d.name} ({d.count} tickets)
-                  </option>
-                ))}
+                {!activeSede ? (
+                  <option value="">-- Selecciona Sede primero --</option>
+                ) : (
+                  <>
+                    <option value="">-- Seleccionar Dependencia ({activeDependencias.length}) --</option>
+                    {activeDependencias.map((d) => (
+                      <option key={d.id} value={d.id}>
+                        {d.name} ({d.count} tickets)
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
             </div>
 
-            <span style={{ color: '#94a3b8', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
+            <span style={{ color: activeDep ? '#0284c7' : '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
 
-            {/* Filtro 3: Oficina */}
-            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
+            {/* Filtro 3: Oficina (Solo oficinas de la dependencia seleccionada) */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              background: !activeDep ? '#f1f5f9' : '#f8fafc',
+              border: selectedOficinaId ? '1.5px solid #0284c7' : (!activeDep ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
+              borderRadius: '8px',
+              padding: '3px 10px',
+              gap: '6px',
+              opacity: !activeDep ? 0.6 : 1
+            }}>
               <span style={{ fontSize: '0.9rem' }}>🚪</span>
               <label htmlFor="filter-ofi-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Oficina:</label>
               <select
                 id="filter-ofi-select"
-                value={selectedOficinaId || 'ALL'}
+                disabled={!activeDep}
+                value={selectedOficinaId || ''}
                 onChange={(e) => {
-                  const val = e.target.value === 'ALL' ? null : e.target.value;
+                  const val = e.target.value || null;
                   setSelectedOficinaId(val);
                 }}
                 style={{
@@ -1654,19 +1673,25 @@ export default function Dashboard({ user }) {
                   background: 'transparent',
                   fontSize: '0.75rem',
                   fontWeight: 700,
-                  color: '#0f172a',
-                  cursor: 'pointer',
+                  color: !activeDep ? '#94a3b8' : '#0f172a',
+                  cursor: !activeDep ? 'not-allowed' : 'pointer',
                   outline: 'none',
                   padding: '3px 0',
                   maxWidth: '170px'
                 }}
               >
-                <option value="ALL">Todas las Oficinas ({activeOficinas.length})</option>
-                {activeOficinas.map((o) => (
-                  <option key={o.id} value={o.id}>
-                    {o.name} ({o.count} tickets)
-                  </option>
-                ))}
+                {!activeDep ? (
+                  <option value="">-- Selecciona Dependencia primero --</option>
+                ) : (
+                  <>
+                    <option value="">Todas las Oficinas ({activeOficinas.length})</option>
+                    {activeOficinas.map((o) => (
+                      <option key={o.id} value={o.id}>
+                        {o.name} ({o.count} tickets)
+                      </option>
+                    ))}
+                  </>
+                )}
               </select>
             </div>
 
@@ -1814,7 +1839,7 @@ export default function Dashboard({ user }) {
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 2: DEPENDENCIA (Pie Chart Plana con Callout Lines)   */}
+          {/* GRÁFICA 2: DEPENDENCIA (Pie Chart - En blanco hasta seleccionar Sede) */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
@@ -1828,7 +1853,7 @@ export default function Dashboard({ user }) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#eff6ff', color: '#1d4ed8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: activeSede ? '#eff6ff' : '#f8fafc', color: activeSede ? '#1d4ed8' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
                   📁
                 </div>
                 <div>
@@ -1836,18 +1861,27 @@ export default function Dashboard({ user }) {
                     DEPENDENCIA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {activeDependencias.length} {activeDependencias.length === 1 ? 'dependencia' : 'dependencias'}
+                    {!activeSede ? 'En espera de selección' : `${activeDependencias.length} ${activeDependencias.length === 1 ? 'dependencia' : 'dependencias'}`}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: activeDep ? '#0284c7' : '#64748b', fontWeight: 700, background: activeDep ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeDep ? activeDep.name : (activeSede ? activeSede.name : 'Todas')}
+              <span style={{ fontSize: '0.7rem', color: activeDep ? '#0284c7' : (activeSede ? '#0369a1' : '#94a3b8'), fontWeight: 700, background: activeSede ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeDep ? activeDep.name : (activeSede ? activeSede.name : 'En espera')}
               </span>
             </div>
 
-            {activeDependencias.length === 0 ? (
+            {!activeSede ? (
+              /* En blanco / estado inicial hasta que se seleccione una Sede */
+              <div style={{ height: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textAlign: 'center', padding: '1.5rem', background: '#fafbfc', borderRadius: '10px', border: '1px dashed #e2e8f0' }}>
+                <span style={{ fontSize: '2.2rem', marginBottom: '10px', opacity: 0.45 }}>📁</span>
+                <strong style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '6px' }}>Gráfica no activada</strong>
+                <span style={{ fontSize: '0.74rem', color: '#94a3b8', maxWidth: '240px', lineHeight: 1.4 }}>
+                  Selecciona una <strong>Sede</strong> en el filtro superior para desplegar sus dependencias.
+                </span>
+              </div>
+            ) : activeDependencias.length === 0 ? (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                No hay dependencias registradas para la sede seleccionada
+                {activeSede.name} no tiene dependencias configuradas
               </div>
             ) : (
               <div style={{ width: '100%', height: 260, position: 'relative' }}>
@@ -1903,12 +1937,14 @@ export default function Dashboard({ user }) {
 
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en dependencias:</span>
-              <strong style={{ color: '#0f172a' }}>{activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets</strong>
+              <strong style={{ color: '#0f172a' }}>
+                {!activeSede ? '—' : `${activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets`}
+              </strong>
             </div>
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 3: OFICINA (Column Chart Vertical Plana y Simétrica) */}
+          {/* GRÁFICA 3: OFICINA (Column Chart - En blanco hasta seleccionar Dependencia) */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
@@ -1922,7 +1958,7 @@ export default function Dashboard({ user }) {
           }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem', paddingBottom: '0.5rem', borderBottom: '1px solid #f1f5f9' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: '#f0fdf4', color: '#15803d', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
+                <div style={{ width: '28px', height: '28px', borderRadius: '8px', background: activeDep ? '#f0fdf4' : '#f8fafc', color: activeDep ? '#15803d' : '#94a3b8', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.9rem' }}>
                   🚪
                 </div>
                 <div>
@@ -1930,18 +1966,27 @@ export default function Dashboard({ user }) {
                     OFICINA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {filteredOficinas.length} {filteredOficinas.length === 1 ? 'oficina' : 'oficinas'}
+                    {!activeDep ? 'En espera de selección' : `${filteredOficinas.length} ${filteredOficinas.length === 1 ? 'oficina' : 'oficinas'}`}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: selectedOficinaId ? '#0284c7' : '#15803d', fontWeight: 700, background: '#f0fdf4', border: '1px solid #bbf7d0', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeDep?.name || (activeSede ? activeSede.name : 'Todas')}
+              <span style={{ fontSize: '0.7rem', color: selectedOficinaId ? '#0284c7' : (activeDep ? '#15803d' : '#94a3b8'), fontWeight: 700, background: activeDep ? '#f0fdf4' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeDep ? activeDep.name : 'En espera'}
               </span>
             </div>
 
-            {filteredOficinas.length === 0 ? (
+            {!activeDep ? (
+              /* En blanco / estado inicial hasta que se seleccione una Dependencia */
+              <div style={{ height: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textAlign: 'center', padding: '1.5rem', background: '#fafbfc', borderRadius: '10px', border: '1px dashed #e2e8f0' }}>
+                <span style={{ fontSize: '2.2rem', marginBottom: '10px', opacity: 0.45 }}>🚪</span>
+                <strong style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '6px' }}>Gráfica no activada</strong>
+                <span style={{ fontSize: '0.74rem', color: '#94a3b8', maxWidth: '240px', lineHeight: 1.4 }}>
+                  Selecciona una <strong>Dependencia</strong> en el filtro superior para auditar sus oficinas.
+                </span>
+              </div>
+            ) : filteredOficinas.length === 0 ? (
               <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                No hay oficinas registradas en esta selección
+                {activeDep.name} no tiene oficinas registradas
               </div>
             ) : (
               <div style={{ width: '100%', height: 260 }}>
@@ -2016,7 +2061,9 @@ export default function Dashboard({ user }) {
 
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en oficinas:</span>
-              <strong style={{ color: '#0f172a' }}>{filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong>
+              <strong style={{ color: '#0f172a' }}>
+                {!activeDep ? '—' : `${filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets`}
+              </strong>
             </div>
           </div>
         </div>

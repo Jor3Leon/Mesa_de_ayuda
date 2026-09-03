@@ -648,95 +648,128 @@ function getCommonRoutes(prisma) {
         }
       ];
 
-      // Calculate Dependencias & Oficinas Ticket Metrics
-      const depStatsMap = {};
+      // 8. Calculate Dependencias & Oficinas Ticket Metrics (Jerarquía Estructura Organizacional)
+      const depMap = new Map();
+
       dependencias.forEach(d => {
-        depStatsMap[d.name.toLowerCase()] = {
+        depMap.set(d.id, {
+          id: d.id,
           name: d.name,
           label: d.name,
+          code: d.code || '',
           sedeName: d.sede?.name || 'Sede Principal',
-          count: 0
-        };
+          count: 0,
+          percent: 0,
+          oficinas: (d.oficinas || []).map(o => ({
+            id: o.id,
+            name: o.name,
+            label: o.name,
+            code: o.code || '',
+            floor: o.floor || '',
+            dependenciaId: d.id,
+            depName: d.name,
+            sedeName: d.sede?.name || 'Sede Principal',
+            count: 0,
+            percentOfDependencia: 0,
+            percentOfTotal: 0
+          }))
+        });
       });
 
-      const ofiStatsMap = {};
-      oficinas.forEach(o => {
-        ofiStatsMap[o.name.toLowerCase()] = {
-          name: o.name,
-          label: o.name,
-          depName: o.dependencia?.name || 'General',
-          sedeName: o.sede?.name || o.dependencia?.sede?.name || 'Sede Principal',
-          count: 0
-        };
-      });
-
+      // Mapear tickets a dependencias y oficinas hijas
       (ticketsByLocationRaw || []).forEach(l => {
-        if (l.locationId && locationMap[l.locationId]) {
-          const locName = locationMap[l.locationId];
-          const locLower = locName.toLowerCase();
-          const count = l._count?._all || 0;
+        if (!l.locationId || !locationMap[l.locationId]) return;
+        const locName = locationMap[l.locationId];
+        const locLower = locName.toLowerCase().trim();
+        const count = l._count?._all || 0;
 
-          let matchedDep = false;
-          let matchedOfi = false;
+        let matched = false;
 
-          Object.keys(depStatsMap).forEach(key => {
-            if (locLower.includes(key)) {
-              depStatsMap[key].count += count;
-              matchedDep = true;
-            }
-          });
+        // Intentar coincidir con cada Dependencia
+        depMap.forEach(dep => {
+          const depNameLower = dep.name.toLowerCase().trim();
+          if (locLower.includes(depNameLower)) {
+            dep.count += count;
+            matched = true;
 
-          Object.keys(ofiStatsMap).forEach(key => {
-            if (locLower.includes(key)) {
-              ofiStatsMap[key].count += count;
-              matchedOfi = true;
-            }
-          });
-
-          if (!matchedDep && !matchedOfi) {
-            const parts = locName.split(' - ').map(s => s.trim());
-            if (parts.length >= 2) {
-              const depPart = parts[1];
-              const depKey = depPart.toLowerCase();
-              if (!depStatsMap[depKey]) {
-                depStatsMap[depKey] = { name: depPart, label: depPart, sedeName: parts[0], count: 0 };
+            // Verificar si también coincide con alguna oficina hija
+            dep.oficinas.forEach(ofi => {
+              const ofiNameLower = ofi.name.toLowerCase().trim();
+              if (locLower.includes(ofiNameLower)) {
+                ofi.count += count;
               }
-              depStatsMap[depKey].count += count;
+            });
+          }
+        });
 
-              if (parts.length >= 3) {
-                const ofiPart = parts[2];
-                const ofiKey = ofiPart.toLowerCase();
-                if (!ofiStatsMap[ofiKey]) {
-                  ofiStatsMap[ofiKey] = { name: ofiPart, label: ofiPart, depName: depPart, sedeName: parts[0], count: 0 };
+        // Intentar coincidir por oficina si la dependencia no coincidió directamente
+        if (!matched) {
+          oficinas.forEach(o => {
+            const ofiLower = o.name.toLowerCase().trim();
+            if (locLower.includes(ofiLower)) {
+              if (o.dependenciaId && depMap.has(o.dependenciaId)) {
+                const parentDep = depMap.get(o.dependenciaId);
+                parentDep.count += count;
+                const childOfi = parentDep.oficinas.find(co => co.id === o.id);
+                if (childOfi) {
+                  childOfi.count += count;
                 }
-                ofiStatsMap[ofiKey].count += count;
               }
-            } else {
-              const depKey = locLower;
-              if (!depStatsMap[depKey]) {
-                depStatsMap[depKey] = { name: locName, label: locName, sedeName: 'Sede Principal', count: 0 };
+              matched = true;
+            }
+          });
+        }
+
+        // Si no coincidió, analizar formato canónico "Sede - Dependencia - Oficina"
+        if (!matched) {
+          const parts = locName.split(' - ').map(s => s.trim());
+          if (parts.length >= 2) {
+            const depPartLower = parts[1].toLowerCase();
+            const matchedDep = Array.from(depMap.values()).find(d => d.name.toLowerCase() === depPartLower);
+            if (matchedDep) {
+              matchedDep.count += count;
+              if (parts.length >= 3) {
+                const ofiPartLower = parts[2].toLowerCase();
+                const matchedOfi = matchedDep.oficinas.find(o => o.name.toLowerCase() === ofiPartLower);
+                if (matchedOfi) matchedOfi.count += count;
               }
-              depStatsMap[depKey].count += count;
             }
           }
         }
       });
 
-      const topDependencias = Object.values(depStatsMap)
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6)
-        .map(d => ({
-          ...d,
-          percent: totalTickets > 0 ? Math.round((d.count / totalTickets) * 100) : 0
-        }));
+      // Calcular porcentajes relativos y globales para dependencias y oficinas
+      const dependenciasTree = Array.from(depMap.values())
+        .map(dep => {
+          const sumOfiTickets = dep.oficinas.reduce((sum, o) => sum + o.count, 0);
+          if (sumOfiTickets > dep.count) {
+            dep.count = sumOfiTickets;
+          }
 
-      const topOficinas = Object.values(ofiStatsMap)
-        .sort((a, b) => b.count - a.count)
-        .slice(0, 6)
-        .map(o => ({
-          ...o,
-          percent: totalTickets > 0 ? Math.round((o.count / totalTickets) * 100) : 0
-        }));
+          const depPercent = totalTickets > 0 ? Math.round((dep.count / totalTickets) * 100) : 0;
+
+          const processedOficinas = dep.oficinas
+            .map(o => ({
+              ...o,
+              percentOfTotal: totalTickets > 0 ? Math.round((o.count / totalTickets) * 100) : 0,
+              percentOfDependencia: dep.count > 0 ? Math.round((o.count / dep.count) * 100) : 0
+            }))
+            .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+          return {
+            ...dep,
+            percent: depPercent,
+            oficinasCount: processedOficinas.length,
+            oficinas: processedOficinas
+          };
+        })
+        .sort((a, b) => b.count - a.count || a.name.localeCompare(b.name));
+
+      const topOficinas = dependenciasTree
+        .flatMap(d => d.oficinas)
+        .sort((a, b) => b.count - a.count);
+
+      const topDependencias = dependenciasTree;
 
       // Format Severity Distribution
       const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
@@ -980,6 +1013,7 @@ function getCommonRoutes(prisma) {
         topRequestTypes,
         topDependencias,
         topOficinas,
+        dependenciasTree,
         topEntities: topDependencias,
         severityDistribution,
         ticketsByPriority,

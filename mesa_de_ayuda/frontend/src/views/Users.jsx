@@ -34,6 +34,8 @@ export default function Users() {
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [togglingUserId, setTogglingUserId] = useState(null);
+  const [userToDelete, setUserToDelete] = useState(null);
+  const [deleting, setDeleting] = useState(false);
   const session = getStoredSession();
   const currentUserId = session?.user?.id;
 
@@ -169,6 +171,22 @@ export default function Users() {
       setError(requestError.message);
     } finally {
       setTogglingUserId(null);
+    }
+  }
+
+  async function handleDeleteUser() {
+    if (!userToDelete) return;
+    setDeleting(true);
+    setError('');
+    try {
+      await apiRequest(`/users/${userToDelete.id}`, { method: 'DELETE' });
+      setUsers((prev) => prev.filter((u) => u.id !== userToDelete.id));
+      setFeedback(`Usuario "${userToDelete.name}" (@${userToDelete.username}) eliminado exitosamente.`);
+      setUserToDelete(null);
+    } catch (err) {
+      setError(err.message || 'Error al eliminar el usuario.');
+    } finally {
+      setDeleting(false);
     }
   }
 
@@ -705,28 +723,72 @@ export default function Users() {
                         </button>
                       </td>
                       <td style={{ padding: '1rem 1.25rem', textAlign: 'right' }}>
-                        <button
-                          onClick={() => handleOpenModal(u)}
-                          style={{
-                            background: '#f8fafc',
-                            border: '1px solid #cbd5e1',
-                            borderRadius: '8px',
-                            padding: '0.4rem 0.75rem',
-                            color: '#0f172a',
-                            fontWeight: '600',
-                            fontSize: '0.8rem',
-                            cursor: 'pointer',
-                            display: 'inline-flex',
-                            alignItems: 'center',
-                            gap: '0.35rem',
-                          }}
-                        >
-                          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
-                            <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
-                          </svg>
-                          Editar
-                        </button>
+                        <div style={{ display: 'inline-flex', alignItems: 'center', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                          <button
+                            type="button"
+                            onClick={() => handleOpenModal(u)}
+                            style={{
+                              background: '#f8fafc',
+                              border: '1px solid #cbd5e1',
+                              borderRadius: '8px',
+                              padding: '0.4rem 0.75rem',
+                              color: '#0f172a',
+                              fontWeight: '600',
+                              fontSize: '0.8rem',
+                              cursor: 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" />
+                              <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" />
+                            </svg>
+                            Editar
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => setUserToDelete(u)}
+                            disabled={isSelf}
+                            title={isSelf ? 'No puedes eliminar tu propia cuenta' : `Eliminar a ${u.name}`}
+                            style={{
+                              background: isSelf ? '#f8fafc' : '#fff1f2',
+                              border: `1px solid ${isSelf ? '#e2e8f0' : '#fecdd3'}`,
+                              borderRadius: '8px',
+                              padding: '0.4rem 0.75rem',
+                              color: isSelf ? '#94a3b8' : '#e11d48',
+                              fontWeight: '600',
+                              fontSize: '0.8rem',
+                              cursor: isSelf ? 'not-allowed' : 'pointer',
+                              display: 'inline-flex',
+                              alignItems: 'center',
+                              gap: '0.35rem',
+                              transition: 'all 0.15s ease',
+                              opacity: isSelf ? 0.6 : 1,
+                            }}
+                            onMouseEnter={(e) => {
+                              if (!isSelf) {
+                                e.currentTarget.style.background = '#ffe4e6';
+                                e.currentTarget.style.borderColor = '#fda4af';
+                              }
+                            }}
+                            onMouseLeave={(e) => {
+                              if (!isSelf) {
+                                e.currentTarget.style.background = '#fff1f2';
+                                e.currentTarget.style.borderColor = '#fecdd3';
+                              }
+                            }}
+                          >
+                            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                              <polyline points="3 6 5 6 21 6" />
+                              <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                              <line x1="10" y1="11" x2="10" y2="17" />
+                              <line x1="14" y1="11" x2="14" y2="17" />
+                            </svg>
+                            Eliminar
+                          </button>
+                        </div>
                       </td>
                     </tr>
                   );
@@ -1017,6 +1079,142 @@ export default function Users() {
                 </button>
               </div>
             </form>
+          </div>
+        </div>
+      )}
+
+      {/* ⚠️ MODAL DE CONFIRMACIÓN PARA ELIMINAR USUARIO */}
+      {userToDelete && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(15, 23, 42, 0.6)',
+            backdropFilter: 'blur(4px)',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            padding: '1rem',
+            zIndex: 10000,
+          }}
+          onClick={() => !deleting && setUserToDelete(null)}
+        >
+          <div
+            style={{
+              background: '#ffffff',
+              borderRadius: '20px',
+              maxWidth: '460px',
+              width: '100%',
+              padding: '1.75rem',
+              boxShadow: '0 25px 50px -12px rgba(0, 0, 0, 0.25)',
+              border: '1px solid #f1f5f9',
+            }}
+            onClick={(e) => e.stopPropagation()}
+          >
+            <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', marginBottom: '1.25rem' }}>
+              <div
+                style={{
+                  width: '48px',
+                  height: '48px',
+                  borderRadius: '14px',
+                  background: '#ffe4e6',
+                  color: '#e11d48',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  flexShrink: 0,
+                }}
+              >
+                <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2">
+                  <polyline points="3 6 5 6 21 6" />
+                  <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                  <line x1="10" y1="11" x2="10" y2="17" />
+                  <line x1="14" y1="11" x2="14" y2="17" />
+                </svg>
+              </div>
+              <div>
+                <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
+                  ¿Eliminar este usuario?
+                </h3>
+                <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+                  Se requiere tu confirmación para proceder
+                </p>
+              </div>
+            </div>
+
+            <p style={{ fontSize: '0.9rem', color: '#334155', lineHeight: '1.5', margin: '0 0 1rem 0' }}>
+              ¿Estás seguro de que deseas eliminar permanentemente a <strong>{userToDelete.name}</strong> (<span style={{ color: '#64748b' }}>@{userToDelete.username}</span>)?
+            </p>
+
+            <div
+              style={{
+                background: '#fffbeb',
+                border: '1px solid #fef3c7',
+                borderRadius: '12px',
+                padding: '0.85rem 1rem',
+                marginBottom: '1.5rem',
+                fontSize: '0.8rem',
+                color: '#92400e',
+                lineHeight: '1.4',
+                display: 'flex',
+                gap: '0.5rem',
+                alignItems: 'flex-start',
+              }}
+            >
+              <span style={{ fontSize: '1.1rem', lineHeight: '1' }}>⚠️</span>
+              <span>Esta acción es definitiva. Los tickets creados o asignados a este usuario quedarán desvinculados de forma segura.</span>
+            </div>
+
+            <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '0.75rem' }}>
+              <button
+                type="button"
+                onClick={() => setUserToDelete(null)}
+                disabled={deleting}
+                style={{
+                  background: '#f1f5f9',
+                  border: '1px solid #e2e8f0',
+                  color: '#475569',
+                  padding: '0.65rem 1.25rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                }}
+              >
+                Cancelar
+              </button>
+              <button
+                type="button"
+                onClick={handleDeleteUser}
+                disabled={deleting}
+                style={{
+                  background: 'linear-gradient(135deg, #e11d48 0%, #be123c 100%)',
+                  color: '#ffffff',
+                  padding: '0.65rem 1.35rem',
+                  borderRadius: '10px',
+                  fontWeight: '600',
+                  fontSize: '0.875rem',
+                  border: 'none',
+                  cursor: deleting ? 'not-allowed' : 'pointer',
+                  boxShadow: '0 4px 12px rgba(225, 29, 72, 0.35)',
+                  display: 'inline-flex',
+                  alignItems: 'center',
+                  gap: '0.4rem',
+                }}
+              >
+                {deleting ? (
+                  'Eliminando...'
+                ) : (
+                  <>
+                    <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
+                      <polyline points="3 6 5 6 21 6" />
+                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2" />
+                    </svg>
+                    Sí, Eliminar Usuario
+                  </>
+                )}
+              </button>
+            </div>
           </div>
         </div>
       )}

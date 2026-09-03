@@ -211,6 +211,61 @@ function getUserRoutes(prisma) {
     }
   });
 
+  // DELETE /api/users/:id - Eliminar un usuario (Admin/USERS_MANAGE)
+  router.delete('/:id', requirePermission('USERS_MANAGE'), async (req, res, next) => {
+    try {
+      const id = Number.parseInt(req.params.id, 10);
+      if (isNaN(id)) {
+        throw createHttpError(400, 'ID de usuario inválido.');
+      }
+
+      if (id === req.auth.user.id) {
+        throw createHttpError(400, 'No puedes eliminar tu propia cuenta de usuario.');
+      }
+
+      const targetUser = await prisma.user.findFirst({
+        where: {
+          id,
+          ...(req.auth.organizationId ? { organizationId: req.auth.organizationId } : {}),
+        }
+      });
+
+      if (!targetUser) {
+        throw createHttpError(404, 'Usuario no encontrado.');
+      }
+
+      if (req.auth.organizationId && targetUser.organizationId !== req.auth.organizationId) {
+        throw createHttpError(403, 'No tienes permiso para eliminar este usuario.');
+      }
+
+      // Desvincular tickets asignados o creados antes de eliminar para mantener integridad referencial
+      await prisma.ticket.updateMany({
+        where: { createdById: id },
+        data: { createdById: null }
+      });
+      await prisma.ticket.updateMany({
+        where: { assignedToId: id },
+        data: { assignedToId: null }
+      });
+      await prisma.ticket.updateMany({
+        where: { secondaryAssignedToId: id },
+        data: { secondaryAssignedToId: null }
+      });
+      await prisma.ticket.updateMany({
+        where: { observerId: id },
+        data: { observerId: null }
+      });
+
+      await prisma.user.delete({
+        where: { id }
+      });
+
+      res.json({ success: true, message: 'Usuario eliminado exitosamente.' });
+    } catch (error) {
+      next(error);
+    }
+  });
+
   return router;
 }
 

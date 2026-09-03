@@ -463,9 +463,7 @@ function getCommonRoutes(prisma) {
         prisma.ticket.groupBy({
           by: ['locationId'],
           _count: { _all: true },
-          where: ticketBaseFilter,
-          orderBy: { _count: { locationId: 'desc' } },
-          take: 6
+          where: ticketBaseFilter
         }).catch(() => [])
       ]);
 

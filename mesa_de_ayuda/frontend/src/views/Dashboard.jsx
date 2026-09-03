@@ -1496,13 +1496,18 @@ export default function Dashboard({ user }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem', flexWrap: 'wrap', gap: '8px' }}>
             <div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
                 <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
                   Casos por Dependencias & Oficinas
                 </h3>
                 <span style={{ fontSize: '0.68rem', fontWeight: 800, background: '#e0f2fe', color: '#0369a1', padding: '2px 8px', borderRadius: '6px' }}>
                   Jerarquía Institucional
                 </span>
+                {filters.startDate && filters.endDate && (
+                  <span style={{ fontSize: '0.66rem', fontWeight: 700, background: '#f1f5f9', color: '#002D62', border: '1px solid #e2e8f0', padding: '2px 8px', borderRadius: '5px' }}>
+                    📅 {filters.startDate} al {filters.endDate}
+                  </span>
+                )}
               </div>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                 Demanda y porcentaje de tickets por dependencia y sus oficinas asociadas

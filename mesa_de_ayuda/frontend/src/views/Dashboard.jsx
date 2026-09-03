@@ -59,6 +59,7 @@ const initialData = {
   monthlyStatusDistribution: [],
   topCategories: [],
   topRequestTypes: [],
+  sedesHierarchy: [],
   topDependencias: [],
   topOficinas: [],
   topEntities: [],
@@ -118,21 +119,6 @@ export default function Dashboard({ user }) {
   const [selectedDepId, setSelectedDepId] = useState(null);
   const [selectedSeverity, setSelectedSeverity] = useState(null);
 
-  const toggleDepExpanded = (depKey) => {
-    setExpandedDeps(prev => ({
-      ...prev,
-      [depKey]: !prev[depKey]
-    }));
-  };
-
-  const toggleAllExpanded = (expand) => {
-    const next = {};
-    (data?.topDependencias || []).forEach((d, idx) => {
-      next[d.id || d.name || idx] = expand;
-    });
-    setExpandedDeps(next);
-  };
-
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
   const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || (userRoleStr.includes('NIVEL 2') && !userRoleStr.includes('NIVEL 1') && !userRoleStr.includes('NIVEL 3'));
   const isLevel1 = userRoleStr === 'NIVEL 1' || userRoleStr === 'LEVEL_1' || userRoleStr.includes('NIVEL 1');
@@ -172,6 +158,37 @@ export default function Dashboard({ user }) {
       );
     });
   }, [data?.technicians]);
+
+  // Jerarquía Completa para la tarjeta interactiva "Casos por Ubicación" (Hooks Incondicionales)
+  const sedesHierarchy = useMemo(() => {
+    return data?.sedesHierarchy || [];
+  }, [data?.sedesHierarchy]);
+
+  const activeSede = useMemo(() => {
+    if (!sedesHierarchy.length) return null;
+    if (selectedSedeId != null) {
+      const found = sedesHierarchy.find(s => s.id === selectedSedeId);
+      if (found) return found;
+    }
+    return sedesHierarchy[0];
+  }, [sedesHierarchy, selectedSedeId]);
+
+  const activeDependencias = useMemo(() => {
+    return activeSede?.dependencias || [];
+  }, [activeSede]);
+
+  const activeDep = useMemo(() => {
+    if (!activeDependencias.length) return null;
+    if (selectedDepId != null) {
+      const found = activeDependencias.find(d => d.id === selectedDepId);
+      if (found) return found;
+    }
+    return activeDependencias[0];
+  }, [activeDependencias, selectedDepId]);
+
+  const activeOficinas = useMemo(() => {
+    return activeDep?.oficinas || [];
+  }, [activeDep]);
 
   useEffect(() => {
     let ignore = false;
@@ -273,37 +290,6 @@ export default function Dashboard({ user }) {
 
   const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
   const maxStructureCount = Math.max(...topDependencias.map(s => s.count), 1);
-
-  // Jerarquía Completa para la tarjeta interactiva "Casos por Ubicación"
-  const sedesHierarchy = useMemo(() => {
-    return data?.sedesHierarchy || [];
-  }, [data?.sedesHierarchy]);
-
-  const activeSede = useMemo(() => {
-    if (!sedesHierarchy.length) return null;
-    if (selectedSedeId != null) {
-      const found = sedesHierarchy.find(s => s.id === selectedSedeId);
-      if (found) return found;
-    }
-    return sedesHierarchy[0];
-  }, [sedesHierarchy, selectedSedeId]);
-
-  const activeDependencias = useMemo(() => {
-    return activeSede?.dependencias || [];
-  }, [activeSede]);
-
-  const activeDep = useMemo(() => {
-    if (!activeDependencias.length) return null;
-    if (selectedDepId != null) {
-      const found = activeDependencias.find(d => d.id === selectedDepId);
-      if (found) return found;
-    }
-    return activeDependencias[0];
-  }, [activeDependencias, selectedDepId]);
-
-  const activeOficinas = useMemo(() => {
-    return activeDep?.oficinas || [];
-  }, [activeDep]);
 
   return (
     <div className="dashboard-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
@@ -1702,7 +1688,7 @@ export default function Dashboard({ user }) {
                 <ResponsiveContainer width="100%" height={210}>
                   <PieChart>
                     <Pie
-                      data={activeDependencias.map(d => ({ ...d, value: Math.max(d.count, 0.001) }))}
+                      data={activeDependencias.map(d => ({ ...d, value: Math.max(Number(d?.count) || 0, 0.001) }))}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
@@ -1735,7 +1721,7 @@ export default function Dashboard({ user }) {
                     <Tooltip content={<CustomChartTooltip />} />
                     {/* Texto Central de la Dona */}
                     <text x="50%" y="46%" textAnchor="middle" dominantBaseline="middle" fill="#0f172a" fontSize="15" fontWeight="800">
-                      {activeDep ? activeDep.count : activeDependencias.reduce((sum, d) => sum + d.count, 0)}
+                      {activeDep ? (activeDep.count || 0) : activeDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0)}
                     </text>
                     <text x="50%" y="58%" textAnchor="middle" dominantBaseline="middle" fill="#64748b" fontSize="10" fontWeight="600">
                       Tickets
@@ -1824,7 +1810,7 @@ export default function Dashboard({ user }) {
                       stroke="#94a3b8"
                       fontSize={10}
                       allowDecimals={false}
-                      domain={[0, (dataMax) => Math.max(dataMax + 1, 3)]}
+                      domain={[0, (dataMax) => (Number.isFinite(dataMax) ? Math.max(dataMax + 1, 3) : 3)]}
                     />
                     <Tooltip content={<CustomChartTooltip />} />
                     <Bar
@@ -1844,7 +1830,7 @@ export default function Dashboard({ user }) {
 
             {/* Resumen de Conteo Total para Oficinas */}
             <div style={{ marginTop: 'auto', paddingTop: '8px', fontSize: '0.72rem', color: '#64748b', textAlign: 'center', borderTop: '1px solid #e2e8f0' }}>
-              Total: <strong style={{ color: '#0f172a' }}>{activeOficinas.reduce((sum, o) => sum + o.count, 0)} tickets</strong> en {activeOficinas.length} oficina(s)
+              Total: <strong style={{ color: '#0f172a' }}>{activeOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets</strong> en {activeOficinas.length} oficina(s)
             </div>
           </div>
         </div>

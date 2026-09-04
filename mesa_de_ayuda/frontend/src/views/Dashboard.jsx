@@ -378,7 +378,7 @@ export default function Dashboard({ user }) {
           <p className="dashboard-hero-subtitle" style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
             {isPersonalScope 
               ? 'Control individual de tickets asignados, tiempos de respuesta y estados de atención.'
-              : 'Métricas, estadísticas, tendencias anuales, distribución de severidad y control de acuerdos ANS.'
+              : 'Métricas, estadísticas, tendencias anuales, distribución de prioridad y control de acuerdos ANS.'
             }
           </p>
         </div>
@@ -1271,7 +1271,7 @@ export default function Dashboard({ user }) {
           </div>
         </div>
 
-        {/* Card: Radar de Atención Inmediata (Casos Críticos en Cola Activa) */}
+        {/* Card: Radar de Atención Inmediata (Casos de Alta Prioridad en Cola Activa) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -1281,29 +1281,30 @@ export default function Dashboard({ user }) {
         }}>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.35rem' }}>
             <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-              Radar de Atención Inmediata (Casos Críticos)
+              Radar de Atención Inmediata (Casos Prioritarios)
             </h3>
             <span style={{ fontSize: '0.72rem', fontWeight: 800, background: '#fee2e2', color: '#dc2626', padding: '3px 8px', borderRadius: '6px' }}>
               Acción RMM
             </span>
           </div>
           <p style={{ margin: '0 0 1.25rem 0', fontSize: '0.8rem', color: '#64748b' }}>
-            Tickets abiertos de máxima prioridad o sin técnico asignado que requieren intervención
+            Tickets abiertos de alta prioridad o sin técnico asignado que requieren intervención
           </p>
 
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {urgentTicketsRadar.length === 0 ? (
               <div style={{ textAlign: 'center', padding: '2.5rem', color: '#10b981', background: '#f0fdf4', borderRadius: '10px', border: '1px dashed #bbf7d0' }}>
                 <span style={{ fontSize: '1.8rem', display: 'block', marginBottom: '0.3rem' }}>🎉</span>
-                <strong style={{ fontSize: '0.9rem' }}>¡Cola Crítica Despejada!</strong>
+                <strong style={{ fontSize: '0.9rem' }}>¡Cola Prioritaria Despejada!</strong>
                 <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.75rem', color: '#15803d' }}>
-                  No hay tickets críticos ni casos prioritarios desatendidos en este momento.
+                  No hay tickets de alta prioridad ni casos prioritarios desatendidos en este momento.
                 </p>
               </div>
             ) : (
               urgentTicketsRadar.map((ticket) => {
                 const isIncidencia = ticket.ticketType === 'Incidencia';
-                const isCritical = ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'].includes(ticket.priority);
+                const isAlto = ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'].includes(String(ticket.priority || '').toUpperCase());
+                const prioColor = isAlto ? '#dc2626' : (['BAJO', 'LOW', 'BAJA'].includes(String(ticket.priority || '').toUpperCase()) ? '#10b981' : '#0284c7');
 
                 return (
                   <div
@@ -1315,7 +1316,7 @@ export default function Dashboard({ user }) {
                       alignItems: 'center',
                       padding: '0.75rem 1rem',
                       borderRadius: '10px',
-                      borderLeft: `4px solid ${isCritical ? '#dc2626' : '#ea580c'}`,
+                      borderLeft: `4px solid ${prioColor}`,
                       borderTop: '1px solid #f1f5f9',
                       borderRight: '1px solid #f1f5f9',
                       borderBottom: '1px solid #f1f5f9',
@@ -1345,10 +1346,10 @@ export default function Dashboard({ user }) {
                           fontWeight: 800,
                           padding: '1px 5px',
                           borderRadius: '4px',
-                          background: isCritical ? '#dc2626' : '#ea580c',
+                          background: prioColor,
                           color: '#fff'
                         }}>
-                          {ticket.priority}
+                          {ticket.priority || 'Medio'}
                         </span>
                       </div>
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', display: 'block', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
@@ -1372,7 +1373,7 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
-      {/* 📊 POWER BI CHARTS ROW 4: SEVERIDAD FUNCIONAL & CATEGORÍAS */}
+      {/* 📊 POWER BI CHARTS ROW 4: PRIORIDAD OPERATIVA & CATEGORÍAS */}
       <div 
         className="dashboard-chart-grid"
         style={{
@@ -1382,7 +1383,7 @@ export default function Dashboard({ user }) {
           marginBottom: '1.75rem'
         }}
       >
-        {/* Chart 4: Distribución Operativa por Severidad (100% Funcional e Interactiva) */}
+        {/* Chart 4: Distribución Operativa por Prioridad (100% Funcional e Interactiva) */}
         <div style={{
           background: '#ffffff',
           borderRadius: '16px',
@@ -1393,7 +1394,7 @@ export default function Dashboard({ user }) {
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
             <div>
               <h3 style={{ margin: 0, fontSize: '1.1rem', fontWeight: 800, color: '#0f172a' }}>
-                Distribución Operativa por Severidad
+                Distribución Operativa por Prioridad
               </h3>
               <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
                 Haz clic en cualquier nivel para filtrar tickets activos en la plataforma

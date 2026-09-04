@@ -12,7 +12,7 @@ import { sanitizeHtml } from '../lib/sanitize';
 const initialForm = {
   title: '',
   description: '',
-  priority: '',
+  priority: 'MEDIO',
   customerId: '',
   ticketType: 'Incidencia',
   category: '',
@@ -38,12 +38,24 @@ function stripHtml(html) {
 // Las utilidades stripHtml y RichTextEditor ahora se importan desde sus respectivos componentes modulares.
 
 /**
+ * Normaliza cualquier nivel de prioridad histórico o entrante a 'ALTO', 'MEDIO' o 'BAJO'.
+ */
+function normalizeTicketPriority(priority) {
+  const p = String(priority || '').toUpperCase().trim();
+  if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(p)) return 'ALTO';
+  if (['BAJO', 'LOW', 'BAJA'].includes(p)) return 'BAJO';
+  return 'MEDIO';
+}
+
+/**
  * Obtiene la clase CSS (color) correspondiente a cada nivel de prioridad.
  * Maps ticket priority to a specific CSS badge class for styling.
  */
 function getPriorityClass(priority) {
-  if (priority === 'CRITICAL' || priority === 'EMERGENCY') return 'badge-danger';
-  if (priority === 'WARNING') return 'badge-warning';
+  const p = normalizeTicketPriority(priority);
+  if (p === 'ALTO') return 'badge-danger';
+  if (p === 'MEDIO') return 'badge-info';
+  if (p === 'BAJO') return 'badge-success';
   return 'badge-neutral';
 }
 
@@ -52,8 +64,10 @@ function getPriorityClass(priority) {
  * Returns the human-readable label for the ticket priority level.
  */
 function getPriorityLabel(priority) {
-  const labels = { EMERGENCY: 'Emergencia', CRITICAL: 'Crítico', WARNING: 'Advertencia', NORMAL: 'Normal' };
-  return labels[priority] || priority;
+  const p = normalizeTicketPriority(priority);
+  if (p === 'ALTO') return 'Alto';
+  if (p === 'BAJO') return 'Bajo';
+  return 'Medio';
 }
 
 /**
@@ -580,7 +594,11 @@ export default function Tickets() {
   const [assignedFilter, setAssignedFilter] = useState(searchParams.get('assigned') || 'ALL');
   const [showMobileForm, setShowMobileForm] = useState(false);
   
-  const [priorityFilter, setPriorityFilter] = useState(searchParams.get('priority')?.toUpperCase() || 'ALL');
+  const [priorityFilter, setPriorityFilter] = useState(() => {
+    const p = searchParams.get('priority')?.toUpperCase()?.trim();
+    if (!p || p === 'ALL') return 'ALL';
+    return normalizeTicketPriority(p);
+  });
   const [form, setForm] = useState(initialForm);
   const [feedback, setFeedback] = useState('');
   const [error, setError] = useState('');
@@ -645,7 +663,7 @@ export default function Tickets() {
       }
       const matchesLocation = locationFilter === 'ALL' || ticket.location?.name === locationFilter;
       const matchesCategory = categoryFilter === 'ALL' || ticket.category === categoryFilter;
-      const matchesPriority = priorityFilter === 'ALL' || ticket.priority === priorityFilter;
+      const matchesPriority = priorityFilter === 'ALL' || normalizeTicketPriority(ticket.priority) === priorityFilter;
 
       let matchesDate = true;
       if (startDateFilter || endDateFilter) {
@@ -965,7 +983,7 @@ export default function Tickets() {
       id: ticket.id,
       title: ticket.title,
       description: ticket.description || '',
-      priority: ticket.priority,
+      priority: normalizeTicketPriority(ticket.priority),
       status: ticket.status || 'NEW',
       ticketType: ticket.ticketType || 'Incidencia',
       category: ticket.category || '',
@@ -2260,6 +2278,20 @@ export default function Tickets() {
                   </select>
                 </div>
 
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
+                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Prioridad</label>
+                  <select 
+                    value={form.priority || 'MEDIO'} 
+                    onChange={(e) => setForm({...form, priority: e.target.value})} 
+                    disabled={isStandardUser(currentUser)}
+                    style={{ background: isStandardUser(currentUser) ? '#f1f5f9' : '#fff', border: '1px solid #ced4da', borderRadius: '4px', padding: '0.45rem', fontSize: '0.9rem', cursor: isStandardUser(currentUser) ? 'not-allowed' : 'default' }}
+                  >
+                    <option value="BAJO">Bajo</option>
+                    <option value="MEDIO">Medio</option>
+                    <option value="ALTO">Alto</option>
+                  </select>
+                </div>
+
 	                {canConfigureTicket ? (
 	                <div style={{ display: 'flex', flexDirection: 'column', gap: '0.2rem' }}>
 	                  <label style={{ color: '#002D62', fontWeight: 600, fontSize: '0.85rem' }}>Tipo</label>
@@ -2805,6 +2837,15 @@ export default function Tickets() {
                     </select>
                   </div>
                   <div className="field">
+                    <label htmlFor="ticket-priority-filter">Prioridad</label>
+                    <select id="ticket-priority-filter" value={priorityFilter} onChange={(event) => setPriorityFilter(event.target.value)}>
+                      <option value="ALL">----</option>
+                      <option value="ALTO">Alto</option>
+                      <option value="MEDIO">Medio</option>
+                      <option value="BAJO">Bajo</option>
+                    </select>
+                  </div>
+                  <div className="field">
                     <label htmlFor="ticket-category-filter">Categoria</label>
                     <select id="ticket-category-filter" value={categoryFilter} onChange={(event) => setCategoryFilter(event.target.value)}>
                       <option value="ALL">----</option>
@@ -2824,6 +2865,7 @@ export default function Tickets() {
                       <tr>
                         <th>ID</th>
                         <th>Titulo</th>
+                        <th className="col-hide-mobile">Prioridad</th>
                         <th className="col-hide-mobile">Usuario</th>
                         <th className="col-hide-mobile">Ubicación</th>
                         <th>ANS</th>
@@ -2839,6 +2881,11 @@ export default function Tickets() {
                           <td>
                             <strong>{ticket.title}</strong>
                             <div className="muted-text">{stripHtml(ticket.description)}</div>
+                          </td>
+                          <td className="col-hide-mobile">
+                            <span className={`badge ${getPriorityClass(ticket.priority)}`}>
+                              {getPriorityLabel(ticket.priority)}
+                            </span>
                           </td>
                           <td className="col-hide-mobile">
                             <div style={{ display: 'flex', alignItems: 'center', gap: '0.55rem' }}>
@@ -2908,7 +2955,12 @@ export default function Tickets() {
                         }}
                       >
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          <span style={{ fontWeight: 800, color: '#1e40af', fontSize: '0.85rem' }}>#{ticket.id}</span>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+                            <span style={{ fontWeight: 800, color: '#1e40af', fontSize: '0.85rem' }}>#{ticket.id}</span>
+                            <span className={`badge ${getPriorityClass(ticket.priority)}`} style={{ fontSize: '0.68rem', padding: '1px 6px' }}>
+                              {getPriorityLabel(ticket.priority)}
+                            </span>
+                          </div>
                           <span className={`badge ${getStatusClass(ticket.status)}`} style={{ fontSize: '0.72rem' }}>
                             {getStatusLabel(ticket.status)}
                           </span>
@@ -2950,6 +3002,15 @@ export default function Tickets() {
                   <select id="ticket-type" value={form.ticketType} onChange={(e) => setForm({...form, ticketType: e.target.value, category: ''})} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '0.4rem 0.6rem' }}>
                     <option value="Incidencia">Incidencia</option>
                     <option value="Solicitud">Solicitud</option>
+                  </select>
+                </div>
+
+                <div className="field full" style={{ gap: '0.2rem' }}>
+                  <label htmlFor="ticket-priority" style={{ color: '#002D62', fontWeight: 500 }}>Prioridad</label>
+                  <select id="ticket-priority" value={form.priority || 'MEDIO'} onChange={(e) => setForm({...form, priority: e.target.value})} style={{ background: '#fff', border: '1px solid #ccc', borderRadius: '3px', padding: '0.4rem 0.6rem' }}>
+                    <option value="BAJO">Bajo</option>
+                    <option value="MEDIO">Medio</option>
+                    <option value="ALTO">Alto</option>
                   </select>
                 </div>
                 

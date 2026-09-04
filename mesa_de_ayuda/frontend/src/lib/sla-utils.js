@@ -9,15 +9,25 @@ export function getSlaInfo(ticket) {
   const createdDate = new Date(ticket.createdAt);
   const endDate = ticket.closedAt ? new Date(ticket.closedAt) : (ticket.resolvedAt ? new Date(ticket.resolvedAt) : new Date());
   
-  // Priority to hours mapping
+  // Priority to hours mapping (Alto: 8h, Medio: 24h, Bajo: 48h)
   const priorityHours = {
-    CRITICA: 4,
+    ALTO: 8,
+    MEDIO: 24,
+    BAJO: 48,
     ALTA: 8,
     MEDIA: 24,
     BAJA: 48,
+    HIGH: 8,
+    MEDIUM: 24,
+    LOW: 48,
+    CRITICA: 8,
+    CRITICAL: 8,
+    EMERGENCY: 8,
+    URGENTE: 8,
   };
 
-  const totalHoursAllowed = priorityHours[ticket.priority] || 24;
+  const prioKey = String(ticket.priority || '').toUpperCase().trim();
+  const totalHoursAllowed = priorityHours[prioKey] || 24;
   const businessHoursPerDay = 7.5; // 4h (morning) + 3.5h (afternoon)
 
   // Simplified business hours calculation

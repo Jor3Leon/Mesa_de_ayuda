@@ -62,7 +62,16 @@ function getTicketRoutes(prisma) {
         throw createValidationError('El título (subject) es requerido.', 'title');
       }
       const description = sanitizeHtmlServer(requireNonEmptyString(req.body.description, 'description'));
-      const priority = normalizeOptionalString(req.body.priority) || 'BAJA';
+      const rawPriority = (normalizeOptionalString(req.body.priority) || 'MEDIO').toUpperCase();
+      let priority = 'MEDIO';
+      if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(rawPriority)) {
+        priority = 'ALTO';
+      } else if (['BAJO', 'LOW', 'BAJA'].includes(rawPriority)) {
+        priority = 'BAJO';
+      } else {
+        priority = 'MEDIO';
+      }
+
       
       // Si no viene customerId, usamos un cliente por defecto o el ID del creador
       const customerId = normalizeOptionalPositiveInt(req.body.customerId) || 1; 
@@ -230,7 +239,16 @@ function getTicketRoutes(prisma) {
           updateData.title = incomingTitle.toUpperCase();
         }
         if (req.body.description !== undefined) updateData.description = sanitizeHtmlServer(requireNonEmptyString(req.body.description, 'description'));
-        if (req.body.priority !== undefined) updateData.priority = requireNonEmptyString(req.body.priority, 'priority');
+        if (req.body.priority !== undefined) {
+          const rawPrio = requireNonEmptyString(req.body.priority, 'priority').toUpperCase();
+          if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(rawPrio)) {
+            updateData.priority = 'ALTO';
+          } else if (['BAJO', 'LOW', 'BAJA'].includes(rawPrio)) {
+            updateData.priority = 'BAJO';
+          } else {
+            updateData.priority = 'MEDIO';
+          }
+        }
         if (req.body.status !== undefined) updateData.status = requireNonEmptyString(req.body.status, 'status');
         if (req.body.category !== undefined) updateData.category = normalizeOptionalString(req.body.category);
         if (req.body.customerId !== undefined) updateData.customerId = requirePositiveInt(req.body.customerId, 'customerId');

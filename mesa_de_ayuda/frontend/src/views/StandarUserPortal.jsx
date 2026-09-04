@@ -1,6 +1,26 @@
 import React, { useEffect, useState, useMemo } from 'react';
 import { apiRequest } from '../lib/api';
 
+const STATUS_MAP = {
+  NEW: { label: 'Nuevo', bg: '#fef3c7', color: '#b45309' },
+  OPEN: { label: 'En Progreso', bg: '#e0f2fe', color: '#0369a1' },
+  IN_PROGRESS: { label: 'En Progreso', bg: '#e0f2fe', color: '#0369a1' },
+  SCHEDULED: { label: 'Programado', bg: '#fef3c7', color: '#b45309' },
+  RESOLVED: { label: 'Resuelto', bg: '#dcfce7', color: '#15803d' },
+  CLOSED: { label: 'Cerrado', bg: '#f1f5f9', color: '#475569' },
+};
+
+const PRIORITY_MAP = {
+  ALTO: { label: 'Alto', color: '#dc2626', bg: '#fee2e2' },
+  MEDIO: { label: 'Medio', color: '#0284c7', bg: '#e0f2fe' },
+  BAJO: { label: 'Bajo', color: '#10b981', bg: '#dcfce7' },
+  HIGH: { label: 'Alto', color: '#dc2626', bg: '#fee2e2' },
+  MEDIUM: { label: 'Medio', color: '#0284c7', bg: '#e0f2fe' },
+  LOW: { label: 'Bajo', color: '#10b981', bg: '#dcfce7' },
+  CRITICAL: { label: 'Alto', color: '#dc2626', bg: '#fee2e2' },
+  EMERGENCY: { label: 'Alto', color: '#dc2626', bg: '#fee2e2' },
+};
+
 export default function StandarUserPortal() {
   const [tickets, setTickets] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -530,18 +550,32 @@ export default function StandarUserPortal() {
                 >
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', marginBottom: '0.5rem' }}>
                     <span style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b' }}>#{t.id}</span>
-                    <span
-                      style={{
-                        fontSize: '0.7rem',
-                        fontWeight: '700',
-                        padding: '0.2rem 0.5rem',
-                        borderRadius: '6px',
-                        background: isIncidencia ? '#fef2f2' : '#eff6ff',
-                        color: isIncidencia ? '#ef4444' : '#2563eb',
-                      }}
-                    >
-                      {isIncidencia ? '🚨 Incidencia' : '📋 Solicitud'}
-                    </span>
+                    <div style={{ display: 'flex', gap: '0.35rem', alignItems: 'center' }}>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '6px',
+                          background: isIncidencia ? '#fef2f2' : '#eff6ff',
+                          color: isIncidencia ? '#ef4444' : '#2563eb',
+                        }}
+                      >
+                        {isIncidencia ? '🚨 Incidencia' : '📋 Solicitud'}
+                      </span>
+                      <span
+                        style={{
+                          fontSize: '0.7rem',
+                          fontWeight: '700',
+                          padding: '0.2rem 0.5rem',
+                          borderRadius: '6px',
+                          background: priorityInfo.bg || '#e0f2fe',
+                          color: priorityInfo.color || '#0284c7',
+                        }}
+                      >
+                        {priorityInfo.label || 'Medio'}
+                      </span>
+                    </div>
                   </div>
 
                   <h4 style={{ margin: '0 0 0.5rem 0', fontSize: '0.95rem', color: '#0f172a', lineHeight: '1.3' }}>

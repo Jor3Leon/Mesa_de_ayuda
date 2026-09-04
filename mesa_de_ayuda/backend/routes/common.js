@@ -236,7 +236,7 @@ function getCommonRoutes(prisma) {
         recentActivities
       ] = await Promise.all([
         prisma.ticket.count({ where: { ...orgFilter, status: { in: ['NEW', 'OPEN', 'IN_PROGRESS'] } } }),
-        prisma.ticket.count({ where: { ...orgFilter, priority: { in: ['CRITICAL', 'EMERGENCY'] }, status: { not: 'CLOSED' } } }),
+        prisma.ticket.count({ where: { ...orgFilter, priority: { in: ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'EMERGENCY'] }, status: { not: 'CLOSED' } } }),
         prisma.asset.count({ where: orgFilter }),
         prisma.asset.count({ where: { ...orgFilter, status: 'ONLINE' } }),
         prisma.customer.count({ where: orgFilter }),
@@ -394,24 +394,17 @@ function getCommonRoutes(prisma) {
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: { in: ['PENDING', 'WAITING', 'EN_ESPERA'] } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'RESOLVED' } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, status: 'CLOSED' } }).catch(() => 0),
-        prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
+        prisma.ticket.count({ where: { ...ticketBaseFilter, priority: { in: ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'EMERGENCY', 'CRITICA', 'URGENTE'] }, status: { notIn: ['CLOSED', 'RESOLVED'] } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { in: ['Incidencia', 'Incidente', 'Falla'] } } }).catch(() => 0),
         prisma.ticket.count({ where: { ...ticketBaseFilter, ticketType: { notIn: ['Incidencia', 'Incidente', 'Falla'] } } }).catch(() => 0),
         isLevel2 ? 0 : prisma.ticket.count({ where: { ...orgFilter, ...dateFilter, ...typeFilter, assignedToId: null, status: { in: ['NEW', 'OPEN'] } } }).catch(() => 0),
 
-        // SLA Overdue counts per priority
+        // SLA Overdue counts per priority (Alto: 8h, Medio: 24h, Bajo: 48h)
+        0, // Overdue critical eliminado
         prisma.ticket.count({
           where: {
             ...ticketBaseFilter,
-            priority: { in: ['CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'] },
-            status: { notIn: ['CLOSED', 'RESOLVED'] },
-            createdAt: { lt: fourHoursAgo }
-          }
-        }).catch(() => 0),
-        prisma.ticket.count({
-          where: {
-            ...ticketBaseFilter,
-            priority: { in: ['HIGH', 'ALTA'] },
+            priority: { in: ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'] },
             status: { notIn: ['CLOSED', 'RESOLVED'] },
             createdAt: { lt: eightHoursAgo }
           }
@@ -419,7 +412,7 @@ function getCommonRoutes(prisma) {
         prisma.ticket.count({
           where: {
             ...ticketBaseFilter,
-            priority: { in: ['MEDIUM', 'MEDIA'] },
+            priority: { in: ['MEDIO', 'MEDIUM', 'MEDIA'] },
             status: { notIn: ['CLOSED', 'RESOLVED'] },
             createdAt: { lt: twentyFourHoursAgo }
           }
@@ -427,7 +420,7 @@ function getCommonRoutes(prisma) {
         prisma.ticket.count({
           where: {
             ...ticketBaseFilter,
-            priority: { in: ['LOW', 'BAJA'] },
+            priority: { in: ['BAJO', 'LOW', 'BAJA'] },
             status: { notIn: ['CLOSED', 'RESOLVED'] },
             createdAt: { lt: fortyEightHoursAgo }
           }
@@ -817,29 +810,44 @@ function getCommonRoutes(prisma) {
 
       const topDependencias = dependenciasTree;
 
-      // Format Severity Distribution
-      const severityOrder = ['CRITICAL', 'HIGH', 'MEDIUM', 'LOW'];
+      // Format Severity/Priority Distribution (Bajo, Medio, Alto)
+      const severityOrder = ['ALTO', 'MEDIO', 'BAJO'];
       const severityLabels = {
-        CRITICAL: 'Crítico / Emergencia',
-        HIGH: 'Alta Prioridad',
-        MEDIUM: 'Media Prioridad',
-        LOW: 'Baja Prioridad'
+        ALTO: 'Alta Prioridad',
+        MEDIO: 'Media Prioridad',
+        BAJO: 'Baja Prioridad'
       };
       const severityColors = {
-        CRITICAL: '#dc2626',
-        HIGH: '#ea580c',
-        MEDIUM: '#2563eb',
-        LOW: '#059669'
+        ALTO: '#dc2626',
+        MEDIO: '#0284c7',
+        BAJO: '#10b981'
       };
 
-      const ticketsByPriority = (ticketsByPriorityRaw || []).reduce((acc, curr) => {
-        if (curr.priority) acc[curr.priority] = curr._count?._all || 0;
-        return acc;
-      }, {});
+      const normalizedPrioCounts = { ALTO: 0, MEDIO: 0, BAJO: 0 };
+      (ticketsByPriorityRaw || []).forEach(curr => {
+        const up = String(curr.priority || '').toUpperCase().trim();
+        const count = curr._count?._all || 0;
+        if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up)) {
+          normalizedPrioCounts.ALTO += count;
+        } else if (['BAJO', 'LOW', 'BAJA'].includes(up)) {
+          normalizedPrioCounts.BAJO += count;
+        } else {
+          normalizedPrioCounts.MEDIO += count;
+        }
+      });
+
+      const ticketsByPriority = {
+        ALTO: normalizedPrioCounts.ALTO,
+        MEDIO: normalizedPrioCounts.MEDIO,
+        BAJO: normalizedPrioCounts.BAJO,
+        Alto: normalizedPrioCounts.ALTO,
+        Medio: normalizedPrioCounts.MEDIO,
+        Bajo: normalizedPrioCounts.BAJO
+      };
 
       const totalOpenPrio = openTickets || 1;
       const severityDistribution = severityOrder.map(key => {
-        const count = ticketsByPriority[key] || 0;
+        const count = normalizedPrioCounts[key] || 0;
         return {
           priority: key,
           label: severityLabels[key],
@@ -1005,15 +1013,22 @@ function getCommonRoutes(prisma) {
 
       // 10. Calculate Urgent Tickets Radar (Top 5 Priority Active Tickets)
       const urgentTicketsRadar = (activeTickets || [])
-        .filter(t => ['CRITICAL', 'EMERGENCY', 'HIGH', 'CRITICA', 'URGENTE', 'ALTA'].includes(t.priority) || !t.assignedTo)
+        .filter(t => {
+          const up = String(t.priority || '').toUpperCase().trim();
+          return ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up) || !t.assignedTo;
+        })
         .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
         .slice(0, 5)
         .map(t => {
           const elapsedHours = Math.round((now - new Date(t.createdAt)) / (1000 * 60 * 60));
+          const up = String(t.priority || '').toUpperCase().trim();
+          const displayPriority = ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up)
+            ? 'Alto'
+            : (['BAJO', 'LOW', 'BAJA'].includes(up) ? 'Bajo' : 'Medio');
           return {
             id: t.id,
             title: t.title,
-            priority: t.priority,
+            priority: displayPriority,
             status: t.status,
             ticketType: t.ticketType || 'Incidencia',
             assignedTo: t.assignedTo?.name || 'Sin Asignar',
@@ -1031,7 +1046,8 @@ function getCommonRoutes(prisma) {
           pendingTickets,
           resolvedTickets,
           closedTickets,
-          criticalTickets,
+          criticalTickets: 0,
+          highPriorityTickets: normalizedPrioCounts.ALTO,
           incidentCount: incidentCount || Math.round(totalTickets * 0.55),
           requestCount: requestCount || Math.max(0, totalTickets - Math.round(totalTickets * 0.55)),
           overdueTickets,

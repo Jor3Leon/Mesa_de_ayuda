@@ -169,16 +169,19 @@ function getAnalyticsRoutes(prisma) {
       let overdueCount = 0;
 
       const slaThresholdHours = {
-        CRITICAL: 4,
-        EMERGENCY: 4,
-        CRITICA: 4,
-        URGENTE: 4,
+        ALTO: 8,
+        MEDIO: 24,
+        BAJO: 48,
         HIGH: 8,
         ALTA: 8,
         MEDIUM: 24,
         MEDIA: 24,
         LOW: 48,
-        BAJA: 48
+        BAJA: 48,
+        CRITICAL: 8,
+        EMERGENCY: 8,
+        CRITICA: 8,
+        URGENTE: 8
       };
 
       allTicketsForMetrics.forEach(t => {
@@ -361,7 +364,20 @@ function getAnalyticsRoutes(prisma) {
         isAdmin: Boolean(isAdmin),
         canSwitchView: Boolean(isAdmin || isLevel1 || isLevel3),
         viewMode: forcePersonal ? 'personal' : 'global',
-        ticketsByPriority: ticketsByPriorityRaw.map(p => ({ label: p.priority, value: p._count.id })),
+        ticketsByPriority: (() => {
+          const map = { Alto: 0, Medio: 0, Bajo: 0 };
+          (ticketsByPriorityRaw || []).forEach(p => {
+            const up = String(p.priority || '').toUpperCase().trim();
+            if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up)) {
+              map.Alto += (p._count?.id || 0);
+            } else if (['BAJO', 'LOW', 'BAJA'].includes(up)) {
+              map.Bajo += (p._count?.id || 0);
+            } else {
+              map.Medio += (p._count?.id || 0);
+            }
+          });
+          return Object.entries(map).map(([label, value]) => ({ label, value }));
+        })(),
         ticketsByStatus: ticketsByStatusRaw.map(s => ({ label: s.status, value: s._count.id })),
         ticketsByCategory: ticketsByCategoryRaw.filter(c => c.category).map(c => ({ label: c.category, value: c._count.id })),
         dailyEvolution,

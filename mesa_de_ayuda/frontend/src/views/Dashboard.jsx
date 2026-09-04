@@ -529,9 +529,9 @@ export default function Dashboard({ user }) {
         className="dashboard-kpi-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 165px), 1fr))',
-          gap: '0.65rem',
-          marginBottom: '1.25rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem'
         }}
       >
         {/* Total Tickets */}
@@ -541,7 +541,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #3b82f6',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -549,8 +549,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -558,13 +558,13 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Total Tickets
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
           </div>
           <div style={{ display: 'flex', alignItems: 'baseline' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.totalTickets.toLocaleString()}
             </strong>
           </div>
@@ -577,7 +577,7 @@ export default function Dashboard({ user }) {
           style={{
             background: k.overdueTickets > 0 ? '#fff5f5' : '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: k.overdueTickets > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
             borderLeft: '3.5px solid #dc2626',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -585,8 +585,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -594,16 +594,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#dc2626', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Desfasados
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#dc2626', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#dc2626', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.overdueTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               {k.overdueTickets > 0 ? 'SLA excedido' : 'Al día'}
             </span>
           </div>
@@ -616,7 +616,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #0284c7',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -624,8 +624,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -633,16 +633,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Asignados
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>👤</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>👤</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#002D62', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#002D62', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.assignedTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Con técnico
             </span>
           </div>
@@ -655,7 +655,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #8b5cf6',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -663,8 +663,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -672,16 +672,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               En Progreso
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚡</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⚡</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#8b5cf6', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#8b5cf6', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.inProgressTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               En atención
             </span>
           </div>
@@ -694,7 +694,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #f59e0b',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -702,8 +702,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -711,16 +711,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               En Espera
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.pendingTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Respuesta ext.
             </span>
           </div>
@@ -733,7 +733,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #10b981',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -741,8 +741,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -750,16 +750,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Resueltos
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#10b981', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#10b981', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.resolvedTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Solucionados
             </span>
           </div>
@@ -772,7 +772,7 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #64748b',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
@@ -780,8 +780,8 @@ export default function Dashboard({ user }) {
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
@@ -789,16 +789,16 @@ export default function Dashboard({ user }) {
           onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Cerrados
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🔒</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🔒</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#475569', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#475569', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.closedTickets}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Conformidad
             </span>
           </div>
@@ -810,35 +810,36 @@ export default function Dashboard({ user }) {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #059669',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Cumplimiento ANS
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🎯</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🎯</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {k.slaCompliance}%
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#059669', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Meta: &gt;95%
             </span>
           </div>
         </div>
       </div>
+
 
       {/* 📈 POWER BI CHARTS ROW 1: EVOLUCIÓN ANUAL & TENDENCIAS */}
       <div 

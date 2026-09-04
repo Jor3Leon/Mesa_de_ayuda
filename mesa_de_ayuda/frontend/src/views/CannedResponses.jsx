@@ -177,187 +177,161 @@ export default function CannedResponses() {
       </div>
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}
+      {/* 📊 ENTERPRISE KPI METRICS GRID */}
       <div
+        className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem',
         }}
       >
         {/* KPI 1: Plantillas */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #2563eb',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(37, 99, 235, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #eff6ff 0%, #dbeafe 100%)',
-              border: '1px solid #bfdbfe',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#2563eb',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <polyline points="10 9 9 9 8 9" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Plantillas
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Plantillas Totales
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#2563eb', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {responses.length}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>
-              Respuestas homologadas
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Respuestas
+            </span>
           </div>
         </div>
 
         {/* KPI 2: Categorías */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(5, 150, 105, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
-              border: '1px solid #6ee7b7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#059669',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Categorías
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>📁</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {uniqueCategories.length}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              Áreas temáticas
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Áreas
+            </span>
           </div>
         </div>
 
         {/* KPI 3: Atajos */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #7c3aed',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(124, 58, 237, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)',
-              border: '1px solid #c4b5fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#7c3aed',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polygon points="13 2 3 14 12 14 11 22 21 10 12 10 13 2" />
-            </svg>
-          </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Atajos Rápidos
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⚡</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#7c3aed', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {shortcutsCount}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
-              Comandos /shortcut
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              /shortcuts
+            </span>
           </div>
         </div>
 
         {/* KPI 4: Aceleración */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #d97706',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(217, 119, 6, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              border: '1px solid #fcd34d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v4M12 18v4M4.93 4.93l2.83 2.83M16.24 16.24l2.83 2.83M2 12h4M18 12h4M4.93 19.07l2.83-2.83M16.24 7.76l2.83-2.83" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Ahorro Tiempo
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⏱️</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Ahorro de Tiempo
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
               ~85%
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
-              En primera respuesta
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Respuesta
+            </span>
           </div>
         </div>
       </div>

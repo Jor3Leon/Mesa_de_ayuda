@@ -600,72 +600,159 @@ export default function Categories() {
 
       {/* 📊 KPI METRICS GRID */}
       <div
+        className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem',
         }}
       >
         {/* KPI 1: Total */}
-        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)', border: '1px solid #6ee7b7', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#059669' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M4 19.5A2.5 2.5 0 0 1 6.5 17H20" />
-              <path d="M6.5 2H20v20H6.5A2.5 2.5 0 0 1 4 19.5v-15A2.5 2.5 0 0 1 6.5 2z" />
-            </svg>
+        <div
+          className="stat-card"
+          style={{
+            background: '#ffffff',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(5, 150, 105, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Total Categorías
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>📁</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Total Categorías</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{categories.length}</div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>En 2 tipologías de servicio</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {categories.length}
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Catálogo
+            </span>
           </div>
         </div>
 
         {/* KPI 2: Activas */}
-        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #eff6ff 0%, #bfdbfe 100%)', border: '1px solid #93c5fd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#2563eb' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
-              <polyline points="22 4 12 14.01 9 11.01" />
-            </svg>
+        <div
+          className="stat-card"
+          style={{
+            background: '#ffffff',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #2563eb',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(37, 99, 235, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Activas
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🟢</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Categorías Activas</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{activeCount}</div>
-            <div style={{ fontSize: '0.75rem', color: '#2563eb', fontWeight: '600', marginTop: '0.2rem' }}>Disponibles para radicación</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#2563eb', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {activeCount}
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Radicables
+            </span>
           </div>
         </div>
 
         {/* KPI 3: Grupos */}
-        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)', border: '1px solid #c4b5fd', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#7c3aed' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="3" y="3" width="7" height="7" />
-              <rect x="14" y="3" width="7" height="7" />
-              <rect x="14" y="14" width="7" height="7" />
-              <rect x="3" y="14" width="7" height="7" />
-            </svg>
+        <div
+          className="stat-card"
+          style={{
+            background: '#ffffff',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #7c3aed',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(124, 58, 237, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Grupos
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🗂️</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>Grupos Principales</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>{groupsCount}</div>
-            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>Estructura por áreas</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#7c3aed', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              {groupsCount}
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Estructura
+            </span>
           </div>
         </div>
 
         {/* KPI 4: SLA */}
-        <div style={{ background: '#ffffff', borderRadius: '14px', padding: '1.25rem 1.5rem', boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)', border: '1px solid #e2e8f0', display: 'flex', alignItems: 'center', gap: '1.25rem' }}>
-          <div style={{ width: '50px', height: '50px', borderRadius: '12px', background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)', border: '1px solid #fcd34d', display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#d97706' }}>
-            <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10" />
-              <polyline points="12 6 12 12 16 14" />
-            </svg>
+        <div
+          className="stat-card"
+          style={{
+            background: '#ffffff',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
+            border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #d97706',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+            display: 'flex',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(217, 119, 6, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              ANS Promedio
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⏱️</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>ANS Promedio</div>
-            <div style={{ fontSize: '1.75rem', fontWeight: '800', color: '#002D62', lineHeight: 1.2 }}>1h - 8h</div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>Ventana de resolución</div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
+              1h - 8h
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Resolución
+            </span>
           </div>
         </div>
       </div>

@@ -169,191 +169,159 @@ export default function Customers() {
 
       {/* 📊 ENTERPRISE KPI METRICS GRID */}
       <div
+        className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))',
-          gap: '1rem',
-          marginBottom: '1.75rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem',
         }}
       >
         {/* KPI 1: Clientes */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #0284c7',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(2, 132, 199, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #e0f2fe 0%, #bae6fd 100%)',
-              border: '1px solid #7dd3fc',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#0284c7',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2" />
-              <circle cx="9" cy="7" r="4" />
-              <path d="M23 21v-2a4 4 0 0 0-3-3.87" />
-              <path d="M16 3.13a4 4 0 0 1 0 7.75" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Entidades
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🏢</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Entidades Registradas
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0284c7', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {customers.length}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: '600', marginTop: '0.2rem' }}>
-              Clientes & Organizaciones
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Clientes
+            </span>
           </div>
         </div>
 
         {/* KPI 2: Tickets */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #d97706',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(217, 119, 6, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #fef3c7 0%, #fde68a 100%)',
-              border: '1px solid #fcd34d',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#d97706',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M14.5 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V7.5L14.5 2z" />
-              <polyline points="14 2 14 8 20 8" />
-              <line x1="16" y1="13" x2="8" y2="13" />
-              <line x1="16" y1="17" x2="8" y2="17" />
-              <line x1="10" y1="9" x2="8" y2="9" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Tickets
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>📑</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Tickets Acumulados
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#d97706', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {totalTickets}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#d97706', fontWeight: '600', marginTop: '0.2rem' }}>
-              Solicitudes e incidentes
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Acumulados
+            </span>
           </div>
         </div>
 
         {/* KPI 3: Activos */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #059669',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(5, 150, 105, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #ecfdf5 0%, #a7f3d0 100%)',
-              border: '1px solid #6ee7b7',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#059669',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <rect x="2" y="3" width="20" height="14" rx="2" ry="2" />
-              <line x1="8" y1="21" x2="16" y2="21" />
-              <line x1="12" y1="17" x2="12" y2="21" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Activos
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>💻</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Activos Instalados
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {totalAssets}
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#059669', fontWeight: '600', marginTop: '0.2rem' }}>
-              Equipos y hardware
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Instalados
+            </span>
           </div>
         </div>
 
         {/* KPI 4: Cobertura */}
         <div
+          className="stat-card"
           style={{
             background: '#ffffff',
-            borderRadius: '14px',
-            padding: '1.25rem 1.5rem',
-            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04), 0 1px 2px rgba(0, 0, 0, 0.06)',
+            borderRadius: '10px',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
+            borderLeft: '3.5px solid #7c3aed',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
-            alignItems: 'center',
-            gap: '1.25rem',
+            flexDirection: 'column',
+            justifyContent: 'center',
+            gap: '0.12rem',
+            minHeight: '54px',
+            boxSizing: 'border-box',
+            transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)'
           }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 14px -3px rgba(124, 58, 237, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 1px 3px rgba(0,0,0,0.03)'; }}
         >
-          <div
-            style={{
-              width: '52px',
-              height: '52px',
-              borderRadius: '12px',
-              background: 'linear-gradient(135deg, #f5f3ff 0%, #ddd6fe 100%)',
-              border: '1px solid #c4b5fd',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#7c3aed',
-            }}
-          >
-            <svg width="26" height="26" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 22s8-4 8-10V5l-8-3-8 3v7c0 6 8 10 8 10z" />
-            </svg>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+              Servicio
+            </span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🛡️</span>
           </div>
-          <div>
-            <div style={{ fontSize: '0.75rem', fontWeight: '700', color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
-              Estado del Servicio
-            </div>
-            <div style={{ fontSize: '1.875rem', fontWeight: '800', color: '#0f172a', lineHeight: 1.2 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#7c3aed', lineHeight: 1, letterSpacing: '-0.02em' }}>
               100%
-            </div>
-            <div style={{ fontSize: '0.75rem', color: '#7c3aed', fontWeight: '600', marginTop: '0.2rem' }}>
-              Disponibilidad SLA
-            </div>
+            </strong>
+            <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              SLA Activo
+            </span>
           </div>
         </div>
       </div>

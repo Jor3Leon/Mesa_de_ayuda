@@ -253,9 +253,9 @@ export default function Analytics({ user }) {
         className="analytics-kpi-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
-          gap: '0.65rem',
-          marginBottom: '1.25rem'
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem'
         }}
       >
         <StatCard

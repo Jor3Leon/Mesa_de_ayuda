@@ -590,8 +590,8 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
       {error && <div className="feedback error" style={{ margin: '1rem 0' }}>{error}</div>}
 
       {/* 🌟 4 TARJETAS KPI DEBAJO DEL HEADER */}
-      <section className="asset-kpi-grid" style={{ marginBottom: '1.25rem' }}>
-        <article className="asset-kpi-card" title="Total de Activos Registrados en CMDB">
+      <section className="asset-kpi-grid">
+        <article className="asset-kpi-card" style={{ borderLeft: '3.5px solid #002D62' }} title="Total de Activos Registrados en CMDB">
           <div className="asset-kpi-card-header">
             <span className="asset-kpi-card-title" style={{ color: '#002D62' }}>Total Activos</span>
             <span className="asset-kpi-card-icon">🖥️</span>
@@ -602,7 +602,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
           </div>
         </article>
 
-        <article className="asset-kpi-card" title="Dispositivos activos y comunicándose con el agente">
+        <article className="asset-kpi-card" style={{ borderLeft: '3.5px solid #059669' }} title="Dispositivos activos y comunicándose con el agente">
           <div className="asset-kpi-card-header">
             <span className="asset-kpi-card-title" style={{ color: '#059669' }}>En Línea</span>
             <span className="asset-kpi-card-icon">🟢</span>
@@ -613,18 +613,18 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
           </div>
         </article>
 
-        <article className="asset-kpi-card" title="Dispositivos con alertas o desconectados">
+        <article className="asset-kpi-card" style={{ borderLeft: '3.5px solid #d97706' }} title="Dispositivos con alertas o desconectados">
           <div className="asset-kpi-card-header">
             <span className="asset-kpi-card-title" style={{ color: '#d97706' }}>En Riesgo / Offline</span>
             <span className="asset-kpi-card-icon">⚠️</span>
           </div>
           <div className="asset-kpi-card-body">
             <strong className="asset-kpi-card-value" style={{ color: '#d97706' }}>{stats.warning}</strong>
-            <span className="asset-kpi-card-subtitle">Atención técnica requerida</span>
+            <span className="asset-kpi-card-subtitle">Atención técnica</span>
           </div>
         </article>
 
-        <article className="asset-kpi-card" title="Porcentaje de endpoints con agente de seguridad activo">
+        <article className="asset-kpi-card" style={{ borderLeft: '3.5px solid #0284c7' }} title="Porcentaje de endpoints con agente de seguridad activo">
           <div className="asset-kpi-card-header">
             <span className="asset-kpi-card-title" style={{ color: '#0284c7' }}>Cobertura Endpoint</span>
             <span className="asset-kpi-card-icon">🛡️</span>

@@ -864,6 +864,7 @@ export default function Assets() {
       <section className="asset-kpi-grid">
         <article 
           className={`asset-kpi-card ${categoryFilter === 'ALL' ? 'active-kpi-all' : ''}`}
+          style={{ borderLeft: '3.5px solid #002D62' }}
           onClick={() => setCategoryFilter('ALL')}
           title="Ver todos los dispositivos del inventario"
         >
@@ -879,6 +880,7 @@ export default function Assets() {
 
         <article 
           className={`asset-kpi-card ${categoryFilter === 'Equipos de Computo' ? 'active-kpi-compute' : ''}`}
+          style={{ borderLeft: '3.5px solid #0284c7' }}
           onClick={() => setCategoryFilter(categoryFilter === 'Equipos de Computo' ? 'ALL' : 'Equipos de Computo')}
           title="Filtrar por Equipos de Cómputo (PC, Portátiles, Todo en Uno)"
         >
@@ -894,6 +896,7 @@ export default function Assets() {
 
         <article 
           className={`asset-kpi-card ${categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora' ? 'active-kpi-printer' : ''}`}
+          style={{ borderLeft: '3.5px solid #059669' }}
           onClick={() => setCategoryFilter(categoryFilter.includes('Impresora') ? 'ALL' : 'Impresoras y/o Escaneres')}
           title="Filtrar por Impresoras, Escáneres y Multifuncionales"
         >
@@ -909,6 +912,7 @@ export default function Assets() {
 
         <article 
           className={`asset-kpi-card ${categoryFilter === 'Dispositivo de Red' ? 'active-kpi-network' : ''}`}
+          style={{ borderLeft: '3.5px solid #7c3aed' }}
           onClick={() => setCategoryFilter(categoryFilter === 'Dispositivo de Red' ? 'ALL' : 'Dispositivo de Red')}
           title="Filtrar por Dispositivos de Red (Switches, Routers, Servidores, Módems)"
         >

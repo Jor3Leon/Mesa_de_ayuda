@@ -109,9 +109,9 @@ export default function Patches() {
         className="stat-grid"
         style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 170px), 1fr))',
-          gap: '0.65rem',
-          marginBottom: '1.25rem',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
+          gap: '0.55rem',
+          marginBottom: '1.15rem',
         }}
       >
         {/* KPI 1: Críticos */}
@@ -120,31 +120,31 @@ export default function Patches() {
           style={{
             background: criticalCount > 0 ? '#fff5f5' : '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: criticalCount > 0 ? '1px solid #fecaca' : '1px solid #e2e8f0',
             borderLeft: '3.5px solid #dc2626',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: criticalCount > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: criticalCount > 0 ? '#dc2626' : '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Críticos Pendientes
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⚠️</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: criticalCount > 0 ? '#dc2626' : '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: criticalCount > 0 ? '#dc2626' : '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {criticalCount}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: criticalCount > 0 ? '#dc2626' : '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
-              {criticalCount > 0 ? 'Acción inmediata' : 'Al día'}
+            <span style={{ fontSize: '0.65rem', color: criticalCount > 0 ? '#dc2626' : '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              {criticalCount > 0 ? 'Acción inm.' : 'Al día'}
             </span>
           </div>
         </div>
@@ -155,31 +155,31 @@ export default function Patches() {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #2563eb',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Total Paquetes KB
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>🛡️</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>🛡️</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {patches.length}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#2563eb', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
-              En catálogo
+            <span style={{ fontSize: '0.65rem', color: '#2563eb', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+              Catálogo
             </span>
           </div>
         </div>
@@ -190,30 +190,30 @@ export default function Patches() {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #d97706',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Programados
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>⏳</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {scheduledCount}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#d97706', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#d97706', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               En ventana
             </span>
           </div>
@@ -225,30 +225,30 @@ export default function Patches() {
           style={{
             background: '#ffffff',
             borderRadius: '10px',
-            padding: '0.6rem 0.85rem',
+            padding: '0.55rem 0.75rem',
             border: '1px solid #e2e8f0',
             borderLeft: '3.5px solid #059669',
             boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
             display: 'flex',
             flexDirection: 'column',
             justifyContent: 'center',
-            gap: '0.15rem',
-            minHeight: '58px',
+            gap: '0.12rem',
+            minHeight: '54px',
             boxSizing: 'border-box',
             transition: 'all 0.2s cubic-bezier(0.4, 0, 0.2, 1)',
           }}
         >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '0.35rem' }}>
-            <span style={{ fontSize: '0.72rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            <span style={{ fontSize: '0.7rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.02em', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
               Desplegados
             </span>
-            <span style={{ fontSize: '0.95rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
+            <span style={{ fontSize: '0.88rem', lineHeight: 1, opacity: 0.85 }}>✅</span>
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
-            <strong style={{ fontSize: '1.4rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
+            <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1, letterSpacing: '-0.02em' }}>
               {appliedCount}
             </strong>
-            <span style={{ fontSize: '0.67rem', color: '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
+            <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
               Aplicados OK
             </span>
           </div>

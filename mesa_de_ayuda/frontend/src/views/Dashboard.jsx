@@ -1549,24 +1549,33 @@ export default function Dashboard({ user }) {
         }}
       >
         {/* Encabezado Principal de la Tarjeta con Filtros Dinámicos */}
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.5rem', flexWrap: 'wrap', gap: '14px' }}>
-          <div>
+        <div style={{
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          marginBottom: '1.5rem',
+          flexWrap: 'wrap',
+          gap: '16px'
+        }}>
+          <div style={{ flex: '1 1 280px', minWidth: '240px' }}>
             <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
               Casos por Ubicación
             </h3>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
+            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
               Filtra dinámicamente por Sede, Dependencia y Oficina para visualizar la distribución en tiempo real.
             </p>
           </div>
 
-          {/* Barra de Filtros Dinámicos Superiores (Cascada: Sede ➔ Dependencia ➔ Oficina) */}
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          {/* Barra de Filtros Dinámicos (Estilo Toolbar Superior: Sede, Dependencia, Oficina) */}
+          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
             {/* Filtro 1: Sede */}
-            <div style={{ display: 'flex', alignItems: 'center', background: '#f8fafc', border: selectedSedeId ? '1.5px solid #0284c7' : '1px solid #cbd5e1', borderRadius: '8px', padding: '3px 10px', gap: '6px' }}>
-              <span style={{ fontSize: '0.9rem' }}>🏛️</span>
-              <label htmlFor="filter-sede-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Sede:</label>
+            <div>
+              <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Sede
+              </span>
               <select
                 id="filter-sede-select"
+                className="dashboard-toolbar-select"
                 value={selectedSedeId || ''}
                 onChange={(e) => {
                   const val = e.target.value || null;
@@ -1575,14 +1584,16 @@ export default function Dashboard({ user }) {
                   setSelectedOficinaId(null);
                 }}
                 style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: '#0f172a',
-                  cursor: 'pointer',
+                  padding: '7px 12px',
+                  border: selectedSedeId ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  color: '#1e293b',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
                   outline: 'none',
-                  padding: '3px 0'
+                  cursor: 'pointer',
+                  minWidth: '160px'
                 }}
               >
                 <option value="">-- Seleccionar Sede --</option>
@@ -1594,23 +1605,14 @@ export default function Dashboard({ user }) {
               </select>
             </div>
 
-            <span style={{ color: activeSede ? '#0284c7' : '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
-
-            {/* Filtro 2: Dependencia (Solo dependencias de la sede seleccionada) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: !activeSede ? '#f1f5f9' : '#f8fafc',
-              border: selectedDepId ? '1.5px solid #0284c7' : (!activeSede ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
-              borderRadius: '8px',
-              padding: '3px 10px',
-              gap: '6px',
-              opacity: !activeSede ? 0.6 : 1
-            }}>
-              <span style={{ fontSize: '0.9rem' }}>📁</span>
-              <label htmlFor="filter-dep-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Dependencia:</label>
+            {/* Filtro 2: Dependencia */}
+            <div>
+              <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Dependencia
+              </span>
               <select
                 id="filter-dep-select"
+                className="dashboard-toolbar-select"
                 disabled={!activeSede}
                 value={selectedDepId || ''}
                 onChange={(e) => {
@@ -1619,15 +1621,18 @@ export default function Dashboard({ user }) {
                   setSelectedOficinaId(null);
                 }}
                 style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: !activeSede ? '#94a3b8' : '#0f172a',
-                  cursor: !activeSede ? 'not-allowed' : 'pointer',
+                  padding: '7px 12px',
+                  border: selectedDepId ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  background: !activeSede ? '#f8fafc' : '#ffffff',
+                  color: !activeSede ? '#94a3b8' : '#1e293b',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
                   outline: 'none',
-                  padding: '3px 0',
-                  maxWidth: '190px'
+                  cursor: !activeSede ? 'not-allowed' : 'pointer',
+                  minWidth: '170px',
+                  maxWidth: '220px',
+                  opacity: !activeSede ? 0.75 : 1
                 }}
               >
                 {!activeSede ? (
@@ -1645,23 +1650,14 @@ export default function Dashboard({ user }) {
               </select>
             </div>
 
-            <span style={{ color: activeDep ? '#0284c7' : '#cbd5e1', fontSize: '0.8rem', fontWeight: 700 }}>❯</span>
-
-            {/* Filtro 3: Oficina (Solo oficinas de la dependencia seleccionada) */}
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              background: !activeDep ? '#f1f5f9' : '#f8fafc',
-              border: selectedOficinaId ? '1.5px solid #0284c7' : (!activeDep ? '1px dashed #cbd5e1' : '1px solid #cbd5e1'),
-              borderRadius: '8px',
-              padding: '3px 10px',
-              gap: '6px',
-              opacity: !activeDep ? 0.6 : 1
-            }}>
-              <span style={{ fontSize: '0.9rem' }}>🚪</span>
-              <label htmlFor="filter-ofi-select" style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569' }}>Oficina:</label>
+            {/* Filtro 3: Oficina */}
+            <div>
+              <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Oficina
+              </span>
               <select
                 id="filter-ofi-select"
+                className="dashboard-toolbar-select"
                 disabled={!activeDep}
                 value={selectedOficinaId || ''}
                 onChange={(e) => {
@@ -1669,15 +1665,18 @@ export default function Dashboard({ user }) {
                   setSelectedOficinaId(val);
                 }}
                 style={{
-                  border: 'none',
-                  background: 'transparent',
-                  fontSize: '0.75rem',
-                  fontWeight: 700,
-                  color: !activeDep ? '#94a3b8' : '#0f172a',
-                  cursor: !activeDep ? 'not-allowed' : 'pointer',
+                  padding: '7px 12px',
+                  border: selectedOficinaId ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  background: !activeDep ? '#f8fafc' : '#ffffff',
+                  color: !activeDep ? '#94a3b8' : '#1e293b',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
                   outline: 'none',
-                  padding: '3px 0',
-                  maxWidth: '170px'
+                  cursor: !activeDep ? 'not-allowed' : 'pointer',
+                  minWidth: '160px',
+                  maxWidth: '210px',
+                  opacity: !activeDep ? 0.75 : 1
                 }}
               >
                 {!activeDep ? (
@@ -1697,30 +1696,43 @@ export default function Dashboard({ user }) {
 
             {/* Botón Restablecer si hay algún filtro activo */}
             {(selectedSedeId != null || selectedDepId != null || selectedOficinaId != null) && (
-              <button
-                type="button"
-                onClick={() => {
-                  setSelectedSedeId(null);
-                  setSelectedDepId(null);
-                  setSelectedOficinaId(null);
-                }}
-                title="Restablecer filtros a Todas"
-                style={{
-                  background: '#f1f5f9',
-                  border: '1px solid #cbd5e1',
-                  borderRadius: '6px',
-                  padding: '4px 8px',
-                  fontSize: '0.7rem',
-                  fontWeight: 700,
-                  color: '#475569',
-                  cursor: 'pointer',
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: '4px'
-                }}
-              >
-                ↺ Limpiar
-              </button>
+              <div>
+                <span style={{ display: 'block', fontSize: '0.7rem', height: '14px', marginBottom: '4px' }}>&nbsp;</span>
+                <button
+                  type="button"
+                  onClick={() => {
+                    setSelectedSedeId(null);
+                    setSelectedDepId(null);
+                    setSelectedOficinaId(null);
+                  }}
+                  title="Restablecer filtros a Todas"
+                  style={{
+                    padding: '7px 12px',
+                    border: '1px solid #cbd5e1',
+                    borderRadius: '8px',
+                    background: '#f8fafc',
+                    fontSize: '0.8125rem',
+                    fontWeight: 700,
+                    color: '#475569',
+                    cursor: 'pointer',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    height: '35px',
+                    transition: 'all 0.15s ease'
+                  }}
+                  onMouseEnter={(e) => {
+                    e.currentTarget.style.background = '#e2e8f0';
+                    e.currentTarget.style.color = '#0f172a';
+                  }}
+                  onMouseLeave={(e) => {
+                    e.currentTarget.style.background = '#f8fafc';
+                    e.currentTarget.style.color = '#475569';
+                  }}
+                >
+                  ↺ Limpiar
+                </button>
+              </div>
             )}
           </div>
         </div>
@@ -1870,18 +1882,37 @@ export default function Dashboard({ user }) {
               </span>
             </div>
 
-            {!activeSede ? (
-              /* En blanco / estado inicial hasta que se seleccione una Sede */
-              <div style={{ height: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textAlign: 'center', padding: '1.5rem', background: '#fafbfc', borderRadius: '10px', border: '1px dashed #e2e8f0' }}>
-                <span style={{ fontSize: '2.2rem', marginBottom: '10px', opacity: 0.45 }}>📁</span>
-                <strong style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '6px' }}>Gráfica no activada</strong>
-                <span style={{ fontSize: '0.74rem', color: '#94a3b8', maxWidth: '240px', lineHeight: 1.4 }}>
-                  Selecciona una <strong>Sede</strong> en el filtro superior para desplegar sus dependencias.
-                </span>
-              </div>
-            ) : activeDependencias.length === 0 ? (
-              <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                {activeSede.name} no tiene dependencias configuradas
+            {!activeSede || activeDependencias.length === 0 ? (
+              /* Muestra la dona en cero / sin valor (sin mensaje "Gráfica no activada") */
+              <div style={{ width: '100%', height: 260, position: 'relative' }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <PieChart margin={{ top: 20, right: 35, bottom: 20, left: 35 }}>
+                    <Pie
+                      data={[{ name: 'Sin datos', value: 1 }]}
+                      dataKey="value"
+                      cx="50%"
+                      cy="50%"
+                      innerRadius={50}
+                      outerRadius={75}
+                      stroke="#cbd5e1"
+                      strokeWidth={1.5}
+                      isAnimationActive={false}
+                    >
+                      <Cell fill="#f8fafc" />
+                    </Pie>
+                  </PieChart>
+                </ResponsiveContainer>
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none'
+                }}>
+                  <div style={{ fontSize: '1.4rem', fontWeight: 800, color: '#94a3b8', lineHeight: 1 }}>0</div>
+                  <div style={{ fontSize: '0.68rem', fontWeight: 700, color: '#94a3b8', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '3px' }}>Tickets</div>
+                </div>
               </div>
             ) : (
               <div style={{ width: '100%', height: 260, position: 'relative' }}>
@@ -1893,8 +1924,8 @@ export default function Dashboard({ user }) {
                       nameKey="name"
                       cx="50%"
                       cy="50%"
+                      innerRadius={50}
                       outerRadius={75}
-                      innerRadius={0}
                       labelLine={{ stroke: '#64748b', strokeWidth: 1.2 }}
                       label={({ name, pct, x, y, cx }) => {
                         const shortName = name.length > 14 ? `${name.slice(0, 13)}…` : name;
@@ -1932,13 +1963,29 @@ export default function Dashboard({ user }) {
                     <Tooltip content={<CustomChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
+                {/* Centro de la dona con el total de tickets de la sede */}
+                <div style={{
+                  position: 'absolute',
+                  top: '50%',
+                  left: '50%',
+                  transform: 'translate(-50%, -50%)',
+                  textAlign: 'center',
+                  pointerEvents: 'none'
+                }}>
+                  <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
+                    {activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)}
+                  </div>
+                  <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>
+                    Tickets
+                  </div>
+                </div>
               </div>
             )}
 
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en dependencias:</span>
               <strong style={{ color: '#0f172a' }}>
-                {!activeSede ? '—' : `${activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets`}
+                {!activeSede ? '0 tickets' : `${activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets`}
               </strong>
             </div>
           </div>
@@ -1975,18 +2022,36 @@ export default function Dashboard({ user }) {
               </span>
             </div>
 
-            {!activeDep ? (
-              /* En blanco / estado inicial hasta que se seleccione una Dependencia */
-              <div style={{ height: 260, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', textAlign: 'center', padding: '1.5rem', background: '#fafbfc', borderRadius: '10px', border: '1px dashed #e2e8f0' }}>
-                <span style={{ fontSize: '2.2rem', marginBottom: '10px', opacity: 0.45 }}>🚪</span>
-                <strong style={{ fontSize: '0.86rem', color: '#475569', marginBottom: '6px' }}>Gráfica no activada</strong>
-                <span style={{ fontSize: '0.74rem', color: '#94a3b8', maxWidth: '240px', lineHeight: 1.4 }}>
-                  Selecciona una <strong>Dependencia</strong> en el filtro superior para auditar sus oficinas.
-                </span>
-              </div>
-            ) : filteredOficinas.length === 0 ? (
-              <div style={{ height: 260, display: 'flex', alignItems: 'center', justifyContent: 'center', color: '#94a3b8', fontSize: '0.85rem', fontStyle: 'italic', textAlign: 'center', padding: '1rem' }}>
-                {activeDep.name} no tiene oficinas registradas
+            {!activeDep || filteredOficinas.length === 0 ? (
+              /* Gráfica de barras en cero / sin valor (sin mensaje "Gráfica no activada") */
+              <div style={{ width: '100%', height: 260 }}>
+                <ResponsiveContainer width="100%" height={260}>
+                  <BarChart
+                    data={[{ name: 'Sin datos', count: 0 }]}
+                    margin={{ top: 20, right: 15, left: -20, bottom: 25 }}
+                    barSize={16}
+                  >
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
+                    <XAxis
+                      dataKey="name"
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      tickLine={false}
+                    />
+                    <YAxis
+                      stroke="#94a3b8"
+                      fontSize={10}
+                      allowDecimals={false}
+                      domain={[0, 3]}
+                    />
+                    <Bar
+                      dataKey="count"
+                      name="Tickets"
+                      fill="#00c5a2"
+                      radius={[6, 6, 0, 0]}
+                    />
+                  </BarChart>
+                </ResponsiveContainer>
               </div>
             ) : (
               <div style={{ width: '100%', height: 260 }}>
@@ -2062,7 +2127,7 @@ export default function Dashboard({ user }) {
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en oficinas:</span>
               <strong style={{ color: '#0f172a' }}>
-                {!activeDep ? '—' : `${filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets`}
+                {!activeDep ? '0 tickets' : `${filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets`}
               </strong>
             </div>
           </div>

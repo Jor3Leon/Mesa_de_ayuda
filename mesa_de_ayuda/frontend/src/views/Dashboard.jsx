@@ -167,60 +167,71 @@ export default function Dashboard({ user }) {
     return data?.sedesHierarchy || [];
   }, [data?.sedesHierarchy]);
 
-  // Sede activa: SÓLO si el usuario seleccionó una sede en el filtro
+  // Sede activa: SÓLO si el usuario seleccionó una sede específica en el filtro
   const activeSede = useMemo(() => {
     if (!sedesHierarchy.length || !selectedSedeId || selectedSedeId === 'ALL') return null;
     return sedesHierarchy.find(s => String(s.id) === String(selectedSedeId)) || null;
   }, [sedesHierarchy, selectedSedeId]);
 
-  // Dependencias: SÓLO se cargan las dependencias de la sede seleccionada (en blanco si no hay sede)
-  const activeDependencias = useMemo(() => {
-    if (!activeSede) return [];
-    return activeSede.dependencias || [];
-  }, [activeSede]);
+  // Todas las dependencias consolidadas
+  const allDependencias = useMemo(() => {
+    return sedesHierarchy.flatMap(s => s.dependencias || []);
+  }, [sedesHierarchy]);
 
-  // Dependencia activa: SÓLO si hay sede activa y el usuario seleccionó una dependencia
+  // Dependencias disponibles según la Sede (si es "Todas", se muestran todas)
+  const availableDependencias = useMemo(() => {
+    return activeSede ? (activeSede.dependencias || []) : allDependencias;
+  }, [activeSede, allDependencias]);
+
+  // Dependencia activa: SÓLO si el usuario seleccionó una dependencia específica
   const activeDep = useMemo(() => {
-    if (!activeDependencias.length || !selectedDepId || selectedDepId === 'ALL') return null;
-    return activeDependencias.find(d => String(d.id) === String(selectedDepId)) || null;
-  }, [activeDependencias, selectedDepId]);
+    if (!availableDependencias.length || !selectedDepId || selectedDepId === 'ALL') return null;
+    return availableDependencias.find(d => String(d.id) === String(selectedDepId)) || null;
+  }, [availableDependencias, selectedDepId]);
 
-  // Oficinas: SÓLO se cargan las oficinas de la dependencia seleccionada (en blanco si no hay dependencia)
-  const activeOficinas = useMemo(() => {
-    if (!activeDep) return [];
-    return activeDep.oficinas || [];
-  }, [activeDep]);
+  // Todas las oficinas según las dependencias disponibles
+  const allOficinas = useMemo(() => {
+    return availableDependencias.flatMap(d => d.oficinas || []);
+  }, [availableDependencias]);
+
+  // Oficinas disponibles según la Dependencia seleccionada
+  const availableOficinas = useMemo(() => {
+    return activeDep ? (activeDep.oficinas || []) : allOficinas;
+  }, [activeDep, allOficinas]);
 
   const filteredOficinas = useMemo(() => {
-    if (!activeOficinas.length) return [];
-    if (selectedOficinaId != null && selectedOficinaId !== 'ALL') {
-      return activeOficinas.filter(o => String(o.id) === String(selectedOficinaId));
+    if (!availableOficinas.length) return [];
+    if (selectedOficinaId != null && selectedOficinaId !== 'ALL' && selectedOficinaId !== '') {
+      return availableOficinas.filter(o => String(o.id) === String(selectedOficinaId));
     }
-    return activeOficinas;
-  }, [activeOficinas, selectedOficinaId]);
+    return availableOficinas;
+  }, [availableOficinas, selectedOficinaId]);
 
-  // Preparar datos para el Pie Chart con Líneas Conectoras Externas
+  // Preparar datos para el Donut Chart de Dependencias
   const pieDependencias = useMemo(() => {
-    if (!activeDependencias.length) return [];
-    const total = activeDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0);
+    if (!availableDependencias.length) return [];
+    const total = availableDependencias.reduce((sum, d) => sum + (Number(d?.count) || 0), 0);
     if (total > 0) {
-      return activeDependencias.map((d) => {
+      // Priorizar dependencias con tickets para que las etiquetas quepan limpias y legibles
+      const withTickets = availableDependencias.filter(d => (Number(d?.count) || 0) > 0);
+      const targetList = withTickets.length > 0 ? withTickets : availableDependencias;
+      return targetList.map((d) => {
         const count = Number(d?.count) || 0;
         return {
           ...d,
           value: count > 0 ? count : 0.05,
           realCount: count,
-          pct: Math.round((count / total) * 100)
+          pct: total > 0 ? Math.round((count / total) * 100) : 0
         };
       });
     }
-    return activeDependencias.map((d) => ({
+    return availableDependencias.map((d) => ({
       ...d,
       value: 1,
       realCount: 0,
       pct: 0
     }));
-  }, [activeDependencias]);
+  }, [availableDependencias]);
 
   useEffect(() => {
     let ignore = false;
@@ -1596,10 +1607,10 @@ export default function Dashboard({ user }) {
                   minWidth: '160px'
                 }}
               >
-                <option value="">-- Seleccionar Sede --</option>
+                <option value="">Todas</option>
                 {sedesHierarchy.map((s) => (
                   <option key={s.id} value={s.id}>
-                    {s.name} ({s.count} {s.count === 1 ? 'ticket' : 'tickets'})
+                    {s.name}
                   </option>
                 ))}
               </select>
@@ -1613,7 +1624,6 @@ export default function Dashboard({ user }) {
               <select
                 id="filter-dep-select"
                 className="dashboard-toolbar-select"
-                disabled={!activeSede}
                 value={selectedDepId || ''}
                 onChange={(e) => {
                   const val = e.target.value || null;
@@ -1624,29 +1634,22 @@ export default function Dashboard({ user }) {
                   padding: '7px 12px',
                   border: selectedDepId ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
                   borderRadius: '8px',
-                  background: !activeSede ? '#f8fafc' : '#ffffff',
-                  color: !activeSede ? '#94a3b8' : '#1e293b',
+                  background: '#ffffff',
+                  color: '#1e293b',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   outline: 'none',
-                  cursor: !activeSede ? 'not-allowed' : 'pointer',
+                  cursor: 'pointer',
                   minWidth: '170px',
-                  maxWidth: '220px',
-                  opacity: !activeSede ? 0.75 : 1
+                  maxWidth: '220px'
                 }}
               >
-                {!activeSede ? (
-                  <option value="">-- Selecciona Sede primero --</option>
-                ) : (
-                  <>
-                    <option value="">-- Seleccionar Dependencia ({activeDependencias.length}) --</option>
-                    {activeDependencias.map((d) => (
-                      <option key={d.id} value={d.id}>
-                        {d.name} ({d.count} tickets)
-                      </option>
-                    ))}
-                  </>
-                )}
+                <option value="">Todas</option>
+                {availableDependencias.map((d) => (
+                  <option key={d.id} value={d.id}>
+                    {d.name}
+                  </option>
+                ))}
               </select>
             </div>
 
@@ -1658,7 +1661,6 @@ export default function Dashboard({ user }) {
               <select
                 id="filter-ofi-select"
                 className="dashboard-toolbar-select"
-                disabled={!activeDep}
                 value={selectedOficinaId || ''}
                 onChange={(e) => {
                   const val = e.target.value || null;
@@ -1668,34 +1670,27 @@ export default function Dashboard({ user }) {
                   padding: '7px 12px',
                   border: selectedOficinaId ? '1.5px solid #0284c7' : '1px solid #cbd5e1',
                   borderRadius: '8px',
-                  background: !activeDep ? '#f8fafc' : '#ffffff',
-                  color: !activeDep ? '#94a3b8' : '#1e293b',
+                  background: '#ffffff',
+                  color: '#1e293b',
                   fontSize: '0.8125rem',
                   fontWeight: 600,
                   outline: 'none',
-                  cursor: !activeDep ? 'not-allowed' : 'pointer',
+                  cursor: 'pointer',
                   minWidth: '160px',
-                  maxWidth: '210px',
-                  opacity: !activeDep ? 0.75 : 1
+                  maxWidth: '210px'
                 }}
               >
-                {!activeDep ? (
-                  <option value="">-- Selecciona Dependencia primero --</option>
-                ) : (
-                  <>
-                    <option value="">Todas las Oficinas ({activeOficinas.length})</option>
-                    {activeOficinas.map((o) => (
-                      <option key={o.id} value={o.id}>
-                        {o.name} ({o.count} tickets)
-                      </option>
-                    ))}
-                  </>
-                )}
+                <option value="">Todas</option>
+                {availableOficinas.map((o) => (
+                  <option key={o.id} value={o.id}>
+                    {o.name}
+                  </option>
+                ))}
               </select>
             </div>
 
             {/* Botón Restablecer si hay algún filtro activo */}
-            {(selectedSedeId != null || selectedDepId != null || selectedOficinaId != null) && (
+            {Boolean(selectedSedeId || selectedDepId || selectedOficinaId) && (
               <div>
                 <span style={{ display: 'block', fontSize: '0.7rem', height: '14px', marginBottom: '4px' }}>&nbsp;</span>
                 <button
@@ -1851,7 +1846,7 @@ export default function Dashboard({ user }) {
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 2: DEPENDENCIA (Pie Chart - En blanco hasta seleccionar Sede) */}
+          {/* GRÁFICA 2: DEPENDENCIA (Donut Chart - Dona con innerRadius)  */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
@@ -1873,27 +1868,27 @@ export default function Dashboard({ user }) {
                     DEPENDENCIA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {!activeSede ? 'En espera de selección' : `${activeDependencias.length} ${activeDependencias.length === 1 ? 'dependencia' : 'dependencias'}`}
+                    {availableDependencias.length} {availableDependencias.length === 1 ? 'dependencia' : 'dependencias'}
                   </span>
                 </div>
               </div>
-              <span style={{ fontSize: '0.7rem', color: activeDep ? '#0284c7' : (activeSede ? '#0369a1' : '#94a3b8'), fontWeight: 700, background: activeSede ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeDep ? activeDep.name : (activeSede ? activeSede.name : 'En espera')}
+              <span style={{ fontSize: '0.7rem', color: activeDep ? '#0284c7' : (activeSede ? '#0369a1' : '#64748b'), fontWeight: 700, background: activeSede ? '#eff6ff' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
+                {activeDep ? activeDep.name : (activeSede ? activeSede.name : 'Todas')}
               </span>
             </div>
 
-            {!activeSede || activeDependencias.length === 0 ? (
+            {availableDependencias.length === 0 || pieDependencias.every(p => p.realCount === 0) ? (
               /* Muestra la dona en cero / sin valor (sin mensaje "Gráfica no activada") */
               <div style={{ width: '100%', height: 260, position: 'relative' }}>
                 <ResponsiveContainer width="100%" height={260}>
-                  <PieChart margin={{ top: 20, right: 35, bottom: 20, left: 35 }}>
+                  <PieChart margin={{ top: 15, right: 35, bottom: 15, left: 35 }}>
                     <Pie
                       data={[{ name: 'Sin datos', value: 1 }]}
                       dataKey="value"
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
+                      innerRadius={42}
+                      outerRadius={66}
                       stroke="#cbd5e1"
                       strokeWidth={1.5}
                       isAnimationActive={false}
@@ -1917,29 +1912,59 @@ export default function Dashboard({ user }) {
             ) : (
               <div style={{ width: '100%', height: 260, position: 'relative' }}>
                 <ResponsiveContainer width="100%" height={260}>
-                  <PieChart margin={{ top: 20, right: 35, bottom: 20, left: 35 }}>
+                  <PieChart margin={{ top: 15, right: 35, bottom: 15, left: 35 }}>
                     <Pie
                       data={pieDependencias}
                       dataKey="value"
                       nameKey="name"
                       cx="50%"
                       cy="50%"
-                      innerRadius={50}
-                      outerRadius={75}
+                      innerRadius={42}
+                      outerRadius={66}
                       labelLine={{ stroke: '#64748b', strokeWidth: 1.2 }}
                       label={({ name, pct, x, y, cx }) => {
-                        const shortName = name.length > 14 ? `${name.slice(0, 13)}…` : name;
+                        const percentage = pct > 0 ? ` (${pct}%)` : '';
+                        const isRight = x > cx;
+
+                        if (name.length <= 18) {
+                          return (
+                            <text
+                              x={x}
+                              y={y}
+                              fill="#1e293b"
+                              textAnchor={isRight ? 'start' : 'end'}
+                              dominantBaseline="central"
+                              fontSize={9}
+                              fontWeight={700}
+                            >
+                              {`${name}${percentage}`}
+                            </text>
+                          );
+                        }
+
+                        const words = name.split(' ');
+                        let l1 = '';
+                        let l2 = '';
+                        for (let i = 0; i < words.length; i++) {
+                          if ((l1 + ' ' + words[i]).trim().length <= 16 && !l2) {
+                            l1 = (l1 + ' ' + words[i]).trim();
+                          } else {
+                            l2 = (l2 + ' ' + words[i]).trim();
+                          }
+                        }
+
                         return (
                           <text
                             x={x}
                             y={y}
                             fill="#1e293b"
-                            textAnchor={x > cx ? 'start' : 'end'}
+                            textAnchor={isRight ? 'start' : 'end'}
                             dominantBaseline="central"
-                            fontSize={10}
+                            fontSize={8.5}
                             fontWeight={700}
                           >
-                            {`${shortName} ${pct > 0 ? `(${pct}%)` : ''}`}
+                            <tspan x={x} dy="-0.55em">{l1}</tspan>
+                            <tspan x={x} dy="1.15em">{`${l2}${percentage}`}</tspan>
                           </text>
                         );
                       }}
@@ -1963,7 +1988,7 @@ export default function Dashboard({ user }) {
                     <Tooltip content={<CustomChartTooltip />} />
                   </PieChart>
                 </ResponsiveContainer>
-                {/* Centro de la dona con el total de tickets de la sede */}
+                {/* Centro de la dona con el total de tickets de las dependencias */}
                 <div style={{
                   position: 'absolute',
                   top: '50%',
@@ -1973,7 +1998,7 @@ export default function Dashboard({ user }) {
                   pointerEvents: 'none'
                 }}>
                   <div style={{ fontSize: '1.35rem', fontWeight: 800, color: '#0f172a', lineHeight: 1 }}>
-                    {activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)}
+                    {availableDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)}
                   </div>
                   <div style={{ fontSize: '0.65rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase', letterSpacing: '0.05em', marginTop: '2px' }}>
                     Tickets
@@ -1985,13 +2010,13 @@ export default function Dashboard({ user }) {
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en dependencias:</span>
               <strong style={{ color: '#0f172a' }}>
-                {!activeSede ? '0 tickets' : `${activeDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets`}
+                {`${availableDependencias.reduce((s, x) => s + (Number(x.count) || 0), 0)} tickets`}
               </strong>
             </div>
           </div>
 
           {/* ============================================================ */}
-          {/* GRÁFICA 3: OFICINA (Column Chart - En blanco hasta seleccionar Dependencia) */}
+          {/* GRÁFICA 3: OFICINA (Column Chart)                            */}
           {/* ============================================================ */}
           <div style={{
             border: '1px solid #e2e8f0',
@@ -2013,16 +2038,16 @@ export default function Dashboard({ user }) {
                     OFICINA
                   </h4>
                   <span style={{ fontSize: '0.68rem', color: '#64748b' }}>
-                    {!activeDep ? 'En espera de selección' : `${filteredOficinas.length} ${filteredOficinas.length === 1 ? 'oficina' : 'oficinas'}`}
+                    {filteredOficinas.length} {filteredOficinas.length === 1 ? 'oficina' : 'oficinas'}
                   </span>
                 </div>
               </div>
               <span style={{ fontSize: '0.7rem', color: selectedOficinaId ? '#0284c7' : (activeDep ? '#15803d' : '#94a3b8'), fontWeight: 700, background: activeDep ? '#f0fdf4' : '#f8fafc', border: '1px solid #cbd5e1', padding: '2px 8px', borderRadius: '6px' }}>
-                {activeDep ? activeDep.name : 'En espera'}
+                {selectedOficinaId ? (availableOficinas.find(o => String(o.id) === String(selectedOficinaId))?.name || 'Oficina') : (activeDep ? activeDep.name : 'Todas')}
               </span>
             </div>
 
-            {!activeDep || filteredOficinas.length === 0 ? (
+            {filteredOficinas.length === 0 || filteredOficinas.every(o => (Number(o?.count) || 0) === 0) ? (
               /* Gráfica de barras en cero / sin valor (sin mensaje "Gráfica no activada") */
               <div style={{ width: '100%', height: 260 }}>
                 <ResponsiveContainer width="100%" height={260}>
@@ -2127,7 +2152,7 @@ export default function Dashboard({ user }) {
             <div style={{ marginTop: 'auto', paddingTop: '10px', borderTop: '1px solid #f1f5f9', display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '0.74rem', color: '#64748b' }}>
               <span>Total en oficinas:</span>
               <strong style={{ color: '#0f172a' }}>
-                {!activeDep ? '0 tickets' : `${filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets`}
+                {`${filteredOficinas.reduce((sum, o) => sum + (Number(o?.count) || 0), 0)} tickets`}
               </strong>
             </div>
           </div>

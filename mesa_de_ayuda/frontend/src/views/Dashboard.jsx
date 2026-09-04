@@ -130,12 +130,16 @@ export default function Dashboard({ user }) {
   const isStandardUser = userRoleStr === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
 
   const [filters, setFilters] = useState(() => {
-    const today = new Date().toISOString().split('T')[0];
-    const thirtyDaysAgo = new Date();
-    thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
+    const now = new Date();
+    const currentYear = now.getFullYear();
+    const startOfYear = `${currentYear}-01-01`;
+    const mm = String(now.getMonth() + 1).padStart(2, '0');
+    const dd = String(now.getDate()).padStart(2, '0');
+    const today = `${currentYear}-${mm}-${dd}`;
+
     return {
       unifiedScope: isLevel2 || isStandardUser ? 'personal' : 'global',
-      startDate: thirtyDaysAgo.toISOString().split('T')[0],
+      startDate: startOfYear,
       endDate: today
     };
   });

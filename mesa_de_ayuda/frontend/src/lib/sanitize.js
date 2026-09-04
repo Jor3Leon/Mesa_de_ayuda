@@ -21,7 +21,7 @@ export function sanitizeHtml(dirtyHtml) {
       'a'
     ],
     ALLOWED_ATTR: ['href', 'target', 'rel', 'class', 'title'],
-    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.\-]+(?:[^a-z+.\-:]|$))/i,
+    ALLOWED_URI_REGEXP: /^(?:(?:https?|mailto|tel):|[^a-z]|[a-z+.-]+(?:[^a-z+.:-]|$))/i,
     FORBID_TAGS: ['script', 'iframe', 'object', 'embed', 'form', 'input', 'button', 'style', 'meta', 'link', 'svg', 'canvas'],
     FORBID_ATTR: [
       'onerror', 'onload', 'onclick', 'onmouseover', 'onfocus', 'onblur',

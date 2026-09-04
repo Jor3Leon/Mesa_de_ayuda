@@ -1,4 +1,4 @@
-import React, { useEffect, useState, useRef, useMemo } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
@@ -591,7 +591,7 @@ export default function Tickets() {
   const [categoryFilter, setCategoryFilter] = useState(searchParams.get('category')?.toUpperCase() || 'ALL');
   const [viewingUserProfile, setViewingUserProfile] = useState(null);
   const [dashboardFilter, setDashboardFilter] = useState('ALL');
-  const [assignedFilter, setAssignedFilter] = useState(searchParams.get('assigned') || 'ALL');
+  const assignedFilter = searchParams.get('assigned') || 'ALL';
   const [showMobileForm, setShowMobileForm] = useState(false);
   
   const [priorityFilter, setPriorityFilter] = useState(() => {
@@ -620,9 +620,6 @@ export default function Tickets() {
   const [activities, setActivities] = useState([]);
   const assignableUsers = users.filter(isAssignableUser);
   const participantCount = 1 + form.responsibleUserIds.length + (form.observerId ? 1 : 0);
-  const hasExplicitAssignmentComment = activities.some(
-    (activity) => activity?.action === 'COMMENTED' && activity?.newValue === 'Ticket asignado',
-  );
   const visibleActivities = activities.filter((activity) => {
     if (!activity) return false;
     // Exclude raw "NEW" and "CLOSED" status messages as requested by user
@@ -703,18 +700,6 @@ export default function Tickets() {
       return matchesSearch && matchesStatus && matchesLocation && matchesCategory && matchesPriority && matchesDate && matchesDashboard && matchesAssigned;
     });
   }, [tickets, categoryFilter, locationFilter, priorityFilter, search, statusFilter, startDateFilter, endDateFilter, dashboardFilter, assignedFilter, currentUser?.id]);
-
-  function findAvatarByUserName(name) {
-    if (!name) {
-      return null;
-    }
-
-    if (currentUser?.name === name) {
-      return currentUser.avatarUrl || null;
-    }
-
-    return users.find((user) => user.name === name)?.avatarUrl || null;
-  }
 
   // Auto-close effect: transition from RESOLVED to CLOSED after 8 hours of inactivity
   useEffect(() => {
@@ -828,7 +813,7 @@ export default function Tickets() {
           await apiRequest(`/activities/${realId}`, { method: 'DELETE' });
           setActivities(prev => prev.filter(a => String(a.id) !== realId));
           setError('');
-        } catch (e) {
+        } catch {
           setError('No se pudo eliminar el comentario del historial.');
         }
       }
@@ -851,7 +836,7 @@ export default function Tickets() {
           body: JSON.stringify({ content: editingText })
         });
         setActivities(prev => prev.map(a => String(a.id) === realId ? { ...a, newValue: editingText } : a));
-      } catch (e) {
+      } catch {
         setError('No se pudo guardar la edición.');
       }
     } else {
@@ -908,7 +893,7 @@ export default function Tickets() {
         }
       }
     }
-  }, [tickets]);
+  }, [tickets, selectedTicket]);
 
   useEffect(() => {
     setLocalComments([]);

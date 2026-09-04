@@ -36,7 +36,7 @@ function parseSoftware(softwareData) {
   try {
     const parsed = JSON.parse(softwareData);
     if (Array.isArray(parsed)) return parsed;
-  } catch (e) {
+  } catch {
     if (typeof softwareData === 'string' && softwareData.includes('\n')) {
       return softwareData.split('\n').filter(Boolean).map(s => ({ name: s.trim() }));
     }
@@ -71,7 +71,7 @@ function getAssetDomain(asset) {
 
 function formatAssignedUser(userName) {
   if (!userName) return 'Sin usuario';
-  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim();
+  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^/]*\//, '').trim();
   return clean || userName;
 }
 

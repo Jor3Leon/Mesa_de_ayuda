@@ -11,7 +11,6 @@ const initialForm = {
 
 export default function CannedResponses() {
   const [responses, setResponses] = useState([]);
-  const [categories, setCategories] = useState([]);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
   const [selectedCategory, setSelectedCategory] = useState('ALL');
@@ -30,12 +29,8 @@ export default function CannedResponses() {
   const loadData = async () => {
     setLoading(true);
     try {
-      const [resData, catData] = await Promise.all([
-        apiRequest('/canned-responses'),
-        apiRequest('/categories').catch(() => []),
-      ]);
+      const resData = await apiRequest('/canned-responses');
       setResponses(Array.isArray(resData) ? resData : []);
-      setCategories(Array.isArray(catData) ? catData : []);
     } catch (err) {
       setError('Error al cargar plantillas: ' + err.message);
     } finally {

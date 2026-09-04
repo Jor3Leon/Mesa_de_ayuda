@@ -1,5 +1,7 @@
 const express = require('express');
 const { requireAuth, requirePermission, requireAnyPermission } = require('../lib/middleware');
+const { createHttpError } = require('../lib/utils');
+const { sanitizeUser } = require('../lib/ticket-service');
 
 function getCommonRoutes(prisma) {
   const router = express.Router();
@@ -155,7 +157,7 @@ function getCommonRoutes(prisma) {
       const { name, description, permissionCodes } = req.body;
 
       // 1. Actualizar datos básicos del rol
-      const role = await prisma.role.update({
+      await prisma.role.update({
         where: { id },
         data: {
           name,
@@ -358,7 +360,6 @@ function getCommonRoutes(prisma) {
         }));
 
       const now = new Date();
-      const fourHoursAgo = new Date(now.getTime() - 4 * 60 * 60 * 1000);
       const eightHoursAgo = new Date(now.getTime() - 8 * 60 * 60 * 1000);
       const twentyFourHoursAgo = new Date(now.getTime() - 24 * 60 * 60 * 1000);
       const fortyEightHoursAgo = new Date(now.getTime() - 48 * 60 * 60 * 1000);
@@ -506,7 +507,6 @@ function getCommonRoutes(prisma) {
         const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
         const y = d.getFullYear();
         const m = d.getMonth();
-        const monthKey = `${y}-${String(m + 1).padStart(2, '0')}`;
         const monthLabel = `${monthNames[m]} ${y}`;
         const shortMonth = monthNames[m];
 
@@ -1108,7 +1108,7 @@ function getCommonRoutes(prisma) {
         },
       });
 
-      res.json(require('../lib/ticket-service').sanitizeUser(user));
+      res.json(sanitizeUser(user));
     } catch (error) {
       next(error);
     }

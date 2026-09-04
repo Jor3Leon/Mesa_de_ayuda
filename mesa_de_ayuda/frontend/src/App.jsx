@@ -20,7 +20,6 @@ import CannedResponses from './views/CannedResponses';
 import Categories from './views/Categories';
 import Discovery from './views/Discovery';
 import logoImg from './assets/logo.png';
-import useIsMobile from './hooks/useIsMobile';
 
 function getShortRoleLabel(role) {
   const normalized = (role || '').trim().toUpperCase();
@@ -501,7 +500,7 @@ function buildNavSections(user) {
   return filteredSections;
 }
 
-function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = false }) {
+function RoleSwitcher({ realRole, viewAsRole, onRoleSwitch, isMobile = false }) {
   const [isOpen, setIsOpen] = useState(false);
   const dropdownRef = useRef(null);
   const availableRoles = getAvailableRoles(realRole);
@@ -994,7 +993,7 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
   );
 }
 
-function Sidebar({ user, realRole, viewAsRole, onRoleSwitch, navSections, isCollapsed, onClose, onLogout, onOpenProfile }) {
+function Sidebar({ user, navSections, isCollapsed, onClose, onLogout, onOpenProfile }) {
   const location = useLocation();
   const primaryItems = user?.role === 'USUARIO ESTANDAR' ? [] : [
     { name: 'Dashboard', path: '/', icon: 'dashboard', description: 'Métricas generales', requiredPermission: 'DASHBOARD_VIEW' },
@@ -1303,9 +1302,6 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
         )}
         <Sidebar
           user={effectiveUser}
-          realRole={user.role}
-          viewAsRole={viewAsRole}
-          onRoleSwitch={handleRoleSwitch}
           navSections={navSections}
           isCollapsed={isSidebarCollapsed}
           onClose={closeSidebar}

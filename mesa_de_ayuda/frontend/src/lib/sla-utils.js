@@ -28,7 +28,6 @@ export function getSlaInfo(ticket) {
 
   const prioKey = String(ticket.priority || '').toUpperCase().trim();
   const totalHoursAllowed = priorityHours[prioKey] || 24;
-  const businessHoursPerDay = 7.5; // 4h (morning) + 3.5h (afternoon)
 
   // Simplified business hours calculation
   // For a real production system, this should be more robust (handling holidays, etc.)

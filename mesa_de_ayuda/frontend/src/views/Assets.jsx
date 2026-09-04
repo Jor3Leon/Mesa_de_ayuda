@@ -105,17 +105,17 @@ function extractNetworkCard(networkSummary) {
 function formatAssignedUser(userName) {
   if (!userName) return 'No asignado';
   // Strip domain prefixes e.g. "ALCYOPAL\jherson.rivera" -> "jherson.rivera"
-  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^\/]*\//, '').trim();
+  const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^/]*\//, '').trim();
   return clean || userName;
 }
 
-export function isPrinterDevice(asset) {
+function isPrinterDevice(asset) {
   if (!asset) return false;
   const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''} ${asset.hostname || ''}`.toLowerCase();
   return ['impresora', 'printer', 'scanner', 'escaner', 'escáner', 'multifuncion', 'multifunción', 'multifuncional', 'multifunction', 'fotocopiadora', 'plotter', 'copiadora', 'ecotank', 'epson', 'kyocera', 'ricoh', 'lexmark', 'laserjet', 'deskjet'].some(k => str.includes(k));
 }
 
-export function isNetworkDevice(asset) {
+function isNetworkDevice(asset) {
   if (!asset || isPrinterDevice(asset)) return false;
   const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''} ${asset.hostname || ''}`.toLowerCase();
   return [
@@ -140,20 +140,20 @@ export function isNetworkDevice(asset) {
   ].some(k => str.includes(k)) || (asset.deviceType || '').toLowerCase() === 'dispositivo de red';
 }
 
-export function isComputeDevice(asset) {
+function isComputeDevice(asset) {
   if (!asset || isPrinterDevice(asset) || isNetworkDevice(asset)) return false;
   const str = `${asset.deviceType || ''} ${asset.model || ''} ${asset.brand || ''} ${asset.hostname || ''}`.toLowerCase();
   if (['monitor', 'pantalla', 'mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono'].some(k => (asset.deviceType || '').toLowerCase().includes(k))) return false;
   return ['computo', 'cómputo', 'escritorio', 'all in one', 'all-in-one', 'todo en uno', 'aio', 'portatil', 'portátil', 'desktop', 'laptop', 'notebook', 'mini pc', 'workstation', 'computador', 'pc'].some(k => str.includes(k));
 }
 
-export function isMonitorDevice(asset) {
+function isMonitorDevice(asset) {
   if (!asset) return false;
   const str = (asset.deviceType || '').toLowerCase();
   return str.includes('monitor') || str.includes('pantalla');
 }
 
-export function isPeripheralDevice(asset) {
+function isPeripheralDevice(asset) {
   if (!asset || isPrinterDevice(asset) || isMonitorDevice(asset) || isNetworkDevice(asset) || isComputeDevice(asset)) return false;
   const str = (asset.deviceType || '').toLowerCase();
   return ['mouse', 'teclado', 'webcam', 'auriculares', 'headset', 'parlantes', 'microfono', 'periferico', 'periférico'].some(k => str.includes(k));
@@ -214,7 +214,6 @@ function serializeDisplayEntries(entries) {
 
 export default function Assets() {
   const [assets, setAssets] = useState([]);
-  const [customers, setCustomers] = useState([]);
   const [locations, setLocations] = useState([]);
   const [users, setUsers] = useState([]);
   const [selectedAssetId, setSelectedAssetId] = useState(null);
@@ -309,15 +308,13 @@ export default function Assets() {
 
     Promise.all([
       apiRequest('/assets'), 
-      apiRequest('/customers'), 
       apiRequest('/locations'),
       apiRequest('/users')
     ])
-      .then(([assetsResponse, customersResponse, locationsResponse, usersResponse]) => {
+      .then(([assetsResponse, locationsResponse, usersResponse]) => {
         if (!ignore) {
           const sortedAssets = [...assetsResponse].sort((a, b) => a.hostname.localeCompare(b.hostname));
           setAssets(sortedAssets);
-          setCustomers(customersResponse);
           setLocations(locationsResponse);
           setUsers(usersResponse);
         }
@@ -381,33 +378,10 @@ export default function Assets() {
     [assets, selectedAssetId],
   );
 
-  const categoryAssets = useMemo(() => {
-    if (categoryFilter === 'ALL') return assets;
-    return assets.filter((asset) => {
-      if (categoryFilter === 'Equipos de Computo') return isComputeDevice(asset);
-      if (categoryFilter === 'Dispositivo de Red') return isNetworkDevice(asset);
-      if (categoryFilter === 'Impresoras y/o Escaneres' || categoryFilter === 'Impresoras / Escáneres' || categoryFilter === 'Impresora') return isPrinterDevice(asset);
-      if (categoryFilter === 'Monitor' || categoryFilter === 'Monitores') return isMonitorDevice(asset);
-      if (categoryFilter === 'Perifericos') return isPeripheralDevice(asset);
-      return asset.deviceType === categoryFilter;
-    });
-  }, [assets, categoryFilter]);
-
   const totalCount = assets.length;
   const computeCount = useMemo(() => assets.filter(isComputeDevice).length, [assets]);
   const printerCount = useMemo(() => assets.filter(isPrinterDevice).length, [assets]);
   const networkCount = useMemo(() => assets.filter(isNetworkDevice).length, [assets]);
-  const onlineCount = useMemo(() => assets.filter(a => a.status === 'ONLINE').length, [assets]);
-  const withAgentCount = useMemo(() => assets.filter(a => isComputeDevice(a) && a.agentVersion && !['---', 'N/A', 'Sin antivirus', 'Sin agente', 'Discovery Engine 2.1'].includes(a.agentVersion)).length, [assets]);
-
-  const stats = useMemo(() => {
-    return {
-      card1Title: 'Total Activos',
-      card1Value: totalCount,
-      card2Title: 'En Línea',
-      card2Value: onlineCount,
-    };
-  }, [totalCount, onlineCount]);
 
   function syncSelection(nextAssets) {
     if (nextAssets.length === 0) {
@@ -1419,7 +1393,7 @@ export default function Assets() {
                         </details>
                       );
                     }
-                  } catch (e) {
+                  } catch {
                     return null;
                   }
                   return null;

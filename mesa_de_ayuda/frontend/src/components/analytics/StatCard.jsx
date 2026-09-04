@@ -49,7 +49,6 @@ export default function StatCard({
   trend, 
   iconType = 'tickets', 
   color = '#3b82f6', 
-  sparkline 
 }) {
   const isPositive = trend > 0;
   const trendColor = isPositive ? '#22c55e' : trend < 0 ? '#ef4444' : '#64748b';

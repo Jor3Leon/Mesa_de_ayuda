@@ -1,16 +1,10 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState } from 'react';
 import { apiRequest } from '../../lib/api';
 
-export default function CannedResponseManager({ onSelect, isAdmin }) {
+export default function CannedResponseManager({ onSelect }) {
   const [responses, setResponses] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [loading, setLoading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
-
-  useEffect(() => {
-    if (isOpen) {
-      loadResponses();
-    }
-  }, [isOpen]);
 
   const loadResponses = async () => {
     setLoading(true);
@@ -18,14 +12,24 @@ export default function CannedResponseManager({ onSelect, isAdmin }) {
       .then(setResponses)
       .catch(console.error)
       .finally(() => setLoading(false));
-  }
+  };
+
+  const handleToggle = () => {
+    setIsOpen((prev) => {
+      const next = !prev;
+      if (next && responses.length === 0) {
+        loadResponses();
+      }
+      return next;
+    });
+  };
 
   return (
     <div className="canned-response-manager">
       <button 
         type="button" 
         className="btn-ghost btn-sm"
-        onClick={() => setIsOpen(!isOpen)}
+        onClick={handleToggle}
       >
         ⚡ Respuestas Rápidas
       </button>

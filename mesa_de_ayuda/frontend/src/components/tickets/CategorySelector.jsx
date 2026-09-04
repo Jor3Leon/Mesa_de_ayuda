@@ -13,7 +13,7 @@ function resolveCategoryIcon(name, group) {
   return '📁';
 }
 
-export default function CategorySelector({ categoriesConfig, ticketType, value, onChange, required, disabled }) {
+export default function CategorySelector({ categoriesConfig, ticketType, value, onChange, disabled }) {
   const [isOpen, setIsOpen] = useState(false);
   const [searchTerm, setSearchTerm] = useState('');
   const wrapperRef = useRef(null);
@@ -59,23 +59,25 @@ export default function CategorySelector({ categoriesConfig, ticketType, value, 
     return () => document.removeEventListener('mousedown', handleClickOutside);
   }, [wrapperRef]);
 
-  // Reset search when opening
-  useEffect(() => {
-    if (isOpen) {
-      setSearchTerm('');
-    }
-  }, [isOpen]);
+  const handleToggle = () => {
+    if (disabled) return;
+    setIsOpen((prev) => {
+      if (!prev) setSearchTerm('');
+      return !prev;
+    });
+  };
 
   const handleSelect = (category) => {
     onChange(category);
     setIsOpen(false);
+    setSearchTerm('');
   };
 
   return (
     <div ref={wrapperRef} style={{ position: 'relative', width: '100%' }}>
       {/* Selector Button */}
       <div 
-        onClick={() => !disabled && setIsOpen(!isOpen)}
+        onClick={handleToggle}
         style={{
           background: disabled ? '#f8fafc' : '#fff',
           border: isOpen ? '1px solid #002D62' : '1px solid #cbd5e1',

@@ -5,7 +5,6 @@ export default function OrganizationStructure() {
   const [treeData, setTreeData] = useState([]);
   const [sedes, setSedes] = useState([]);
   const [dependencias, setDependencias] = useState([]);
-  const [oficinas, setOficinas] = useState([]);
   const [stats, setStats] = useState({ totalSedes: 0, totalDependencias: 0, totalOficinas: 0, totalAssets: 0 });
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
@@ -13,10 +12,6 @@ export default function OrganizationStructure() {
   const [error, setError] = useState('');
   const [expandedNodes, setExpandedNodes] = useState({});
   const [expandedAssets, setExpandedAssets] = useState({});
-
-  // Filter states for CRUD tables
-  const [filterSedeId, setFilterSedeId] = useState('ALL');
-  const [filterDepId, setFilterDepId] = useState('ALL');
 
   // Modals state
   const [modalType, setModalType] = useState(null); // 'sede' | 'dependencia' | 'oficina'
@@ -53,7 +48,6 @@ export default function OrganizationStructure() {
       });
       setSedes(sedesList);
       setDependencias(depsList);
-      setOficinas(ofisList);
 
       // Auto-expand all sedes in tree on first load
       const initialExpanded = {};

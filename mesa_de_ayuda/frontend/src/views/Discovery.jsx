@@ -1,5 +1,5 @@
 import { useEffect, useState, useMemo } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { apiRequest } from '../lib/api';
 
 function isValidIpv4(ip) {
@@ -175,8 +175,6 @@ function generateSimulatedDiscovery(ip) {
 }
 
 export default function Discovery() {
-  const navigate = useNavigate();
-
   // Configuration form state
   const [targetIp, setTargetIp] = useState('10.0.5.56');
   const [selectedAgentId, setSelectedAgentId] = useState('');
@@ -187,7 +185,6 @@ export default function Discovery() {
   const [agents, setAgents] = useState([]);
   const [locations, setLocations] = useState([]);
   const [customers, setCustomers] = useState([]);
-  const [loadingInitial, setLoadingInitial] = useState(true);
 
   // Scanning flow state
   const [isScanning, setIsScanning] = useState(false);
@@ -218,7 +215,6 @@ export default function Discovery() {
   // Initial load
   useEffect(() => {
     let ignore = false;
-    setLoadingInitial(true);
 
     Promise.all([
       apiRequest('/discovery/agents').catch(() => []),
@@ -241,11 +237,7 @@ export default function Discovery() {
           if (locList.length > 0) {
             setSelectedLocation(locList[0].name);
           }
-          setLoadingInitial(false);
         }
-      })
-      .catch(() => {
-        if (!ignore) setLoadingInitial(false);
       });
 
     return () => {
@@ -359,7 +351,7 @@ export default function Discovery() {
           method: 'POST',
           body: JSON.stringify(payload),
         });
-      } catch (regErr) {
+      } catch {
         // Fallback to /assets directly if /discovery/register was not mounted
         result = await apiRequest('/assets', {
           method: 'POST',

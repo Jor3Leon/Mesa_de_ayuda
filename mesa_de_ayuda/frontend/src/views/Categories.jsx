@@ -6,7 +6,7 @@ const TICKET_TYPES = [
   { key: 'Solicitud', label: 'SOLICITUD', singular: 'Solicitud', icon: '📋' },
 ];
 
-export const ICON_CATEGORIES = [
+const ICON_CATEGORIES = [
   {
     title: '🖥️ Equipos & Dispositivos',
     icons: ['🖥️', '💻', '📱', '⌨️', '🖱️', '💾', '🔌', '🔋', '📺', '🎧', '🖲️', '🕹️'],
@@ -37,7 +37,7 @@ export const ICON_CATEGORIES = [
   },
 ];
 
-export function resolveSubgroupIcon(subName, customIcon) {
+function resolveSubgroupIcon(subName, customIcon) {
   if (customIcon) return customIcon;
   const n = (subName || '').toLowerCase().trim();
   if (n.includes('equipo') || n.includes('computo') || n.includes('hardware') || n.includes('laptop')) return '🖥️';

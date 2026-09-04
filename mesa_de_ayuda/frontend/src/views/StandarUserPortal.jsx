@@ -85,36 +85,6 @@ export default function StandarUserPortal() {
     resolved: tickets.filter((t) => t.status === 'RESOLVED' || t.status === 'CLOSED').length,
   };
 
-  const getStatusBadge = (status) => {
-    const map = {
-      NEW: { label: 'Nuevo / En Cola', bg: '#fef3c7', color: '#92400e', border: '#fde68a' },
-      OPEN: { label: 'En Diagnóstico', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
-      IN_PROGRESS: { label: 'En Atención Técnica', bg: '#eff6ff', color: '#1e40af', border: '#bfdbfe' },
-      RESOLVED: { label: 'Resuelto / Listo', bg: '#ecfdf5', color: '#047857', border: '#a7f3d0' },
-      CLOSED: { label: 'Cerrado', bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' },
-    };
-    const s = map[status] || { label: status, bg: '#f1f5f9', color: '#475569', border: '#cbd5e1' };
-    return (
-      <span
-        style={{
-          fontSize: '0.75rem',
-          fontWeight: '700',
-          padding: '0.25rem 0.65rem',
-          borderRadius: '9999px',
-          background: s.bg,
-          color: s.color,
-          border: `1px solid ${s.border}`,
-          display: 'inline-flex',
-          alignItems: 'center',
-          gap: '0.35rem',
-        }}
-      >
-        <span style={{ width: '6px', height: '6px', borderRadius: '50%', background: s.color }} />
-        {s.label}
-      </span>
-    );
-  };
-
   const filteredTickets = useMemo(() => {
     return tickets.filter((t) => {
       const isResolved = t.status === 'RESOLVED' || t.status === 'CLOSED';
@@ -529,13 +499,11 @@ export default function StandarUserPortal() {
               return (
                 <div
                   key={t.id}
-                  onClick={() => setSelectedTicket(t)}
                   style={{
                     background: '#fff',
                     borderRadius: '12px',
                     padding: '1.25rem',
                     border: '1px solid #e2e8f0',
-                    cursor: 'pointer',
                     transition: 'all 0.2s ease',
                     boxShadow: '0 1px 3px rgba(0,0,0,0.05)',
                   }}

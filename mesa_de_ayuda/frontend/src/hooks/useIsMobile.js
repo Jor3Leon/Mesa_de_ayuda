@@ -10,6 +10,9 @@ import { useState, useEffect } from 'react';
 export function useIsMobile(breakpoint = 768) {
   const [isMobile, setIsMobile] = useState(() => {
     if (typeof window === 'undefined') return false;
+    if (typeof window.matchMedia === 'function') {
+      return window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches;
+    }
     return window.innerWidth < breakpoint;
   });
 
@@ -18,9 +21,6 @@ export function useIsMobile(breakpoint = 768) {
 
     const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
     const handler = (event) => setIsMobile(event.matches);
-
-    // Sync initial state
-    setIsMobile(mq.matches);
 
     if (typeof mq.addEventListener === 'function') {
       mq.addEventListener('change', handler);

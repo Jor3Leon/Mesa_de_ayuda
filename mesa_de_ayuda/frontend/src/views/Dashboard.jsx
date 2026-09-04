@@ -124,9 +124,6 @@ export default function Dashboard({ user }) {
 
   const userRoleStr = (typeof user?.role === 'string' ? user.role : user?.role?.name || '').trim().toUpperCase();
   const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || (userRoleStr.includes('NIVEL 2') && !userRoleStr.includes('NIVEL 1') && !userRoleStr.includes('NIVEL 3'));
-  const isLevel1 = userRoleStr === 'NIVEL 1' || userRoleStr === 'LEVEL_1' || userRoleStr.includes('NIVEL 1');
-  const isLevel3 = userRoleStr === 'NIVEL 3' || userRoleStr === 'LEVEL_3' || userRoleStr.includes('NIVEL 3') || userRoleStr.includes('SUPERVISOR');
-  const isAdmin = userRoleStr === 'ADMIN' || userRoleStr === 'ADMINISTRADOR';
   const isStandardUser = userRoleStr === 'USUARIO ESTANDAR' || userRoleStr === 'STANDARD_USER';
 
   const [filters, setFilters] = useState(() => {
@@ -281,7 +278,7 @@ export default function Dashboard({ user }) {
       ignore = true;
       clearInterval(interval);
     };
-  }, [user, filters]);
+  }, [user, filters, isLevel2, isStandardUser]);
 
   const handleExportPdf = async () => {
     if (!data) return;
@@ -327,19 +324,20 @@ export default function Dashboard({ user }) {
   const monthlyStatus = data?.monthlyStatusDistribution || [];
   const topCategories = data?.topCategories || [];
   const topRequestTypes = data?.topRequestTypes || [];
-  const topDependencias = data?.topDependencias || [];
-  const topOficinas = data?.topOficinas || [];
   const severityList = data?.severityDistribution || [];
-  const rmmVelocity = data?.rmmVelocity || { mttaMinutes: 18, mttrHours: 2.4, fcrRate: 88, throughputRatio: 100 };
   const ticketAging = data?.ticketAging || [];
   const techniciansWorkload = data?.techniciansWorkload || [];
   const urgentTicketsRadar = data?.urgentTicketsRadar || [];
 
   const maxCategoryCount = Math.max(...topCategories.map(c => c.count), 1);
-  const maxStructureCount = Math.max(...topDependencias.map(s => s.count), 1);
 
   return (
     <div className="dashboard-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+      {error && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#b91c1c', padding: '0.75rem 1rem', borderRadius: '8px', marginBottom: '1rem', fontSize: '0.875rem' }}>
+          ⚠️ Error al sincronizar datos del Dashboard: {error}
+        </div>
+      )}
       
       {/* 🌟 1. HERO HEADER (Limpio y libre de controles internos) */}
       <div className="dashboard-hero-header" style={{

@@ -1565,20 +1565,26 @@ export default function Dashboard({ user }) {
           justifyContent: 'space-between',
           alignItems: 'center',
           marginBottom: '1.5rem',
-          flexWrap: 'wrap',
-          gap: '16px'
+          gap: '20px',
+          flexWrap: 'nowrap'
         }}>
-          <div style={{ flex: '1 1 280px', minWidth: '240px' }}>
-            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em' }}>
+          <div style={{ flex: '1 1 auto', minWidth: '220px' }}>
+            <h3 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 800, color: '#0f172a', letterSpacing: '-0.02em', whiteSpace: 'nowrap' }}>
               Casos por Ubicación
             </h3>
             <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.8rem', color: '#64748b' }}>
-              Filtra dinámicamente por Sede, Dependencia y Oficina para visualizar la distribución en tiempo real.
+              Filtra dinámicamente por Sede, Dependencia y Oficina en tiempo real.
             </p>
           </div>
 
-          {/* Barra de Filtros Dinámicos (Estilo Toolbar Superior: Sede, Dependencia, Oficina) */}
-          <div style={{ display: 'flex', alignItems: 'flex-end', gap: '12px', flexWrap: 'wrap' }}>
+          {/* Barra de Filtros Dinámicos (Fija en posición, sin desplazamientos) */}
+          <div style={{
+            display: 'flex',
+            alignItems: 'flex-end',
+            gap: '12px',
+            flexShrink: 0,
+            flexWrap: 'nowrap'
+          }}>
             {/* Filtro 1: Sede */}
             <div>
               <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
@@ -1604,7 +1610,8 @@ export default function Dashboard({ user }) {
                   fontWeight: 600,
                   outline: 'none',
                   cursor: 'pointer',
-                  minWidth: '160px'
+                  width: '160px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="">Todas</option>
@@ -1640,8 +1647,8 @@ export default function Dashboard({ user }) {
                   fontWeight: 600,
                   outline: 'none',
                   cursor: 'pointer',
-                  minWidth: '170px',
-                  maxWidth: '220px'
+                  width: '180px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="">Todas</option>
@@ -1676,8 +1683,8 @@ export default function Dashboard({ user }) {
                   fontWeight: 600,
                   outline: 'none',
                   cursor: 'pointer',
-                  minWidth: '160px',
-                  maxWidth: '210px'
+                  width: '170px',
+                  boxSizing: 'border-box'
                 }}
               >
                 <option value="">Todas</option>
@@ -1688,47 +1695,6 @@ export default function Dashboard({ user }) {
                 ))}
               </select>
             </div>
-
-            {/* Botón Restablecer si hay algún filtro activo */}
-            {Boolean(selectedSedeId || selectedDepId || selectedOficinaId) && (
-              <div>
-                <span style={{ display: 'block', fontSize: '0.7rem', height: '14px', marginBottom: '4px' }}>&nbsp;</span>
-                <button
-                  type="button"
-                  onClick={() => {
-                    setSelectedSedeId(null);
-                    setSelectedDepId(null);
-                    setSelectedOficinaId(null);
-                  }}
-                  title="Restablecer filtros a Todas"
-                  style={{
-                    padding: '7px 12px',
-                    border: '1px solid #cbd5e1',
-                    borderRadius: '8px',
-                    background: '#f8fafc',
-                    fontSize: '0.8125rem',
-                    fontWeight: 700,
-                    color: '#475569',
-                    cursor: 'pointer',
-                    display: 'flex',
-                    alignItems: 'center',
-                    gap: '4px',
-                    height: '35px',
-                    transition: 'all 0.15s ease'
-                  }}
-                  onMouseEnter={(e) => {
-                    e.currentTarget.style.background = '#e2e8f0';
-                    e.currentTarget.style.color = '#0f172a';
-                  }}
-                  onMouseLeave={(e) => {
-                    e.currentTarget.style.background = '#f8fafc';
-                    e.currentTarget.style.color = '#475569';
-                  }}
-                >
-                  ↺ Limpiar
-                </button>
-              </div>
-            )}
           </div>
         </div>
 

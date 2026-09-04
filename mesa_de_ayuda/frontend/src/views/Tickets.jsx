@@ -390,7 +390,7 @@ function getSlaInfo(createdAt, slaInput, resolutionTime = null, status = null) {
       percentage: 100,
       color: '#ff9800',
       isOverdue: false,
-      remainingStr: 'SLA Pausado'
+      remainingStr: 'ANS Pausado'
     };
   }
 
@@ -2592,7 +2592,7 @@ export default function Tickets() {
                 { id: 'IN_PROGRESS', label: 'En Progreso', count: tickets.filter(t => t.status === 'IN_PROGRESS' || t.status === 'OPEN').length, color: '#8b5cf6', icon: '⚡', subtitle: 'En curso' },
                 { id: 'RESOLVED', label: 'Resueltos', count: tickets.filter(t => t.status === 'RESOLVED').length, color: '#10b981', icon: '✅', subtitle: 'Solucionados' },
                 { id: 'UNRESOLVED', label: 'No Resueltos', count: tickets.filter(t => t.status !== 'RESOLVED' && t.status !== 'CLOSED').length, color: '#64748b', icon: '⏳', subtitle: 'Pendientes' },
-                { id: 'OVERDUE', label: 'Vencidos', count: tickets.filter(t => getSlaInfo(t.createdAt, t.sla, t.resolvedAt || t.closedAt, t.status).isOverdue).length, color: '#dc2626', icon: '⚠️', subtitle: 'SLA excedido' },
+                { id: 'OVERDUE', label: 'Vencidos', count: tickets.filter(t => getSlaInfo(t.createdAt, t.sla, t.resolvedAt || t.closedAt, t.status).isOverdue).length, color: '#dc2626', icon: '⚠️', subtitle: 'ANS excedido' },
               ].map((stat) => {
                 const isSelected = dashboardFilter === stat.id;
                 return (

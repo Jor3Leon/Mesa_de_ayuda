@@ -269,7 +269,7 @@ export default function Analytics({ user }) {
         />
 
         <StatCard
-          title={isPersonal ? "Mi Cumplimiento ANS" : "Cumplimiento Global ANS (SLA)"}
+          title={isPersonal ? "Mi Cumplimiento ANS" : "Cumplimiento Global ANS"}
           value={`${s.slaCompliance || 100}%`}
           subtitle="Meta institucional: >95%"
           badge={s.slaCompliance >= 95 ? "Óptimo" : "En Riesgo"}
@@ -280,8 +280,8 @@ export default function Analytics({ user }) {
 
         <StatCard
           title="MTTA (1ra Respuesta)"
-          value={`${s.mttaMinutes || 18} min`}
-          subtitle="Tiempo medio de asignación"
+          value={`${s.mttaMinutes || 0} min`}
+          subtitle="Tiempo medio a 1ra respuesta"
           trend={-5}
           iconType="time"
           color="#0284c7"

@@ -128,7 +128,7 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
       ['Total Tickets Gestionados', String(k.totalTickets || 0), 'Tickets Asignados en Atención', String(k.assignedTickets || 0)],
       ['Tickets Planificados / En Progreso', String(k.inProgressTickets || 0), 'Tickets Pendientes / En Espera', String(k.pendingTickets || 0)],
       ['Tickets Resueltos', String(k.resolvedTickets || 0), 'Tickets Cerrados Definitivamente', String(k.closedTickets || 0)],
-      ['Tickets Desfasados / Retrasados (SLA)', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
+      ['Tickets Desfasados / Fuera de ANS', String(k.overdueTickets || 0), 'Cumplimiento de Acuerdos ANS', `${k.slaCompliance || 100}%`],
       ['Total Incidencias', String(k.incidentCount || 0), 'Total Solicitudes', String(k.requestCount || 0)]
     ];
 
@@ -334,10 +334,10 @@ export const generateAnalyticsExecutiveReport = (data, filters, user) => {
     doc.setTextColor(15, 23, 42);
     doc.setFontSize(13);
     doc.setFont('helvetica', 'bold');
-    doc.text('1. Resumen Estratégico y Acuerdos de Nivel de Servicio (ANS / SLA)', 15, 55);
+    doc.text('1. Resumen Estratégico y Acuerdos de Nivel de Servicio (ANS)', 15, 55);
 
     const itilKpiData = [
-      ['Total Tickets Gestionados', String(s.totalTickets || 0), 'Cumplimiento Global ANS (SLA)', `${s.slaCompliance || 98}% (Meta: >95%)`],
+      ['Total Tickets Gestionados', String(s.totalTickets || 0), 'Cumplimiento Global ANS', `${s.slaCompliance || 100}% (Meta: >95%)`],
       ['Total Incidencias', String(s.incidentCount || 0), 'Tiempo Promedio de Primera Respuesta (MTTA)', `${s.mttaMinutes || 18} minutos`],
       ['Total Solicitudes', String(s.requestCount || 0), 'Tiempo Promedio de Resolución (MTTR)', `${s.mttrHours || 2.4} horas`],
       ['Tickets Vencidos / Fuera de ANS', String(s.overdueCount || 0), 'Resolución al Primer Contacto (FCR)', `${s.fcrRate || 88}%`],

@@ -107,9 +107,36 @@ function requireRole(...roles) {
   };
 }
 
+/**
+ * Resuelve el rol efectivo de forma segura (Sección 4.7 Auditoría).
+ * Solo usuarios autorizados (ADMIN, SUPERVISOR o con permiso ROLE_VIEW_AS) pueden simular otro rol.
+ */
+function getEffectiveRole(req) {
+  const user = req.auth?.user;
+  if (!user) return '';
+  const actualRole = String(user.role || user.role?.name || '').trim().toUpperCase();
+  const requestedRole = (req.headers['x-view-as-role'] || req.query.role || req.query.viewAsRole || '').trim().toUpperCase();
+
+  if (!requestedRole || requestedRole === actualRole) {
+    return actualRole;
+  }
+
+  const canSwitchRole = 
+    actualRole.includes('ADMIN') || 
+    actualRole.includes('SUPERVISOR') || 
+    (Array.isArray(user.permissions) && user.permissions.includes('ROLE_VIEW_AS'));
+
+  if (!canSwitchRole) {
+    return actualRole;
+  }
+
+  return requestedRole;
+}
+
 module.exports = {
   requireAuth,
   requirePermission,
   requireAnyPermission,
   requireRole,
+  getEffectiveRole,
 };

@@ -18,6 +18,26 @@ const {
 } = require('../lib/ticket-service');
 const { requireAuth, requirePermission } = require('../lib/middleware');
 const { autoCloseResolvedTickets } = require('../lib/business-hours');
+const { resolvePolicy } = require('../lib/ans-engine');
+
+async function findEntityFirst(model, where) {
+  if (!model) return null;
+  if (typeof model.findFirst === 'function') {
+    return model.findFirst({ where });
+  }
+  if (typeof model.findMany === 'function') {
+    const items = await model.findMany({ where });
+    return items ? items[0] : null;
+  }
+  if (typeof model.findUnique === 'function' && where.id !== undefined) {
+    const item = await model.findUnique({ where: { id: where.id } });
+    if (item && (!where.organizationId || item.organizationId === where.organizationId)) {
+      return item;
+    }
+    return null;
+  }
+  return null;
+}
 
 function getTicketRoutes(prisma) {
   const router = express.Router();
@@ -73,6 +93,26 @@ function getTicketRoutes(prisma) {
       }
 
       
+      // Validación multi-tenant estricta de relaciones
+      if (req.auth.organizationId) {
+        if (req.body.customerId) {
+          const cust = await findEntityFirst(prisma.customer, { id: normalizeOptionalPositiveInt(req.body.customerId), organizationId: req.auth.organizationId });
+          if (!cust) throw createValidationError('El solicitante no pertenece a su organización.', 'customerId');
+        }
+        if (req.body.assetId) {
+          const asset = await findEntityFirst(prisma.asset, { id: normalizeOptionalPositiveInt(req.body.assetId), organizationId: req.auth.organizationId });
+          if (!asset) throw createValidationError('El activo no pertenece a su organización.', 'assetId');
+        }
+        if (req.body.locationId) {
+          const loc = await findEntityFirst(prisma.location, { id: normalizeOptionalPositiveInt(req.body.locationId), organizationId: req.auth.organizationId });
+          if (!loc) throw createValidationError('La ubicación no pertenece a su organización.', 'locationId');
+        }
+        if (req.body.observerId) {
+          const obs = await findEntityFirst(prisma.user, { id: normalizeOptionalPositiveInt(req.body.observerId), organizationId: req.auth.organizationId });
+          if (!obs) throw createValidationError('El observador no pertenece a su organización.', 'observerId');
+        }
+      }
+
       // Si no viene customerId, usamos un cliente por defecto o el ID del creador
       const customerId = normalizeOptionalPositiveInt(req.body.customerId) || 1; 
       const category = normalizeOptionalString(req.body.category) || 'General';
@@ -83,12 +123,16 @@ function getTicketRoutes(prisma) {
       // Lógica corregida para asignación primaria y secundaria
       const assignedToId = responsibleUserIds[0] || null;
       const secondaryAssignedToId = responsibleUserIds[1] || null;
+      const assignedAt = assignedToId ? new Date() : null;
       
       const ticketType = normalizeOptionalString(req.body.ticketType) || 'Incidencia';
       const locationId = normalizeOptionalPositiveInt(req.body.locationId);
       const assetId = normalizeOptionalPositiveInt(req.body.assetId);
       const observerId = normalizeOptionalPositiveInt(req.body.observerId);
       const sla = normalizeOptionalString(req.body.sla);
+
+      // Snapshot ANS oficial
+      const ansPolicy = await resolvePolicy(prisma, priority, req.auth.organizationId);
 
       const ticket = await prisma.ticket.create({
         data: {
@@ -104,8 +148,11 @@ function getTicketRoutes(prisma) {
           assetId,
           observerId,
           sla,
+          responseAnsMinutes: ansPolicy.responseMinutes,
+          resolutionAnsMinutes: ansPolicy.resolutionMinutes,
           assignedToId,
           secondaryAssignedToId,
+          assignedAt,
           responsibleUserIds: JSON.stringify(responsibleUserIds),
           createdById: req.auth.user.id,
         },
@@ -241,21 +288,54 @@ function getTicketRoutes(prisma) {
         if (req.body.description !== undefined) updateData.description = sanitizeHtmlServer(requireNonEmptyString(req.body.description, 'description'));
         if (req.body.priority !== undefined) {
           const rawPrio = requireNonEmptyString(req.body.priority, 'priority').toUpperCase();
+          let newPrio = 'MEDIO';
           if (['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(rawPrio)) {
-            updateData.priority = 'ALTO';
+            newPrio = 'ALTO';
           } else if (['BAJO', 'LOW', 'BAJA'].includes(rawPrio)) {
-            updateData.priority = 'BAJO';
-          } else {
-            updateData.priority = 'MEDIO';
+            newPrio = 'BAJO';
+          }
+          updateData.priority = newPrio;
+          if (newPrio !== targetTicket.priority) {
+            const p = await resolvePolicy(prisma, newPrio, req.auth.organizationId);
+            updateData.responseAnsMinutes = p.responseMinutes;
+            updateData.resolutionAnsMinutes = p.resolutionMinutes;
           }
         }
         if (req.body.status !== undefined) updateData.status = requireNonEmptyString(req.body.status, 'status');
         if (req.body.category !== undefined) updateData.category = normalizeOptionalString(req.body.category);
-        if (req.body.customerId !== undefined) updateData.customerId = requirePositiveInt(req.body.customerId, 'customerId');
+        if (req.body.customerId !== undefined) {
+          const cid = requirePositiveInt(req.body.customerId, 'customerId');
+          if (req.auth.organizationId) {
+            const cust = await findEntityFirst(prisma.customer, { id: cid, organizationId: req.auth.organizationId });
+            if (!cust) throw createValidationError('El solicitante no pertenece a su organización.', 'customerId');
+          }
+          updateData.customerId = cid;
+        }
         if (req.body.ticketType !== undefined) updateData.ticketType = normalizeOptionalString(req.body.ticketType);
-        if (req.body.locationId !== undefined) updateData.locationId = normalizeOptionalPositiveInt(req.body.locationId);
-        if (req.body.assetId !== undefined) updateData.assetId = normalizeOptionalPositiveInt(req.body.assetId);
-        if (req.body.observerId !== undefined) updateData.observerId = normalizeOptionalPositiveInt(req.body.observerId);
+        if (req.body.locationId !== undefined) {
+          const lid = normalizeOptionalPositiveInt(req.body.locationId);
+          if (lid && req.auth.organizationId) {
+            const loc = await findEntityFirst(prisma.location, { id: lid, organizationId: req.auth.organizationId });
+            if (!loc) throw createValidationError('La ubicación no pertenece a su organización.', 'locationId');
+          }
+          updateData.locationId = lid;
+        }
+        if (req.body.assetId !== undefined) {
+          const aid = normalizeOptionalPositiveInt(req.body.assetId);
+          if (aid && req.auth.organizationId) {
+            const asset = await findEntityFirst(prisma.asset, { id: aid, organizationId: req.auth.organizationId });
+            if (!asset) throw createValidationError('El activo no pertenece a su organización.', 'assetId');
+          }
+          updateData.assetId = aid;
+        }
+        if (req.body.observerId !== undefined) {
+          const oid = normalizeOptionalPositiveInt(req.body.observerId);
+          if (oid && req.auth.organizationId) {
+            const obs = await findEntityFirst(prisma.user, { id: oid, organizationId: req.auth.organizationId });
+            if (!obs) throw createValidationError('El observador no pertenece a su organización.', 'observerId');
+          }
+          updateData.observerId = oid;
+        }
         if (req.body.sla !== undefined) updateData.sla = normalizeOptionalString(req.body.sla);
 
         if (req.body.responsibleUserIds !== undefined || req.body.assignedToId !== undefined) {
@@ -265,6 +345,9 @@ function getTicketRoutes(prisma) {
           updateData.responsibleUserIds = JSON.stringify(responsibleUserIds);
           updateData.assignedToId = responsibleUserIds[0] || null;
           updateData.secondaryAssignedToId = responsibleUserIds[1] || null;
+          if (responsibleUserIds.length > 0 && !targetTicket.assignedAt) {
+            updateData.assignedAt = new Date();
+          }
           
           if ((targetTicket.status === 'NEW' || targetTicket.status === 'OPEN') && responsibleUserIds.length > 0) {
             updateData.status = 'IN_PROGRESS';
@@ -272,19 +355,31 @@ function getTicketRoutes(prisma) {
         }
       }
 
-      // SLA Stop Logic: Set resolvedAt/closedAt based on status change
+      // Registrar primera respuesta si un técnico/agente atiende el caso
+      const userRole = String(req.auth.user.role || '').toUpperCase();
+      const isTechOrAdmin = !userRole.includes('ESTANDAR') && !userRole.includes('STANDARD');
+      if (isTechOrAdmin && !targetTicket.firstResponseAt) {
+        updateData.firstResponseAt = new Date();
+        updateData.firstResponseById = req.auth.user.id;
+      }
+
+      // ANS Stop Logic: Set resolvedAt/closedAt/resolvedById and reopenCount
       if (updateData.status === 'RESOLVED' && targetTicket.status !== 'RESOLVED') {
         updateData.resolvedAt = new Date();
+        updateData.resolvedById = req.auth.user.id;
       }
       if (updateData.status === 'CLOSED' && targetTicket.status !== 'CLOSED') {
         updateData.closedAt = new Date();
         if (!targetTicket.resolvedAt && !updateData.resolvedAt) {
           updateData.resolvedAt = new Date();
+          updateData.resolvedById = req.auth.user.id;
         }
       }
       if (updateData.status === 'IN_PROGRESS' && (targetTicket.status === 'RESOLVED' || targetTicket.status === 'CLOSED')) {
         updateData.resolvedAt = null;
+        updateData.resolvedById = null;
         updateData.closedAt = null;
+        updateData.reopenCount = (targetTicket.reopenCount || 0) + 1;
       }
 
       const updatedTicket = await prisma.ticket.update({
@@ -610,6 +705,19 @@ function getTicketRoutes(prisma) {
           newValue: content,
         },
       });
+
+      // Si el autor es técnico/admin y el ticket aún no tiene primera respuesta registrada, registrarla
+      const userRole = String(req.auth.user.role || '').toUpperCase();
+      const isTechOrAdmin = !userRole.includes('ESTANDAR') && !userRole.includes('STANDARD');
+      if (isTechOrAdmin) {
+        await prisma.ticket.updateMany({
+          where: { id: ticketId, firstResponseAt: null },
+          data: {
+            firstResponseAt: new Date(),
+            firstResponseById: req.auth.user.id
+          }
+        }).catch(() => null);
+      }
 
       res.status(201).json(activity);
     } catch (error) {

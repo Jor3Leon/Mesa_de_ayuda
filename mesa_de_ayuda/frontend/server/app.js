@@ -1,3 +1,11 @@
+try {
+  const canonicalBackend = require('../../backend/app');
+  module.exports = canonicalBackend;
+  return;
+} catch (e) {
+  // Fallback to local copy if running isolated
+}
+
 const express = require('express');
 const cors = require('cors');
 const morgan = require('morgan');

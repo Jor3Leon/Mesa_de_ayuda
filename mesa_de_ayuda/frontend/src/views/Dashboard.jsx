@@ -33,7 +33,11 @@ const initialData = {
     requestCount: 0,
     overdueTickets: 0,
     unassignedTickets: 0,
-    slaCompliance: 100
+    ansCompliance: 100,
+    ansResponseCompliance: 100,
+    ansResolutionCompliance: 100,
+    slaCompliance: 100,
+    backlog: 0
   },
   personal: {
     myTickets: 0,
@@ -48,9 +52,14 @@ const initialData = {
   technicians: [],
   techniciansWorkload: [],
   rmmVelocity: {
-    mttaMinutes: 18,
-    mttrHours: 2.4,
-    fcrRate: 88,
+    mttaMinutes: 0,
+    mttaP50Minutes: 0,
+    mttaP90Minutes: 0,
+    mttrHours: 0,
+    mttrP50Hours: 0,
+    mttrP90Hours: 0,
+    fcrRate: 0,
+    reopenRate: 0,
     throughputRatio: 100
   },
   ticketAging: [],
@@ -524,6 +533,149 @@ export default function Dashboard({ user }) {
         </div>
       </div>
 
+      {/* 🌟 2.5. RESUMEN EJECUTIVO DE RENDIMIENTO ANS (SECCIÓN 6 AUDITORÍA) */}
+      <div 
+        className="dashboard-executive-ans-grid"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 230px), 1fr))',
+          gap: '0.85rem',
+          marginBottom: '1.25rem'
+        }}
+      >
+        {/* KPI 1: Tickets Activos */}
+        <div 
+          onClick={() => navigate('/tickets?status=IN_PROGRESS')}
+          style={{
+            background: 'linear-gradient(135deg, #001D40 0%, #002D62 100%)',
+            borderRadius: '14px',
+            padding: '1.15rem 1.25rem',
+            border: '1px solid rgba(0, 209, 255, 0.25)',
+            boxShadow: '0 4px 14px rgba(0, 45, 98, 0.15)',
+            color: '#ffffff',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 8px 20px rgba(0, 209, 255, 0.25)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 4px 14px rgba(0, 45, 98, 0.15)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#00D1FF', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Tickets Activos
+            </span>
+            <span style={{ fontSize: '1.1rem' }}>⚡</span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <strong style={{ fontSize: '1.75rem', fontWeight: 900, color: '#ffffff', lineHeight: 1 }}>
+              {((k.openTickets || 0) + (k.inProgressTickets || 0) + (k.pendingTickets || 0)).toLocaleString()}
+            </strong>
+            <span style={{ fontSize: '0.75rem', color: '#cbd5e1' }}>
+              de {k.totalTickets} total
+            </span>
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#94a3b8' }}>
+            En atención y resolución
+          </div>
+        </div>
+
+        {/* KPI 2: ANS Primera Respuesta */}
+        <div 
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.15rem 1.25rem',
+            border: '1px solid #e2e8f0',
+            borderTop: '4px solid #0284c7',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ANS 1ª Respuesta
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, background: (k.ansResponseCompliance ?? 100) >= 95 ? '#ecfdf5' : '#fffbeb', color: (k.ansResponseCompliance ?? 100) >= 95 ? '#059669' : '#d97706', padding: '2px 7px', borderRadius: '5px' }}>
+              Meta: &gt;95%
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <strong style={{ fontSize: '1.75rem', fontWeight: 900, color: (k.ansResponseCompliance ?? 100) >= 95 ? '#059669' : '#d97706', lineHeight: 1 }}>
+              {k.ansResponseCompliance ?? k.ansCompliance ?? 100}%
+            </strong>
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#64748b' }}>
+            MTTA P50: <strong>{data?.rmmVelocity?.mttaP50Minutes ?? data?.rmmVelocity?.mttaMinutes ?? 0}m</strong> · P90: <strong>{data?.rmmVelocity?.mttaP90Minutes ?? 0}m</strong>
+          </div>
+        </div>
+
+        {/* KPI 3: ANS Solución Definitiva */}
+        <div 
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.15rem 1.25rem',
+            border: '1px solid #e2e8f0',
+            borderTop: '4px solid #10b981',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+            transition: 'all 0.2s ease'
+          }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              ANS Solución Definitiva
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, background: (k.ansResolutionCompliance ?? k.slaCompliance ?? 100) >= 90 ? '#ecfdf5' : '#fee2e2', color: (k.ansResolutionCompliance ?? k.slaCompliance ?? 100) >= 90 ? '#059669' : '#dc2626', padding: '2px 7px', borderRadius: '5px' }}>
+              Meta: &gt;90%
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <strong style={{ fontSize: '1.75rem', fontWeight: 900, color: (k.ansResolutionCompliance ?? k.slaCompliance ?? 100) >= 90 ? '#059669' : '#dc2626', lineHeight: 1 }}>
+              {k.ansResolutionCompliance ?? k.slaCompliance ?? 100}%
+            </strong>
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#64748b' }}>
+            MTTR P50: <strong>{data?.rmmVelocity?.mttrP50Hours ?? data?.rmmVelocity?.mttrHours ?? 0}h</strong> · P90: <strong>{data?.rmmVelocity?.mttrP90Hours ?? 0}h</strong>
+          </div>
+        </div>
+
+        {/* KPI 4: Backlog & Sin Asignar */}
+        <div 
+          onClick={() => navigate('/tickets?unassigned=true')}
+          style={{
+            background: '#ffffff',
+            borderRadius: '14px',
+            padding: '1.15rem 1.25rem',
+            border: '1px solid #e2e8f0',
+            borderTop: '4px solid #f59e0b',
+            boxShadow: '0 2px 8px rgba(0, 0, 0, 0.04)',
+            cursor: 'pointer',
+            transition: 'all 0.2s ease'
+          }}
+          onMouseEnter={(e) => { e.currentTarget.style.transform = 'translateY(-2px)'; e.currentTarget.style.boxShadow = '0 6px 16px rgba(245, 158, 11, 0.15)'; }}
+          onMouseLeave={(e) => { e.currentTarget.style.transform = 'translateY(0)'; e.currentTarget.style.boxShadow = '0 2px 8px rgba(0, 0, 0, 0.04)'; }}
+        >
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.4rem' }}>
+            <span style={{ fontSize: '0.75rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em' }}>
+              Backlog Operacional
+            </span>
+            <span style={{ fontSize: '0.7rem', fontWeight: 800, background: (k.unassignedTickets || 0) > 0 ? '#fee2e2' : '#f1f5f9', color: (k.unassignedTickets || 0) > 0 ? '#dc2626' : '#475569', padding: '2px 7px', borderRadius: '5px' }}>
+              {k.unassignedTickets || 0} sin técnico
+            </span>
+          </div>
+          <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px' }}>
+            <strong style={{ fontSize: '1.75rem', fontWeight: 900, color: '#0f172a', lineHeight: 1 }}>
+              {((k.openTickets || 0) + (k.inProgressTickets || 0) + (k.pendingTickets || 0)).toLocaleString()}
+            </strong>
+            <span style={{ fontSize: '0.75rem', color: (k.overdueTickets || 0) > 0 ? '#dc2626' : '#059669', fontWeight: 700 }}>
+              {(k.overdueTickets || 0) > 0 ? `⚠️ ${k.overdueTickets} vencidos` : '✅ Al día'}
+            </span>
+          </div>
+          <div style={{ marginTop: '0.5rem', fontSize: '0.72rem', color: '#64748b' }}>
+            FCR (1er contacto): <strong>{data?.rmmVelocity?.fcrRate ?? 0}%</strong>
+          </div>
+        </div>
+      </div>
+
       {/* 📊 3. POWER BI KPI CARDS GRID (8 Indicadores Clave de Tickets) */}
       <div 
         className="dashboard-kpi-grid"
@@ -604,7 +756,7 @@ export default function Dashboard({ user }) {
               {k.overdueTickets}
             </strong>
             <span style={{ fontSize: '0.65rem', color: k.overdueTickets > 0 ? '#b91c1c' : '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
-              {k.overdueTickets > 0 ? 'SLA excedido' : 'Al día'}
+              {k.overdueTickets > 0 ? 'ANS vencido' : 'Al día'}
             </span>
           </div>
         </div>
@@ -831,10 +983,10 @@ export default function Dashboard({ user }) {
           </div>
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'baseline', gap: '0.4rem' }}>
             <strong style={{ fontSize: '1.35rem', fontWeight: 800, color: '#059669', lineHeight: 1, letterSpacing: '-0.02em' }}>
-              {k.slaCompliance}%
+              {k.ansResolutionCompliance ?? k.slaCompliance ?? 100}%
             </strong>
             <span style={{ fontSize: '0.65rem', color: '#059669', fontWeight: 700, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
-              Meta: &gt;95%
+              Meta: &gt;90%
             </span>
           </div>
         </div>
@@ -1350,6 +1502,31 @@ export default function Dashboard({ user }) {
                         }}>
                           {ticket.priority || 'Medio'}
                         </span>
+                        {ticket.isOverdue ? (
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: '#fee2e2',
+                            color: '#dc2626',
+                            border: '1px solid #fecaca'
+                          }}>
+                            🚨 ANS Vencido
+                          </span>
+                        ) : ticket.isAtRisk ? (
+                          <span style={{
+                            fontSize: '0.65rem',
+                            fontWeight: 800,
+                            padding: '1px 6px',
+                            borderRadius: '4px',
+                            background: '#fef3c7',
+                            color: '#d97706',
+                            border: '1px solid #fde68a'
+                          }}>
+                            ⏳ ANS en Riesgo {ticket.remainingMinutes != null ? `(${Math.round(ticket.remainingMinutes)}m)` : ''}
+                          </span>
+                        ) : null}
                       </div>
                       <span style={{ fontSize: '0.85rem', fontWeight: 700, color: '#0f172a', display: 'block', maxWidth: '400px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
                         {ticket.title}

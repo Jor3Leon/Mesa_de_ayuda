@@ -1427,7 +1427,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             />
             <Route
               path="/desk"
-              element={<PlaceholderModule title="Service Desk" description="La estructura principal ya esta lista para conectar catalogo, SLA y bandeja de asignaciones." />}
+              element={<PlaceholderModule title="Service Desk" description="La estructura principal ya está lista para conectar catálogo, acuerdos ANS y bandeja de asignaciones." />}
             />
             <Route
               path="/software"

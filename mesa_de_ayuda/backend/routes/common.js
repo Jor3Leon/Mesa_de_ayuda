@@ -1,7 +1,9 @@
 const express = require('express');
-const { requireAuth, requirePermission, requireAnyPermission } = require('../lib/middleware');
+const { requireAuth, requirePermission, requireAnyPermission, getEffectiveRole } = require('../lib/middleware');
 const { createHttpError } = require('../lib/utils');
 const { sanitizeUser } = require('../lib/ticket-service');
+const { calculateBusinessMinutes } = require('../lib/business-time');
+const { evaluateTicketAns } = require('../lib/ans-engine');
 
 function getCommonRoutes(prisma) {
   const router = express.Router();
@@ -280,8 +282,7 @@ function getCommonRoutes(prisma) {
       const userId = user.id;
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
 
-      const headerRole = req.headers['x-view-as-role'] || req.query.role || req.query.viewAsRole;
-      const effectiveRole = (headerRole || user.role || user.role?.name || '').trim().toUpperCase();
+      const effectiveRole = getEffectiveRole(req);
       const isLevel2 = effectiveRole === 'NIVEL 2' || effectiveRole === 'LEVEL_2' || effectiveRole === 'TECNICO NIVEL 2' || effectiveRole === 'TÉCNICO NIVEL 2' || (effectiveRole.includes('NIVEL 2') && !effectiveRole.includes('NIVEL 1') && !effectiveRole.includes('NIVEL 3'));
       const isLevel1 = effectiveRole === 'NIVEL 1' || effectiveRole === 'LEVEL_1' || effectiveRole.includes('NIVEL 1');
       const isLevel3 = effectiveRole === 'NIVEL 3' || effectiveRole === 'LEVEL_3' || effectiveRole.includes('NIVEL 3') || effectiveRole.includes('SUPERVISOR');
@@ -492,10 +493,14 @@ function getCommonRoutes(prisma) {
           id: true,
           createdAt: true,
           assignedAt: true,
+          firstResponseAt: true,
           resolvedAt: true,
           status: true,
           ticketType: true,
-          priority: true
+          priority: true,
+          reopenCount: true,
+          responseAnsMinutes: true,
+          resolutionAnsMinutes: true
         }
       }).catch(() => []);
 
@@ -863,7 +868,7 @@ function getCommonRoutes(prisma) {
       }, {});
 
       const slaCompliance = totalTickets > 0 
-        ? Math.max(70, Math.min(100, Math.round(((totalTickets - overdueTickets) / totalTickets) * 100))) 
+        ? Math.min(100, Math.max(0, Math.round(((totalTickets - overdueTickets) / totalTickets) * 100))) 
         : 100;
 
       // 6. Fetch Active Tickets for Aging Matrix & Urgent Radar
@@ -913,114 +918,119 @@ function getCommonRoutes(prisma) {
         b.percent = totalActiveCount > 0 ? Math.round((b.count / totalActiveCount) * 100) : 0;
       });
 
-      // 8. Calculate RMM Velocity & Efficiency Metrics
-      let totalMttaMinutes = 0;
-      let mttaCount = 0;
-      let totalMttrHours = 0;
-      let mttrCount = 0;
+      // 8. Calculate RMM Velocity & Efficiency Metrics (Minutos y horas hábiles)
+      const mttaMinutesList = [];
+      const mttrHoursList = [];
 
       pastYearTickets.forEach(t => {
-        if (t.createdAt && t.assignedAt) {
-          const diffMin = Math.round((new Date(t.assignedAt) - new Date(t.createdAt)) / (1000 * 60));
-          if (diffMin >= 0 && diffMin <= 10080) {
-            totalMttaMinutes += diffMin;
-            mttaCount++;
+        const respDate = t.firstResponseAt || t.assignedAt;
+        if (t.createdAt && respDate) {
+          const diffMin = calculateBusinessMinutes(t.createdAt, respDate);
+          if (diffMin >= 0 && diffMin <= 43200) {
+            mttaMinutesList.push(diffMin);
           }
         }
         if (t.createdAt && t.resolvedAt) {
-          const diffHrs = Math.round(((new Date(t.resolvedAt) - new Date(t.createdAt)) / (1000 * 60 * 60)) * 10) / 10;
+          const diffMin = calculateBusinessMinutes(t.createdAt, t.resolvedAt);
+          const diffHrs = Math.round((diffMin / 60) * 10) / 10;
           if (diffHrs >= 0 && diffHrs <= 720) {
-            totalMttrHours += diffHrs;
-            mttrCount++;
+            mttrHoursList.push(diffHrs);
           }
         }
       });
 
-      const avgMttaMinutes = mttaCount > 0 ? Math.round(totalMttaMinutes / mttaCount) : 18;
-      const avgMttrHours = mttrCount > 0 ? Math.round((totalMttrHours / mttrCount) * 10) / 10 : 2.4;
+      mttaMinutesList.sort((a, b) => a - b);
+      mttrHoursList.sort((a, b) => a - b);
+
+      const mttaP50Minutes = mttaMinutesList.length > 0 ? mttaMinutesList[Math.floor(mttaMinutesList.length * 0.5)] : 0;
+      const mttaP90Minutes = mttaMinutesList.length > 0 ? mttaMinutesList[Math.min(mttaMinutesList.length - 1, Math.floor(mttaMinutesList.length * 0.9))] : 0;
+      const avgMttaMinutes = mttaMinutesList.length > 0 ? Math.round(mttaMinutesList.reduce((a, b) => a + b, 0) / mttaMinutesList.length) : 0;
+
+      const mttrP50Hours = mttrHoursList.length > 0 ? mttrHoursList[Math.floor(mttrHoursList.length * 0.5)] : 0;
+      const mttrP90Hours = mttrHoursList.length > 0 ? mttrHoursList[Math.min(mttrHoursList.length - 1, Math.floor(mttrHoursList.length * 0.9))] : 0;
+      const avgMttrHours = mttrHoursList.length > 0 ? Math.round((mttrHoursList.reduce((a, b) => a + b, 0) / mttrHoursList.length) * 10) / 10 : 0;
+
       const throughputRatio = totalTickets > 0 ? Math.round((resolvedTickets / totalTickets) * 100) : 100;
-      const fcrRate = totalTickets > 0 ? Math.max(75, Math.min(98, Math.round(((resolvedTickets - overdueTickets) / Math.max(resolvedTickets, 1)) * 100))) : 88;
+      const fcrRate = resolvedTickets > 0 ? Math.min(100, Math.max(0, Math.round(((resolvedTickets - overdueTickets) / resolvedTickets) * 100))) : 0;
 
       const rmmVelocity = {
         mttaMinutes: avgMttaMinutes,
+        mttaP50Minutes,
+        mttaP90Minutes,
         mttrHours: avgMttrHours,
+        mttrP50Hours,
+        mttrP90Hours,
         fcrRate,
         throughputRatio
       };
 
-      // 9. Calculate Technician Workload & Productivity Pulse
-      const techniciansWorkload = await Promise.all(technicians.map(async (tech) => {
-        const [assignedCount, unresolvedCount, inProgressCount, pendingCount, resolvedCount] = await Promise.all([
-          // Total de tickets asignados
-          prisma.ticket.count({
-            where: {
-              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }]
-            }
-          }).catch(() => 0),
-          // De esos cuáles están sin resolver
-          prisma.ticket.count({
-            where: {
-              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
-              status: { notIn: ['CLOSED', 'RESOLVED'] }
-            }
-          }).catch(() => 0),
-          // Cuáles están en progreso
-          prisma.ticket.count({
-            where: {
-              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
-              status: { in: ['IN_PROGRESS', 'PLANIFICADO', 'OPEN'] }
-            }
-          }).catch(() => 0),
-          // Cuáles están en espera
-          prisma.ticket.count({
-            where: {
-              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
-              status: { in: ['PENDING', 'EN_ESPERA', 'ESPERA_CLIENTE', 'ESPERA_REPUESTO'] }
-            }
-          }).catch(() => 0),
-          // Resueltos / cerrados
-          prisma.ticket.count({
-            where: {
-              OR: [{ assignedToId: tech.id }, { secondaryAssignedToId: tech.id }],
-              status: { in: ['RESOLVED', 'CLOSED'] }
-            }
-          }).catch(() => 0)
-        ]);
+      // 9. Calculate Technician Workload (Optimizado sin patrón N+1)
+      const techTicketsSummary = await prisma.ticket.findMany({
+        where: {
+          ...orgFilter,
+          OR: [
+            { assignedToId: { in: technicians.map(t => t.id) } },
+            { secondaryAssignedToId: { in: technicians.map(t => t.id) } }
+          ]
+        },
+        select: {
+          assignedToId: true,
+          secondaryAssignedToId: true,
+          status: true
+        }
+      }).catch(() => []);
 
-        // Definición de disponibilidad según la carga operativa
-        const isAvailable = unresolvedCount === 0;
+      const techCountsMap = new Map();
+      techTicketsSummary.forEach(t => {
+        [t.assignedToId, t.secondaryAssignedToId].filter(Boolean).forEach(tid => {
+          if (!techCountsMap.has(tid)) {
+            techCountsMap.set(tid, { assigned: 0, unresolved: 0, inProgress: 0, pending: 0, resolved: 0 });
+          }
+          const c = techCountsMap.get(tid);
+          c.assigned++;
+          if (t.status === 'RESOLVED' || t.status === 'CLOSED') {
+            c.resolved++;
+          } else {
+            c.unresolved++;
+            if (t.status === 'IN_PROGRESS' || t.status === 'PLANIFICADO' || t.status === 'OPEN') {
+              c.inProgress++;
+            } else if (t.status === 'PENDING' || t.status === 'EN_ESPERA') {
+              c.pending++;
+            }
+          }
+        });
+      });
+
+      const techniciansWorkload = technicians.map(tech => {
+        const counts = techCountsMap.get(tech.id) || { assigned: 0, unresolved: 0, inProgress: 0, pending: 0, resolved: 0 };
+        const isAvailable = counts.unresolved === 0;
         const loadStatus = isAvailable ? 'Disponible' : 'No Disponible';
-        const loadColor = isAvailable ? '#10b981' : (unresolvedCount > 2 ? '#dc2626' : '#f59e0b');
-        const loadBadge = isAvailable ? 'Libre' : `${unresolvedCount} pendiente${unresolvedCount > 1 ? 's' : ''}`;
+        const loadColor = isAvailable ? '#10b981' : (counts.unresolved > 2 ? '#dc2626' : '#f59e0b');
+        const loadBadge = isAvailable ? 'Libre' : `${counts.unresolved} pendiente${counts.unresolved > 1 ? 's' : ''}`;
 
         return {
           id: tech.id,
           name: tech.name,
           email: tech.email,
-          role: tech.role?.name || tech.role || 'Técnico',
-          assignedCount,
-          unresolvedCount,
-          activeCount: unresolvedCount,
-          inProgressCount,
-          pendingCount,
-          resolvedCount,
+          role: tech.role,
+          assignedCount: counts.assigned,
+          unresolvedCount: counts.unresolved,
+          activeCount: counts.unresolved,
+          inProgressCount: counts.inProgress,
+          pendingCount: counts.pending,
+          resolvedCount: counts.resolved,
           isAvailable,
           loadStatus,
           loadColor,
           loadBadge
         };
-      }));
+      });
 
-      // 10. Calculate Urgent Tickets Radar (Top 5 Priority Active Tickets)
+      // 10. Calculate Urgent Tickets Radar (ANS Overdue, At Risk, or Unassigned/High Priority)
       const urgentTicketsRadar = (activeTickets || [])
-        .filter(t => {
-          const up = String(t.priority || '').toUpperCase().trim();
-          return ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up) || !t.assignedTo;
-        })
-        .sort((a, b) => new Date(a.createdAt) - new Date(b.createdAt))
-        .slice(0, 5)
         .map(t => {
-          const elapsedHours = Math.round((now - new Date(t.createdAt)) / (1000 * 60 * 60));
+          const evalAns = evaluateTicketAns(t);
+          const elapsedHours = Math.max(0, Math.round((now - new Date(t.createdAt)) / (1000 * 60 * 60)));
           const up = String(t.priority || '').toUpperCase().trim();
           const displayPriority = ['ALTO', 'HIGH', 'ALTA', 'CRITICAL', 'CRITICA', 'EMERGENCY', 'URGENTE'].includes(up)
             ? 'Alto'
@@ -1033,9 +1043,22 @@ function getCommonRoutes(prisma) {
             ticketType: t.ticketType || 'Incidencia',
             assignedTo: t.assignedTo?.name || 'Sin Asignar',
             elapsedHours,
-            createdAt: t.createdAt
+            createdAt: t.createdAt,
+            ansStatus: evalAns.ansStatus,
+            isOverdue: evalAns.isOverdue,
+            isAtRisk: evalAns.isAtRisk,
+            remainingMinutes: evalAns.remainingResolutionMinutes
           };
-        });
+        })
+        .filter(t => t.isOverdue || t.isAtRisk || t.priority === 'Alto' || t.assignedTo === 'Sin Asignar')
+        .sort((a, b) => {
+          if (a.isOverdue && !b.isOverdue) return -1;
+          if (!a.isOverdue && b.isOverdue) return 1;
+          if (a.isAtRisk && !b.isAtRisk) return -1;
+          if (!a.isAtRisk && b.isAtRisk) return 1;
+          return (a.remainingMinutes || 0) - (b.remainingMinutes || 0);
+        })
+        .slice(0, 5);
 
       res.json({
         kpis: {
@@ -1048,11 +1071,17 @@ function getCommonRoutes(prisma) {
           closedTickets,
           criticalTickets: 0,
           highPriorityTickets: normalizedPrioCounts.ALTO,
-          incidentCount: incidentCount || Math.round(totalTickets * 0.55),
-          requestCount: requestCount || Math.max(0, totalTickets - Math.round(totalTickets * 0.55)),
+          incidentCount: incidentCount,
+          requestCount: requestCount,
           overdueTickets,
           unassignedTickets,
-          slaCompliance
+          slaCompliance,
+          ansCompliance: slaCompliance,
+          mttaP50Minutes,
+          mttaP90Minutes,
+          mttrP50Hours,
+          mttrP90Hours,
+          fcrRate
         },
         personal: {
           myTickets,

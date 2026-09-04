@@ -1,5 +1,10 @@
 const { PrismaClient } = require('@prisma/client');
-const { buildApp } = require('../server/app');
+let buildApp;
+try {
+  buildApp = require('../../backend/app').buildApp;
+} catch {
+  buildApp = require('../server/app').buildApp;
+}
 
 let appInstance = null;
 

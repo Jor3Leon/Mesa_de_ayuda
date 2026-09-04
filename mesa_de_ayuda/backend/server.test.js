@@ -953,5 +953,157 @@ test('PER-ORGANIZATION AGENT API KEY: Validates org-specific key and rejects mis
   }
 });
 
+// ==========================================
+// NUEVAS PRUEBAS OFICIALES ANS & ANALYTICS 2026
+// ==========================================
+
+const { calculateBusinessMinutes, addBusinessMinutes } = require('./lib/business-time');
+const { evaluateTicketAns, getDefaultPolicy } = require('./lib/ans-engine');
+const { getTicketPerformanceMetrics } = require('./lib/ticket-analytics-service');
+
+test('ANS: BusinessTimeService computes minutes strictly during work hours (08:00-17:00, Mon-Fri)', () => {
+  // Lunes 08:00 a Lunes 10:00 = 120 minutos hábiles
+  const mondayStart = new Date('2026-09-07T08:00:00');
+  const mondayEnd = new Date('2026-09-07T10:00:00');
+  const minsSameDay = calculateBusinessMinutes(mondayStart, mondayEnd);
+  assert.equal(minsSameDay, 120);
+
+  // Sábado a Domingo = 0 minutos hábiles
+  const sat = new Date('2026-09-12T10:00:00');
+  const sun = new Date('2026-09-13T16:00:00');
+  const weekendMins = calculateBusinessMinutes(sat, sun);
+  assert.equal(weekendMins, 0);
+
+  // Viernes 16:00 a Lunes 09:00 = 60 min viernes (16-17) + 60 min lunes (08-09) = 120 min
+  const fri = new Date('2026-09-04T16:00:00');
+  const mon = new Date('2026-09-07T09:00:00');
+  const weekendSpanMins = calculateBusinessMinutes(fri, mon);
+  assert.equal(weekendSpanMins, 120);
+});
+
+test('ANS: AnsEngine evaluates compliance and breach without artificial minimum percentages', () => {
+  const createdAt = new Date('2026-09-07T08:00:00');
+  const firstResponseAt = new Date('2026-09-07T08:45:00'); // 45 min (límite ALTO = 60 min) -> Cumplido
+  const resolvedAt = new Date('2026-09-07T14:00:00');      // 360 min (límite ALTO = 480 min) -> Cumplido
+
+  const ticket = {
+    createdAt,
+    priority: 'ALTO',
+    firstResponseAt,
+    resolvedAt,
+    status: 'RESOLVED',
+    responseAnsMinutes: 60,
+    resolutionAnsMinutes: 480
+  };
+
+  const evalResult = evaluateTicketAns(ticket);
+  assert.equal(evalResult.responseCompliant, true);
+  assert.equal(evalResult.resolutionCompliant, true);
+  assert.equal(evalResult.isOverdue, false);
+  assert.equal(evalResult.ansStatus, 'COMPLETED');
+});
+
+test('ANALYTICS: TicketAnalyticsService calculates P50/P90, true FCR, and separate ANS response/resolution', async () => {
+  const mockTickets = [
+    {
+      id: 1,
+      title: 'Ticket 1',
+      priority: 'ALTO',
+      status: 'RESOLVED',
+      ticketType: 'Incidencia',
+      category: 'Redes',
+      createdAt: new Date('2026-09-07T08:00:00'),
+      firstResponseAt: new Date('2026-09-07T08:20:00'), // 20 min
+      resolvedAt: new Date('2026-09-07T10:00:00'),      // 120 min (2h)
+      reopenCount: 0,
+      assignedToId: 10,
+      responseAnsMinutes: 60,
+      resolutionAnsMinutes: 480
+    },
+    {
+      id: 2,
+      title: 'Ticket 2',
+      priority: 'MEDIO',
+      status: 'RESOLVED',
+      ticketType: 'Solicitud',
+      category: 'Software',
+      createdAt: new Date('2026-09-07T08:00:00'),
+      firstResponseAt: new Date('2026-09-07T09:00:00'), // 60 min
+      resolvedAt: new Date('2026-09-07T16:00:00'),      // 480 min (8h)
+      reopenCount: 0,
+      assignedToId: 10,
+      responseAnsMinutes: 120,
+      resolutionAnsMinutes: 1440
+    }
+  ];
+
+  const mockPrisma = {
+    ticket: {
+      count: async () => mockTickets.length,
+      findMany: async () => mockTickets,
+      groupBy: async () => []
+    },
+    user: {
+      findMany: async () => [{ id: 10, name: 'Tech 1', email: 'tech1@test.com', role: { name: 'Técnico' } }]
+    },
+    sede: { findMany: async () => [] },
+    dependencia: { findMany: async () => [] },
+    oficina: { findMany: async () => [] }
+  };
+
+  const metrics = await getTicketPerformanceMetrics(mockPrisma, {
+    organizationId: 'org-test',
+    startDate: '2026-09-01',
+    endDate: '2026-09-30'
+  });
+
+  assert.ok(metrics.summary);
+  assert.equal(metrics.summary.total, 2);
+  assert.equal(metrics.summary.responseAnsCompliance, 100);
+  assert.equal(metrics.summary.resolutionAnsCompliance, 100);
+  assert.equal(metrics.summary.fcrRate, 100);
+  assert.equal(metrics.summary.mttaP50Minutes, 60);
+  assert.equal(typeof metrics.summary.mttrP50Hours, 'number');
+});
+
+test('SECURITY: getEffectiveRole ignores unprivileged role impersonation header', () => {
+  const { getEffectiveRole } = require('./lib/middleware');
+  
+  // Usuario estándar intentando enviar x-view-as-role: ADMIN
+  const reqUnprivileged = {
+    auth: {
+      user: {
+        id: 5,
+        role: 'USUARIO ESTANDAR',
+        permissions: ['TICKETS_VIEW']
+      }
+    },
+    headers: {
+      'x-view-as-role': 'ADMIN'
+    },
+    query: {}
+  };
+  const roleResult = getEffectiveRole(reqUnprivileged);
+  assert.equal(roleResult, 'USUARIO ESTANDAR'); // Impersonación bloqueada
+
+  // Usuario Administrador tiene permiso para simular
+  const reqAdmin = {
+    auth: {
+      user: {
+        id: 1,
+        role: 'ADMIN',
+        permissions: ['ROLE_VIEW_AS', 'ANALYTICS_VIEW']
+      }
+    },
+    headers: {
+      'x-view-as-role': 'NIVEL 1'
+    },
+    query: {}
+  };
+  const adminRoleResult = getEffectiveRole(reqAdmin);
+  assert.equal(adminRoleResult, 'NIVEL 1'); // Permitido
+});
+
+
 
 

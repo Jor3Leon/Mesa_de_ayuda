@@ -28,6 +28,8 @@ model Organization {
   assets           Asset[]
   cannedResponses  CannedResponse[]
   ticketCategories TicketCategory[]
+  ansPolicies      AnsPolicy[]
+  businessCalendars BusinessCalendar[]
 
   @@index([slug])
 }
@@ -175,6 +177,8 @@ model User {
   secondaryAssignedTickets Ticket[]      @relation("TicketSecondaryAssignee")
   assignedTickets          Ticket[]      @relation("TicketAssignee")
   tickets                  Ticket[]      @relation("TicketCreator")
+  firstRespondedTickets    Ticket[]      @relation("TicketFirstResponder")
+  resolvedTickets          Ticket[]      @relation("TicketResolver")
   role                     Role          @relation(fields: [roleId], references: [id])
   location                 Location?     @relation(fields: [locationId], references: [id])
 
@@ -205,9 +209,19 @@ model Ticket {
   secondaryAssignedToId Int?
   observerId            Int?
   assignedAt            DateTime?
+  firstResponseAt       DateTime?
+  firstResponseById     Int?
+  firstResponseBy       User?            @relation("TicketFirstResponder", fields: [firstResponseById], references: [id])
   resolvedAt            DateTime?
+  resolvedById          Int?
+  resolvedBy            User?            @relation("TicketResolver", fields: [resolvedById], references: [id])
   closedAt              DateTime?
   sla                   String?
+  responseAnsMinutes    Int?
+  resolutionAnsMinutes  Int?
+  responseBreachedAt    DateTime?
+  resolutionBreachedAt  DateTime?
+  reopenCount           Int              @default(0)
   responsibleUserIds    String?
   maintenances          Maintenance[]
   observer              User?            @relation("TicketObserver", fields: [observerId], references: [id])
@@ -224,6 +238,9 @@ model Ticket {
   @@index([customerId])
   @@index([assignedToId])
   @@index([createdById])
+  @@index([createdAt])
+  @@index([firstResponseAt])
+  @@index([resolvedAt])
 }
 
 model TicketActivity {
@@ -333,4 +350,59 @@ model TicketCategory {
   organization   Organization? @relation(fields: [organizationId], references: [id], onDelete: Cascade)
 
   @@index([organizationId])
+}
+
+model AnsPolicy {
+  id                 Int               @id @default(autoincrement())
+  name               String?
+  priority           String            // ALTO, MEDIO, BAJO, etc.
+  responseMinutes    Int               @default(60)
+  resolutionMinutes  Int               @default(480)
+  businessCalendarId Int?
+  businessCalendar   BusinessCalendar? @relation(fields: [businessCalendarId], references: [id], onDelete: SetNull)
+  isActive           Boolean           @default(true)
+  createdAt          DateTime          @default(now())
+  updatedAt          DateTime          @updatedAt
+  organizationId     String?
+  organization       Organization?     @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+
+  @@unique([priority, organizationId])
+  @@index([organizationId])
+}
+
+model BusinessCalendar {
+  id             Int                        @id @default(autoincrement())
+  name           String                     @default("Calendario Laboral Estándar")
+  timezone       String                     @default("America/Bogota")
+  isDefault      Boolean                    @default(true)
+  createdAt      DateTime                   @default(now())
+  updatedAt      DateTime                   @updatedAt
+  organizationId String?
+  organization   Organization?              @relation(fields: [organizationId], references: [id], onDelete: Cascade)
+  intervals      BusinessCalendarInterval[]
+  holidays       BusinessHoliday[]
+  policies       AnsPolicy[]
+
+  @@index([organizationId])
+}
+
+model BusinessCalendarInterval {
+  id         Int              @id @default(autoincrement())
+  calendarId Int
+  calendar   BusinessCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  weekday    Int              // 1 = Lunes, ..., 5 = Viernes, 6 = Sábado, 7 = Domingo
+  startTime  String           // "08:00"
+  endTime    String           // "17:00"
+
+  @@index([calendarId])
+}
+
+model BusinessHoliday {
+  id         Int              @id @default(autoincrement())
+  calendarId Int
+  calendar   BusinessCalendar @relation(fields: [calendarId], references: [id], onDelete: Cascade)
+  date       DateTime
+  name       String
+
+  @@index([calendarId])
 }

@@ -95,20 +95,21 @@ function readFileAsDataUrl(file) {
   });
 }
 
-function UserAvatar({ user, size = 40, className = 'profile-avatar' }) {
+function UserAvatar({ user, size, className = 'profile-avatar' }) {
+  const avatarStyle = size ? { width: size, height: size } : undefined;
   if (user?.avatarUrl) {
     return (
       <img
         src={user.avatarUrl}
         alt={`Avatar de ${user.name}`}
         className={className}
-        style={{ width: size, height: size }}
+        style={avatarStyle}
       />
     );
   }
 
   return (
-    <div className={className} style={{ width: size, height: size }}>
+    <div className={className} style={avatarStyle}>
       {getUserInitials(user?.name)}
     </div>
   );
@@ -544,15 +545,15 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
     <div style={{ position: 'relative', display: 'inline-flex', alignItems: 'center' }} ref={dropdownRef}>
       <button
         type="button"
-        className="status-pill"
+        className={`status-pill role-switcher-button ${isMobile ? 'role-switcher-mobile' : ''}`}
         onClick={() => setIsOpen(!isOpen)}
         style={{
           cursor: 'pointer',
           width: 'auto',
-          maxWidth: isMobile ? '82px' : 'none',
+          maxWidth: isMobile ? '82px' : undefined,
           height: isMobile ? '26px' : 'auto',
-          padding: isMobile ? '0.1rem 0.38rem' : '0.45rem 0.85rem',
-          fontSize: isMobile ? '0.66rem' : '0.8rem',
+          padding: isMobile ? '0.1rem 0.38rem' : undefined,
+          fontSize: isMobile ? '0.66rem' : undefined,
           border: isImpersonating ? `1.5px solid ${getRoleColor(viewAsRole)}` : '1px solid #e2e8f0',
           background: isImpersonating ? `${getRoleColor(viewAsRole)}15` : '#f8fafc',
           transition: 'all 0.2s ease',
@@ -576,7 +577,7 @@ function RoleSwitcher({ user, realRole, viewAsRole, onRoleSwitch, isMobile = fal
               flexShrink: 0,
             }} 
           />
-          <span style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '46px' : 'none' }}>
+          <span className="role-switcher-label" style={{ whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', maxWidth: isMobile ? '46px' : undefined }}>
             {isMobile ? getShortRoleLabel(viewAsRole || realRole) : getRoleLabel(viewAsRole || realRole)}
           </span>
         </div>
@@ -913,7 +914,7 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
         )}
       </div>
 
-      {/* Acciones de cabecera en Mobile: Selector de Rol ultra-compacto + Avatar */}
+      {/* Acciones de cabecera en Mobile: Selector de Rol ultra-compacto + Avatar + Salir */}
       <div className="header-mobile-actions show-mobile-flex">
         <RoleSwitcher
           user={user}
@@ -930,6 +931,19 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
         >
           <UserAvatar user={user} size={30} />
         </button>
+        <button 
+          type="button" 
+          className="header-mobile-logout-btn" 
+          onClick={onLogout}
+          title="Cerrar sesión"
+          aria-label="Cerrar sesión"
+        >
+          <svg width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2.2" strokeLinecap="round" strokeLinejoin="round">
+            <path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4" />
+            <polyline points="16 17 21 12 16 7" />
+            <line x1="21" y1="12" x2="9" y2="12" />
+          </svg>
+        </button>
       </div>
 
       {/* Meta del usuario: visible en desktop */}
@@ -944,29 +958,33 @@ function Header({ user, realRole, viewAsRole, onRoleSwitch, navSections, onLogou
 
         {/* Indicador de impersonación */}
         {isImpersonating && (
-          <div style={{
-            background: `${getRoleColor(viewAsRole)}15`,
-            border: `1px solid ${getRoleColor(viewAsRole)}40`,
-            borderRadius: '8px',
-            padding: '0.25rem 0.6rem',
-            fontSize: '0.68rem',
-            color: getRoleColor(viewAsRole),
-            fontWeight: 700,
-            display: 'flex',
-            alignItems: 'center',
-            gap: '0.3rem',
-            cursor: 'pointer',
-          }}
-          onClick={() => onRoleSwitch(null)}
-          title="Clic para restaurar rol original"
+          <div 
+            className="impersonation-badge"
+            style={{
+              background: `${getRoleColor(viewAsRole)}15`,
+              border: `1px solid ${getRoleColor(viewAsRole)}40`,
+              borderRadius: '8px',
+              padding: '0.25rem 0.6rem',
+              fontSize: '0.68rem',
+              color: getRoleColor(viewAsRole),
+              fontWeight: 700,
+              display: 'flex',
+              alignItems: 'center',
+              gap: '0.3rem',
+              cursor: 'pointer',
+              flexShrink: 0,
+              whiteSpace: 'nowrap',
+            }}
+            onClick={() => onRoleSwitch(null)}
+            title="Clic para restaurar rol original"
           >
-            <span>👁️</span> Vista como
+            <span>👁️</span> <span className="impersonation-text">Vista como</span>
           </div>
         )}
 
         <button type="button" className="profile-chip profile-chip-button" onClick={onOpenProfile} title="Mi Perfil">
           <UserAvatar user={user} />
-          <strong style={{ fontSize: '0.88rem', color: '#0f172a', fontWeight: 700 }}>{user.name}</strong>
+          <strong className="profile-name">{user.name}</strong>
         </button>
         <button type="button" className="btn-ghost" onClick={onLogout}>
           Salir

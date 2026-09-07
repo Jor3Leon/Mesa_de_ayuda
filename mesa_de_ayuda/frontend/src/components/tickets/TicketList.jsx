@@ -1,5 +1,5 @@
 import React from 'react';
-import SlaBadge from './SlaBadge';
+import AnsBadge from './AnsBadge';
 
 export default function TicketList({ tickets, onSelect, selectedId, loading }) {
   if (loading) return <div className="loading-state">Cargando tickets...</div>;
@@ -41,7 +41,7 @@ export default function TicketList({ tickets, onSelect, selectedId, loading }) {
               <h4 className="ticket-subject">{ticket.subject}</h4>
               <p className="ticket-customer">{ticket.customer?.name || 'Cliente sin nombre'}</p>
               <div className="ticket-card-footer">
-                <SlaBadge ticket={ticket} />
+                <AnsBadge ticket={ticket} />
                 <span className={`priority-indicator ${ticket.priority.toLowerCase()}`}>
                   {ticket.priority}
                 </span>

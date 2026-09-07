@@ -1,9 +1,7 @@
-import React, { useEffect, useState } from 'react';
+import React, { useEffect, useState, useMemo } from 'react';
 import { apiRequest, getStoredSession } from '../lib/api';
 import StatCard from '../components/analytics/StatCard';
-import SimplePieChart from '../components/analytics/SimplePieChart';
-import HeatmapChart from '../components/analytics/HeatmapChart';
-import AnalyticsFilters from '../components/analytics/AnalyticsFilters';
+import AnsBadge from '../components/tickets/AnsBadge';
 import { generateAnalyticsExecutiveReport } from '../lib/reports';
 import {
   AreaChart,
@@ -13,7 +11,9 @@ import {
   CartesianGrid,
   Tooltip,
   ResponsiveContainer,
-  Legend
+  PieChart,
+  Pie,
+  Cell
 } from 'recharts';
 
 function CustomChartTooltip({ active, payload, label }) {
@@ -53,53 +53,79 @@ function CustomChartTooltip({ active, payload, label }) {
   );
 }
 
+const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#dc2626'];
+
 export default function Analytics({ user }) {
+  const sessionUser = getStoredSession()?.user;
+  const currentUser = user || sessionUser;
+
+  const [technicians, setTechnicians] = useState([]);
+  const [selectedTechId, setSelectedTechId] = useState(null);
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [loadingMetrics, setLoadingMetrics] = useState(false);
   const [error, setError] = useState(null);
   const [isExporting, setIsExporting] = useState(false);
 
-  const sessionUser = getStoredSession()?.user;
-  const currentUser = user || sessionUser;
-  const userRoleStr = (typeof currentUser?.role === 'string' ? currentUser.role : currentUser?.role?.name || '').trim().toUpperCase();
-  const isLevel2 = userRoleStr === 'NIVEL 2' || userRoleStr === 'LEVEL_2' || userRoleStr === 'TECNICO NIVEL 2' || userRoleStr === 'TÉCNICO NIVEL 2' || (userRoleStr.includes('NIVEL 2') && !userRoleStr.includes('NIVEL 1') && !userRoleStr.includes('NIVEL 3'));
-  const isLevel1 = userRoleStr === 'NIVEL 1' || userRoleStr === 'LEVEL_1' || userRoleStr.includes('NIVEL 1');
-  const isLevel3 = userRoleStr === 'NIVEL 3' || userRoleStr === 'LEVEL_3' || userRoleStr.includes('NIVEL 3') || userRoleStr.includes('SUPERVISOR');
-
-  const [filters, setFilters] = useState(() => {
+  const [dateRange, setDateRange] = useState(() => {
     const today = new Date().toISOString().split('T')[0];
     const thirtyDaysAgo = new Date();
     thirtyDaysAgo.setDate(thirtyDaysAgo.getDate() - 30);
     return {
-      department: 'all',
-      ticketType: 'all',
-      technicianId: 'all',
-      viewMode: isLevel2 ? 'personal' : 'global',
       startDate: thirtyDaysAgo.toISOString().split('T')[0],
       endDate: today,
     };
   });
 
+  // 1. Cargar la lista de técnicos accesibles según jerarquía desde el backend
   useEffect(() => {
     setLoading(true);
-    const params = { 
-      ...filters,
-      ...(isLevel2 ? { viewMode: 'personal' } : {})
-    };
-    Object.keys(params).forEach(key => !params[key] && delete params[key]);
-    
-    const query = new URLSearchParams(params).toString();
-    apiRequest(`/analytics/dashboard?${query}`)
-      .then(setData)
-      .catch(err => setError(err.message))
-      .finally(() => setLoading(false));
-  }, [filters, isLevel2, user]);
+    apiRequest('/analytics/technicians')
+      .then((techList) => {
+        const list = Array.isArray(techList) ? techList : [];
+        setTechnicians(list);
+        if (list.length > 0) {
+          // Si el usuario actual está en la lista de técnicos, seleccionarlo por defecto
+          const isMe = list.find(t => Number(t.id) === Number(currentUser?.id));
+          setSelectedTechId(isMe ? isMe.id : list[0].id);
+        }
+      })
+      .catch((err) => {
+        setError(err.message || 'Error cargando técnicos autorizados.');
+      })
+      .finally(() => {
+        setLoading(false);
+      });
+  }, [currentUser?.id]);
+
+  // 2. Cargar los 8 indicadores del técnico seleccionado
+  useEffect(() => {
+    if (!selectedTechId) return;
+
+    setLoadingMetrics(true);
+    setError(null);
+    const query = new URLSearchParams({
+      startDate: dateRange.startDate,
+      endDate: dateRange.endDate
+    }).toString();
+
+    apiRequest(`/analytics/technician/${selectedTechId}?${query}`)
+      .then((res) => {
+        setData(res);
+      })
+      .catch((err) => {
+        setError(err.message || 'Error obteniendo métricas del técnico.');
+      })
+      .finally(() => {
+        setLoadingMetrics(false);
+      });
+  }, [selectedTechId, dateRange]);
 
   const handleExportPdf = async () => {
     if (!data) return;
     setIsExporting(true);
     try {
-      generateAnalyticsExecutiveReport(data, filters, currentUser);
+      generateAnalyticsExecutiveReport(data, dateRange, currentUser);
     } catch (err) {
       console.error(err);
     } finally {
@@ -107,458 +133,615 @@ export default function Analytics({ user }) {
     }
   };
 
-  if (loading && !data) return (
-    <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
-      <div style={{
-        width: '40px',
-        height: '40px',
-        border: '3px solid #e2e8f0',
-        borderTopColor: '#00D1FF',
-        borderRadius: '50%',
-        animation: 'spin 1s linear infinite',
-        margin: '0 auto 1rem auto'
-      }} />
-      <p style={{ fontWeight: '600' }}>Cargando Business Intelligence & Analítica ITIL...</p>
-    </div>
-  );
+  // Gráficos complementarios derivados de los tickets del técnico
+  const priorityDistribution = useMemo(() => {
+    const map = {};
+    (data?.tickets || []).forEach(t => {
+      const p = t.priority || 'MEDIO';
+      map[p] = (map[p] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [data?.tickets]);
 
-  if (error) return (
-    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
-      <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '1rem', borderRadius: '10px' }}>
-        {error}
+  const statusDistribution = useMemo(() => {
+    const map = {};
+    (data?.tickets || []).forEach(t => {
+      const s = t.status || 'OPEN';
+      map[s] = (map[s] || 0) + 1;
+    });
+    return Object.entries(map).map(([name, value]) => ({ name, value }));
+  }, [data?.tickets]);
+
+  const timelineData = useMemo(() => {
+    const map = {};
+    (data?.tickets || []).forEach(t => {
+      const d = new Date(t.createdAt).toISOString().split('T')[0];
+      if (!map[d]) map[d] = { date: d, asignados: 0, resueltos: 0 };
+      map[d].asignados++;
+      if (t.status === 'RESOLVED' || t.status === 'CLOSED') {
+        map[d].resueltos++;
+      }
+    });
+    return Object.keys(map).sort().map(k => map[k]);
+  }, [data?.tickets]);
+
+  if (loading) {
+    return (
+      <div style={{ padding: '4rem 2rem', textAlign: 'center', color: '#64748b' }}>
+        <div style={{
+          width: '40px',
+          height: '40px',
+          border: '3px solid #e2e8f0',
+          borderTopColor: '#00D1FF',
+          borderRadius: '50%',
+          animation: 'spin 1s linear infinite',
+          margin: '0 auto 1rem auto'
+        }} />
+        <p style={{ fontWeight: '600' }}>Cargando Analítica de Desempeño Individual...</p>
       </div>
-    </div>
-  );
-  
-  if (!data) return null;
+    );
+  }
 
-  const s = data?.summary || {};
-  const isPersonal = Boolean(data?.isLevel2 || filters?.viewMode === 'personal');
-  const trends = s.trends || {};
-  const sparklines = s.sparklines || {};
-
-  const priorityData = (data?.ticketsByPriority || []).map(p => ({
-    label: p.label,
-    value: p.value || 0
-  }));
-
-  const statusData = (data?.ticketsByStatus || []).map(st => ({
-    label: st.label,
-    value: st.value || 0
-  }));
-
-  const categoryData = data?.ticketsByCategory || [];
-  const maxCategory = Math.max(...categoryData.map(c => c.value), 1);
-  const techPerformance = data?.techniciansPerformance || [];
-  const dailyEvolution = data?.dailyEvolution || [];
+  const bA = data?.bloqueA || {};
+  const bB = data?.bloqueB || {};
+  const mtta = bB?.mtta || { p50: 0, p90: 0, avg: 0 };
+  const mttr = bB?.mttr || { p50: 0, p90: 0, avg: 0 };
+  const ans = bB?.ansCompliance || { response: 100, resolution: 100, global: 100 };
+  const tech = data?.technician || technicians.find(t => Number(t.id) === Number(selectedTechId)) || {};
 
   return (
-    <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
+    <div className="analytics-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
       
-      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
-      <div
-        className="card"
-        style={{
-          background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #003A7A 100%)',
-          borderRadius: '16px',
-          padding: '1.25rem 1.5rem',
-          marginBottom: '1.25rem',
-          boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
-          border: '1px solid rgba(0, 209, 255, 0.25)',
-          color: '#ffffff',
-          display: 'flex',
-          flexWrap: 'wrap',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          gap: '1.25rem',
-        }}
-      >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '0.85rem' }}>
-          <div style={{
-            width: '42px',
-            height: '42px',
-            borderRadius: '10px',
-            background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
-            fontSize: '1.35rem',
-            color: '#001D40',
-            flexShrink: 0,
-          }}>
-            📈
-          </div>
-          <div>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', flexWrap: 'wrap' }}>
-              <h1 style={{ fontSize: '1.5rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
-                {isLevel2 
-                  ? 'Analítica Operacional · Técnico Nivel 2' 
-                  : isLevel1
-                  ? 'Analítica & Coordinación · Nivel 1'
-                  : isLevel3
-                  ? 'Supervisión Estratégica & BI · Nivel 3'
-                  : 'Business Intelligence & Auditoría ITIL / ITSM'
-                }
-              </h1>
-              <span style={{ 
-                fontSize: '0.75rem', 
-                fontWeight: '800', 
-                padding: '0.2rem 0.6rem', 
-                borderRadius: '9999px', 
-                background: 'rgba(0, 209, 255, 0.18)', 
-                color: '#00D1FF', 
-                border: '1px solid rgba(0, 209, 255, 0.4)',
-                textTransform: 'uppercase'
-              }}>
-                {isPersonal ? 'Alcance Personal' : 'Auditoría Global'}
-              </span>
-            </div>
-            <p style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
-              {isPersonal
-                ? 'Monitoreo de tus tiempos de resolución, acuerdos ANS y volumen atendido individualmente.'
-                : 'Métricas estandarizadas ITIL: cumplimiento ANS, tiempos MTTA/MTTR, carga técnica y auditoría del servicio.'
-              }
-            </p>
-          </div>
-        </div>
-      </div>
-
-      {/* 🎛️ BARRA DE FILTROS & ACCIONES (Debajo del Header) */}
+      {/* HEADER PRINCIPAL */}
       <div style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        padding: '1.15rem 1.5rem',
-        marginBottom: '1.25rem',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
         display: 'flex',
         flexWrap: 'wrap',
-        alignItems: 'center',
         justifyContent: 'space-between',
-        gap: '14px'
-      }}>
-        <AnalyticsFilters 
-          filters={filters} 
-          onChange={setFilters} 
-          isLevel2={isLevel2}
-          technicians={techPerformance}
-          onExportPdf={handleExportPdf}
-          isExporting={isExporting}
-        />
-      </div>
-
-      {/* 📊 KPI CARDS GRID (7 Métricas Estratégicas ITIL) */}
-      <div 
-        className="analytics-kpi-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 135px), 1fr))',
-          gap: '0.55rem',
-          marginBottom: '1.15rem'
-        }}
-      >
-        <StatCard
-          title={isPersonal ? "Mis Tickets Gestionados" : "Total Tickets Gestionados"}
-          value={(s.totalTickets || 0).toLocaleString()}
-          subtitle={`Incidencias: ${s.incidentCount || 0} · Solicitudes: ${s.requestCount || 0}`}
-          trend={trends.totalTickets || 0}
-          sparkline={sparklines.totalTickets || []}
-          iconType="tickets"
-          color="#3b82f6"
-        />
-
-        <StatCard
-          title={isPersonal ? "Mi Cumplimiento ANS" : "Cumplimiento Global ANS"}
-          value={`${s.slaCompliance || 100}%`}
-          subtitle="Meta institucional: >95%"
-          badge={s.slaCompliance >= 95 ? "Óptimo" : "En Riesgo"}
-          trend={0}
-          iconType="check"
-          color={s.slaCompliance >= 95 ? "#10b981" : "#f59e0b"}
-        />
-
-        <StatCard
-          title="MTTA (1ra Respuesta)"
-          value={`${s.mttaMinutes || 0} min`}
-          subtitle="Tiempo medio a 1ra respuesta"
-          trend={-5}
-          iconType="time"
-          color="#0284c7"
-        />
-
-        <StatCard
-          title="MTTR (Resolución Media)"
-          value={`${s.mttrHours || 2.4} hrs`}
-          subtitle="Tiempo medio hasta cierre"
-          trend={-8}
-          iconType="clock"
-          color="#8b5cf6"
-        />
-
-        <StatCard
-          title="FCR (1er Contacto)"
-          value={`${s.fcrRate || 88}%`}
-          subtitle="Casos cerrados en 1er contacto"
-          badge="ITIL KPI"
-          trend={4}
-          iconType="check"
-          color="#059669"
-        />
-
-        <StatCard
-          title="Tickets Retrasados (Overdue)"
-          value={s.overdueCount || 0}
-          subtitle="Casos con tiempo límite excedido"
-          badge={s.overdueCount > 0 ? "Atención" : "Al Día"}
-          trend={s.overdueCount > 0 ? 10 : 0}
-          iconType="alert"
-          color={s.overdueCount > 0 ? "#dc2626" : "#64748b"}
-        />
-
-        <StatCard
-          title="Tasa de Cierre"
-          value={`${s.throughputRatio || 100}%`}
-          subtitle={s.throughputRatio >= 100 ? "Reduciendo backlog" : "Acumulando cola"}
-          badge="Throughput"
-          trend={0}
-          iconType="tickets"
-          color="#002D62"
-        />
-      </div>
-
-      {/* 📈 SECTION 1: TEMPORAL EVOLUTION (Interactive Recharts) */}
-      <div style={{
+        alignItems: 'center',
+        gap: '1rem',
         background: '#ffffff',
-        borderRadius: '16px',
-        padding: '1.5rem',
         border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-        marginBottom: '1.75rem'
+        borderRadius: '12px',
+        padding: '1.2rem 1.5rem',
+        boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
+        marginBottom: '1.5rem'
       }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem', flexWrap: 'wrap', gap: '0.5rem' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
-              Evolución Temporal del Servicio TI (Creación vs Resolución)
-            </h3>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-              Comportamiento del flujo de entrada de incidencias y solicitudes frente a la capacidad de cierre
-            </p>
+        <div>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#001D40', letterSpacing: '-0.02em' }}>
+              Analítica de Desempeño Individual
+            </h1>
+            {tech.name && (
+              <span style={{
+                background: 'linear-gradient(135deg, rgba(0, 45, 98, 0.08) 0%, rgba(0, 209, 255, 0.15) 100%)',
+                color: '#002D62',
+                border: '1px solid rgba(0, 209, 255, 0.4)',
+                padding: '4px 12px',
+                borderRadius: '20px',
+                fontSize: '0.85rem',
+                fontWeight: 700,
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: '6px'
+              }}>
+                <span>👤</span>
+                <span>Desempeño de: <strong>{tech.name}</strong></span>
+                <span style={{
+                  background: '#002D62',
+                  color: '#ffffff',
+                  fontSize: '0.7rem',
+                  padding: '2px 8px',
+                  borderRadius: '12px',
+                  textTransform: 'uppercase'
+                }}>
+                  {tech.role}
+                </span>
+              </span>
+            )}
           </div>
-          <div style={{ display: 'flex', gap: '8px' }}>
-            <span style={{ fontSize: '0.75rem', fontWeight: '800', padding: '0.25rem 0.6rem', borderRadius: '6px', background: '#f1f5f9', color: '#002D62' }}>
-              {dailyEvolution.length} Días analizados
-            </span>
-          </div>
+          <p style={{ margin: '4px 0 0 0', fontSize: '0.825rem', color: '#64748b' }}>
+            Indicadores operativos y de calidad según Acuerdos de Nivel de Servicio (ANS).
+          </p>
         </div>
 
-        <div style={{ width: '100%', minHeight: '300px', position: 'relative' }}>
-          <ResponsiveContainer width="100%" height={300} minWidth={100}>
-            <AreaChart data={dailyEvolution} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
-              <defs>
-                <linearGradient id="anIncGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#ef4444" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#ef4444" stopOpacity={0.0}/>
-                </linearGradient>
-                <linearGradient id="anReqGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#00D1FF" stopOpacity={0.4}/>
-                  <stop offset="95%" stopColor="#00D1FF" stopOpacity={0.0}/>
-                </linearGradient>
-                <linearGradient id="anResGrad" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="5%" stopColor="#10b981" stopOpacity={0.35}/>
-                  <stop offset="95%" stopColor="#10b981" stopOpacity={0.0}/>
-                </linearGradient>
-              </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" vertical={false} />
-              <XAxis dataKey="label" stroke="#94a3b8" fontSize={10} tickLine={false} interval="preserveStartEnd" />
-              <YAxis stroke="#94a3b8" fontSize={11} tickLine={false} allowDecimals={false} />
-              <Tooltip content={<CustomChartTooltip />} />
-              <Legend iconType="circle" wrapperStyle={{ fontSize: '12px', paddingTop: '10px' }} />
-              <Area isAnimationActive={false} type="monotone" name="Incidencias" dataKey="incidents" stroke="#ef4444" strokeWidth={2.5} fillOpacity={1} fill="url(#anIncGrad)" />
-              <Area isAnimationActive={false} type="monotone" name="Solicitudes" dataKey="requests" stroke="#00D1FF" strokeWidth={2.5} fillOpacity={1} fill="url(#anReqGrad)" />
-              <Area isAnimationActive={false} type="monotone" name="Tickets Resueltos" dataKey="resolved" stroke="#10b981" strokeWidth={2.5} fillOpacity={1} fill="url(#anResGrad)" />
-            </AreaChart>
-          </ResponsiveContainer>
+        {/* CONTROLES: SELECTOR DE TÉCNICO + FECHAS + EXPORTAR */}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
+          
+          {/* SELECTOR DE TÉCNICO (Solo visible si tiene subordinados o más de 1 técnico autorizado) */}
+          {technicians.length > 1 ? (
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                Técnico Supervisado
+              </label>
+              <select
+                value={selectedTechId || ''}
+                onChange={(e) => setSelectedTechId(Number(e.target.value))}
+                style={{
+                  padding: '7px 12px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#f8fafc',
+                  fontSize: '0.85rem',
+                  fontWeight: 600,
+                  color: '#0f172a',
+                  cursor: 'pointer',
+                  outline: 'none',
+                  minWidth: '220px'
+                }}
+              >
+                {technicians.map((t) => (
+                  <option key={t.id} value={t.id}>
+                    {t.name} ({t.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          ) : (
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              background: '#f1f5f9',
+              borderRadius: '8px',
+              fontSize: '0.8rem',
+              color: '#334155',
+              fontWeight: 600
+            }}>
+              <span>🔒 Vista Personal:</span>
+              <span>{tech.name || currentUser?.name}</span>
+            </div>
+          )}
+
+          {/* RANGO DE FECHAS */}
+          <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                Desde
+              </label>
+              <input
+                type="date"
+                value={dateRange.startDate}
+                onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#ffffff',
+                  fontSize: '0.82rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
+              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
+                Hasta
+              </label>
+              <input
+                type="date"
+                value={dateRange.endDate}
+                onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+                style={{
+                  padding: '6px 10px',
+                  borderRadius: '8px',
+                  border: '1.5px solid #cbd5e1',
+                  background: '#ffffff',
+                  fontSize: '0.82rem',
+                  outline: 'none'
+                }}
+              />
+            </div>
+          </div>
+
+          {/* BOTÓN EXPORTAR PDF */}
+          <button
+            type="button"
+            onClick={handleExportPdf}
+            disabled={isExporting || loadingMetrics}
+            style={{
+              alignSelf: 'flex-end',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
+              color: '#001D40',
+              border: 'none',
+              padding: '8px 16px',
+              borderRadius: '8px',
+              fontSize: '0.8125rem',
+              fontWeight: 800,
+              cursor: isExporting ? 'not-allowed' : 'pointer',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.3)',
+              transition: 'transform 0.15s ease',
+              height: '35px'
+            }}
+          >
+            {isExporting ? 'Generando...' : '📑 Exportar Informe (PDF)'}
+          </button>
         </div>
       </div>
 
-      {/* 📋 SECTION 2: TECHNICIANS PERFORMANCE & AUDIT TABLE */}
-      <div style={{
-        background: '#ffffff',
-        borderRadius: '16px',
-        padding: '1.5rem',
-        border: '1px solid #e2e8f0',
-        boxShadow: '0 2px 8px rgba(0,0,0,0.03)',
-        marginBottom: '1.75rem'
-      }}>
-        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1.25rem' }}>
-          <div>
-            <h3 style={{ margin: 0, fontSize: '1.15rem', fontWeight: '800', color: '#0f172a' }}>
-              {isPersonal ? 'Mi Auditoría de Desempeño Técnico' : 'Auditoría de Rendimiento Técnico & Cumplimiento ANS'}
-            </h3>
-            <p style={{ margin: '0.2rem 0 0 0', fontSize: '0.85rem', color: '#64748b' }}>
-              Métricas individuales de productividad, efectividad y tiempos de resolución
-            </p>
-          </div>
+      {error && (
+        <div style={{ background: '#fef2f2', border: '1px solid #fecaca', color: '#991b1b', padding: '1rem', borderRadius: '10px', marginBottom: '1.5rem' }}>
+          ⚠️ {error}
+        </div>
+      )}
+
+      {loadingMetrics && (
+        <div style={{ textAlign: 'center', padding: '1rem', color: '#64748b', fontSize: '0.9rem' }}>
+          Actualizando métricas de {tech.name}...
+        </div>
+      )}
+
+      {/* BLOQUE A — CONTEOS OPERATIVOS DEL TÉCNICO */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Bloque A — Conteos Operativos del Técnico
+          </span>
+          <span style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
         </div>
 
-        <div style={{ overflowX: 'auto' }}>
-          <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.875rem' }}>
-            <thead>
-              <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', textAlign: 'left' }}>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800 }}>Técnico</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800 }}>Rol / Nivel</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>Asignados</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>Resueltos</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>En Progreso</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>% Cumplimiento ANS</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>MTTR Promedio</th>
-                <th style={{ padding: '10px 14px', color: '#475569', fontWeight: 800, textAlign: 'center' }}>Estado de Carga</th>
-              </tr>
-            </thead>
-            <tbody>
-              {techPerformance.length === 0 ? (
-                <tr>
-                  <td colSpan="8" style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8' }}>
-                    No hay registros técnicos para este filtro
-                  </td>
-                </tr>
-              ) : (
-                techPerformance.map((tech) => (
-                  <tr key={tech.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s ease' }} onMouseEnter={(e) => e.currentTarget.style.background = '#f8fafc'} onMouseLeave={(e) => e.currentTarget.style.background = 'transparent'}>
-                    <td style={{ padding: '12px 14px', fontWeight: 700, color: '#0f172a' }}>
-                      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-                        <div style={{ width: '28px', height: '28px', borderRadius: '50%', background: '#eff6ff', color: '#2563eb', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '0.75rem', fontWeight: 800 }}>
-                          {tech.name?.charAt(0) || 'T'}
-                        </div>
-                        {tech.name}
-                      </div>
-                    </td>
-                    <td style={{ padding: '12px 14px', color: '#64748b', fontWeight: 600 }}>
-                      <span style={{ padding: '2px 8px', borderRadius: '6px', background: '#f1f5f9', fontSize: '0.75rem', fontWeight: 700 }}>
-                        {tech.role}
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#0f172a' }}>
-                      {tech.assignedCount}
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#10b981' }}>
-                      {tech.resolvedCount}
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center', fontWeight: 800, color: '#3b82f6' }}>
-                      {tech.inProgressCount}
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.8rem',
-                        fontWeight: 800,
-                        background: tech.slaRate >= 90 ? '#ecfdf5' : '#fffbeb',
-                        color: tech.slaRate >= 90 ? '#047857' : '#b45309'
-                      }}>
-                        {tech.slaRate}%
-                      </span>
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center', color: '#64748b', fontWeight: 700 }}>
-                      {tech.avgResolveHours} hrs
-                    </td>
-                    <td style={{ padding: '12px 14px', textAlign: 'center' }}>
-                      <span style={{
-                        padding: '3px 8px',
-                        borderRadius: '6px',
-                        fontSize: '0.75rem',
-                        fontWeight: 800,
-                        background: tech.workloadStatus === 'Sobrecarga' ? '#fee2e2' : tech.workloadStatus === 'Alta' ? '#fef3c7' : '#ecfdf5',
-                        color: tech.workloadStatus === 'Sobrecarga' ? '#b91c1c' : tech.workloadStatus === 'Alta' ? '#b45309' : '#047857'
-                      }}>
-                        {tech.workloadStatus}
-                      </span>
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
-      </div>
-
-      {/* 📊 SECTION 3: CATEGORIES & HEATMAP */}
-      <div 
-        className="analytics-chart-grid"
-        style={{
+        <div style={{
           display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-          gap: '1.5rem',
-          marginBottom: '1.75rem'
-        }}
-      >
-        {/* Category Breakdown (Horizontal Bar) */}
-        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <h4 className="analytics-card-title" style={{ margin: '0 0 1rem 0' }}>
-            Distribución por Categoría & Departamento
-          </h4>
+          gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))',
+          gap: '12px'
+        }}>
+          {/* Indicador 1: Tickets Asignados */}
+          <StatCard
+            title="Tickets Asignados"
+            value={bA.assigned ?? 0}
+            subtitle="Carga total recibida"
+            iconType="tickets"
+            color="#2563eb"
+          />
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '14px' }}>
-            {categoryData.length === 0 ? (
-              <div style={{ textAlign: 'center', padding: '2rem', color: '#94a3b8', fontSize: '0.85rem' }}>
-                No hay incidencias registradas en este periodo
-              </div>
+          {/* Indicador 2: Tickets Resueltos */}
+          <StatCard
+            title="Tickets Resueltos"
+            value={bA.resolved ?? 0}
+            subtitle="Resueltos & Cerrados"
+            iconType="check"
+            color="#10b981"
+          />
+
+          {/* Indicador 3: Tickets Programados */}
+          <StatCard
+            title="Tickets Programados"
+            value={bA.scheduled ?? 0}
+            subtitle="Visitas o agenda"
+            iconType="monitor"
+            color="#6366f1"
+          />
+
+          {/* Indicador 4: Tickets No Resueltos */}
+          <StatCard
+            title="Tickets No Resueltos"
+            value={bA.unresolved ?? 0}
+            subtitle="Activos en gestión"
+            iconType="clock"
+            color="#f59e0b"
+          />
+
+          {/* Indicador 5: Tickets Tardíos */}
+          <StatCard
+            title="Tickets Tardíos"
+            value={bA.overdue ?? 0}
+            subtitle="Fuera de límite ANS"
+            iconType="alert"
+            color="#dc2626"
+            badge={bA.overdue > 0 ? 'Vencido' : 'Al Día'}
+          />
+        </div>
+      </div>
+
+      {/* BLOQUE B — DESEMPEÑO Y CUMPLIMIENTO ANS DEL TÉCNICO */}
+      <div style={{ marginBottom: '1.5rem' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '0.75rem' }}>
+          <span style={{ fontSize: '0.85rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.04em' }}>
+            Bloque B — Velocidad de Atención & Acuerdos de Nivel de Servicio (ANS)
+          </span>
+          <span style={{ height: '1px', flex: 1, background: '#e2e8f0' }} />
+        </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))',
+          gap: '14px'
+        }}>
+          {/* Indicador 6: MTTA */}
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #0284c7',
+            borderRadius: '10px',
+            padding: '1rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                MTTA (Tiempo Primera Respuesta)
+              </span>
+              <span style={{ fontSize: '1.1rem' }}>⚡</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#001D40' }}>
+                {mtta.p50 ?? 0} min
+              </strong>
+              <span style={{ fontSize: '0.75rem', color: '#0284c7', fontWeight: 600 }}>Mediana (P50)</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '12px' }}>
+              <span>P90: <strong>{mtta.p90 ?? 0} min</strong></span>
+              <span>Promedio: <strong>{mtta.avg ?? 0} min</strong></span>
+            </div>
+          </div>
+
+          {/* Indicador 7: MTTR */}
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderLeft: '4px solid #0d9488',
+            borderRadius: '10px',
+            padding: '1rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                MTTR (Tiempo Medio de Resolución)
+              </span>
+              <span style={{ fontSize: '1.1rem' }}>⏱️</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: '#001D40' }}>
+                {mttr.p50 ?? 0} hrs
+              </strong>
+              <span style={{ fontSize: '0.75rem', color: '#0d9488', fontWeight: 600 }}>Mediana (P50)</span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '12px' }}>
+              <span>P90: <strong>{mttr.p90 ?? 0} hrs</strong></span>
+              <span>Promedio: <strong>{mttr.avg ?? 0} hrs</strong></span>
+            </div>
+          </div>
+
+          {/* Indicador 8: Cumplimiento ANS */}
+          <div style={{
+            background: '#ffffff',
+            border: '1px solid #e2e8f0',
+            borderLeft: `4px solid ${ans.global >= 90 ? '#16a34a' : '#dc2626'}`,
+            borderRadius: '10px',
+            padding: '1rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+          }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '6px' }}>
+              <span style={{ fontSize: '0.75rem', fontWeight: 700, color: '#64748b', textTransform: 'uppercase' }}>
+                Cumplimiento ANS Individual
+              </span>
+              <span style={{ fontSize: '1.1rem' }}>🛡️</span>
+            </div>
+            <div style={{ display: 'flex', alignItems: 'baseline', gap: '8px', marginBottom: '4px' }}>
+              <strong style={{ fontSize: '1.6rem', fontWeight: 800, color: ans.global >= 90 ? '#16a34a' : '#dc2626' }}>
+                {ans.global ?? 100}%
+              </strong>
+              <span style={{
+                fontSize: '0.7rem',
+                fontWeight: 700,
+                padding: '2px 6px',
+                borderRadius: '4px',
+                background: ans.global >= 95 ? '#dcfce7' : (ans.global >= 80 ? '#fef9c3' : '#fee2e2'),
+                color: ans.global >= 95 ? '#166534' : (ans.global >= 80 ? '#854d0e' : '#991b1b')
+              }}>
+                {ans.global >= 95 ? 'Cumplimiento Óptimo' : (ans.global >= 80 ? 'Aceptable' : 'Riesgo Crítico')}
+              </span>
+            </div>
+            <div style={{ fontSize: '0.75rem', color: '#64748b', display: 'flex', gap: '12px' }}>
+              <span>Respuesta: <strong>{ans.response ?? 100}%</strong></span>
+              <span>Solución: <strong>{ans.resolution ?? 100}%</strong></span>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      {/* GRÁFICOS COMPLEMENTARIOS DEL TÉCNICO */}
+      <div style={{
+        display: 'grid',
+        gridTemplateColumns: 'repeat(auto-fit, minmax(340px, 1fr))',
+        gap: '1rem',
+        marginBottom: '1.5rem'
+      }}>
+        {/* Evolución Diaria del Técnico */}
+        <div style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '1.2rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 800, color: '#002D62' }}>
+            📈 Actividad del Técnico en el Período
+          </h3>
+          <div style={{ height: '220px', width: '100%' }}>
+            {timelineData.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <AreaChart data={timelineData}>
+                  <defs>
+                    <linearGradient id="colorAsignados" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#2563eb" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#2563eb" stopOpacity={0}/>
+                    </linearGradient>
+                    <linearGradient id="colorResueltos" x1="0" y1="0" x2="0" y2="1">
+                      <stop offset="5%" stopColor="#10b981" stopOpacity={0.4}/>
+                      <stop offset="95%" stopColor="#10b981" stopOpacity={0}/>
+                    </linearGradient>
+                  </defs>
+                  <CartesianGrid strokeDasharray="3 3" stroke="#f1f5f9" />
+                  <XAxis dataKey="date" tick={{ fontSize: 11, fill: '#64748b' }} />
+                  <YAxis tick={{ fontSize: 11, fill: '#64748b' }} allowDecimals={false} />
+                  <Tooltip content={<CustomChartTooltip />} />
+                  <Area type="monotone" dataKey="asignados" name="Asignados" stroke="#2563eb" strokeWidth={2} fillOpacity={1} fill="url(#colorAsignados)" />
+                  <Area type="monotone" dataKey="resueltos" name="Resueltos" stroke="#10b981" strokeWidth={2} fillOpacity={1} fill="url(#colorResueltos)" />
+                </AreaChart>
+              </ResponsiveContainer>
             ) : (
-              categoryData.map((cat, idx) => (
-                <div key={idx} style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                  <span style={{ fontSize: '0.8125rem', color: '#475569', fontWeight: 700, minWidth: '130px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
-                    {cat.label || 'General'}
-                  </span>
-                  <div style={{ flex: 1, height: '10px', background: '#f1f5f9', borderRadius: '5px', overflow: 'hidden' }}>
-                    <div style={{
-                      height: '100%',
-                      width: `${(cat.value / maxCategory) * 100}%`,
-                      background: 'linear-gradient(90deg, #00D1FF, #002D62)',
-                      borderRadius: '5px',
-                      transition: 'width 0.8s ease'
-                    }} />
-                  </div>
-                  <span style={{ fontSize: '0.8125rem', fontWeight: 800, color: '#0f172a', minWidth: '24px', textAlign: 'right' }}>
-                    {cat.value}
-                  </span>
-                </div>
-              ))
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#94a3b8', fontSize: '0.85rem' }}>
+                Sin actividad registrada en este rango de fechas.
+              </div>
             )}
           </div>
         </div>
 
-        {/* Heatmap Chart */}
-        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <HeatmapChart recentActivity={data.recentActivity} title="Matriz Horaria de Demanda de Tickets" />
+        {/* Casos por Prioridad del Técnico */}
+        <div style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '1.2rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 800, color: '#002D62' }}>
+            🎯 Casos por Prioridad
+          </h3>
+          <div style={{ height: '220px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {priorityDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={priorityDistribution}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {priorityDistribution.map((entry, index) => (
+                      <Cell key={`cell-${index}`} fill={PIE_COLORS[index % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Sin tickets asignados en el período.</div>
+            )}
+          </div>
+        </div>
+
+        {/* Casos por Estado del Técnico */}
+        <div style={{
+          background: '#ffffff',
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          padding: '1.2rem',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+        }}>
+          <h3 style={{ margin: '0 0 1rem 0', fontSize: '0.9rem', fontWeight: 800, color: '#002D62' }}>
+            📊 Casos por Estado
+          </h3>
+          <div style={{ height: '220px', width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+            {statusDistribution.length > 0 ? (
+              <ResponsiveContainer width="100%" height="100%">
+                <PieChart>
+                  <Pie
+                    data={statusDistribution}
+                    dataKey="value"
+                    nameKey="name"
+                    cx="50%"
+                    cy="50%"
+                    outerRadius={80}
+                    label={({ name, value }) => `${name}: ${value}`}
+                  >
+                    {statusDistribution.map((entry, index) => (
+                      <Cell key={`cell-status-${index}`} fill={PIE_COLORS[(index + 2) % PIE_COLORS.length]} />
+                    ))}
+                  </Pie>
+                  <Tooltip />
+                </PieChart>
+              </ResponsiveContainer>
+            ) : (
+              <div style={{ color: '#94a3b8', fontSize: '0.85rem' }}>Sin tickets en este período.</div>
+            )}
+          </div>
         </div>
       </div>
 
-      {/* 🍩 SECTION 4: PRIORITY & STATUS DONUTS */}
-      <div 
-        className="analytics-chart-grid"
-        style={{
-          display: 'grid',
-          gridTemplateColumns: 'repeat(auto-fit, minmax(min(100%, 320px), 1fr))',
-          gap: '1.5rem'
-        }}
-      >
-        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <SimplePieChart
-            title={isPersonal ? "Distribución de Mis Tickets por Prioridad" : "Distribución de Volumen por Severidad"}
-            data={priorityData}
-            colorScheme="priority"
-          />
+      {/* LISTADO DE TICKETS DEL TÉCNICO */}
+      <div style={{
+        background: '#ffffff',
+        border: '1px solid #e2e8f0',
+        borderRadius: '12px',
+        padding: '1.2rem',
+        boxShadow: '0 1px 3px rgba(0,0,0,0.03)'
+      }}>
+        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#002D62' }}>
+            📋 Tickets Asignados al Técnico ({data?.tickets?.length || 0})
+          </h3>
+          <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
+            Mostrando casos asignados en el rango seleccionado
+          </span>
         </div>
-        <div style={{ background: '#ffffff', borderRadius: '16px', border: '1px solid #e2e8f0', padding: '1.5rem', boxShadow: '0 2px 6px rgba(0,0,0,0.03)' }}>
-          <SimplePieChart
-            title={isPersonal ? "Distribución de Mis Tickets por Estado" : "Distribución por Estado del Ciclo de Vida"}
-            data={statusData}
-            colorScheme="status"
-          />
-        </div>
+
+        {(!data?.tickets || data.tickets.length === 0) ? (
+          <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
+            El técnico no tiene tickets asignados en las fechas seleccionadas.
+          </div>
+        ) : (
+          <div style={{ overflowX: 'auto' }}>
+            <table style={{ width: '100%', borderCollapse: 'collapse', fontSize: '0.85rem', textAlign: 'left' }}>
+              <thead>
+                <tr style={{ background: '#f8fafc', borderBottom: '2px solid #e2e8f0', color: '#475569' }}>
+                  <th style={{ padding: '10px 12px' }}>ID</th>
+                  <th style={{ padding: '10px 12px' }}>Título</th>
+                  <th style={{ padding: '10px 12px' }}>Tipo</th>
+                  <th style={{ padding: '10px 12px' }}>Prioridad</th>
+                  <th style={{ padding: '10px 12px' }}>Estado</th>
+                  <th style={{ padding: '10px 12px' }}>Acuerdo ANS</th>
+                  <th style={{ padding: '10px 12px' }}>Fecha</th>
+                </tr>
+              </thead>
+              <tbody>
+                {data.tickets.map((t) => (
+                  <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}>
+                    <td style={{ padding: '10px 12px', fontWeight: 700, color: '#002D62' }}>#{t.id}</td>
+                    <td style={{ padding: '10px 12px', fontWeight: 600, color: '#1e293b' }}>{t.title}</td>
+                    <td style={{ padding: '10px 12px' }}>{t.ticketType || 'Incidencia'}</td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: t.priority === 'ALTO' || t.priority === 'URGENTE' ? '#fee2e2' : '#f1f5f9',
+                        color: t.priority === 'ALTO' || t.priority === 'URGENTE' ? '#b91c1c' : '#475569'
+                      }}>
+                        {t.priority}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <span style={{
+                        padding: '2px 8px',
+                        borderRadius: '12px',
+                        fontSize: '0.75rem',
+                        fontWeight: 700,
+                        background: t.status === 'RESOLVED' || t.status === 'CLOSED' ? '#dcfce7' : '#e0f2fe',
+                        color: t.status === 'RESOLVED' || t.status === 'CLOSED' ? '#15803d' : '#0369a1'
+                      }}>
+                        {t.status}
+                      </span>
+                    </td>
+                    <td style={{ padding: '10px 12px' }}>
+                      <AnsBadge ticket={t} />
+                    </td>
+                    <td style={{ padding: '10px 12px', color: '#64748b' }}>
+                      {new Date(t.createdAt).toLocaleDateString()}
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
+        )}
       </div>
     </div>
   );
 }
-

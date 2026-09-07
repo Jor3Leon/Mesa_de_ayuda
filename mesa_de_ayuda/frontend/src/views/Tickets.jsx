@@ -4,7 +4,7 @@ import { jsPDF } from 'jspdf';
 import autoTable from 'jspdf-autotable';
 import { apiRequest, getStoredSession } from '../lib/api';
 import RichTextEditor from '../components/common/RichTextEditor';
-import SlaBadge from '../components/tickets/SlaBadge';
+import AnsBadge from '../components/tickets/AnsBadge';
 import TicketList from '../components/tickets/TicketList';
 import CategorySelector from '../components/tickets/CategorySelector';
 import { sanitizeHtml } from '../lib/sanitize';
@@ -366,15 +366,14 @@ function SearchableSingleUserSelector({ users, value, onChange, placeholder }) {
 // Business hours: Mon-Fri, 08:00-12:00 and 14:00-17:30
 
 /**
- * Función principal para calcular el Acuerdo de Nivel de Servicio (ANS / SLA).
- * Core function to calculate the Service Level Agreement (ANS / SLA).
- * Evalúa el progreso y la fecha límite tomando en cuenta horas hábiles / Evaluates progress based on business hours.
+ * Función principal para calcular el Acuerdo de Nivel de Servicio (ANS).
+ * Evalúa el progreso y la fecha límite tomando en cuenta horas hábiles.
  *
- * @param {Date|string} createdAt - Fecha de creación del ticket / Creation timestamp
- * @param {string} slaInput - SLA como texto, ej "4h" / SLA limit as string, e.g. "4h"
- * @param {Date|string|null} resolutionTime - (Opcional) Tiempo cuando se resolvió el ticket / (Optional) Time when ticket was resolved
+ * @param {Date|string} createdAt - Fecha de creación del ticket
+ * @param {string} slaInput - Límite ANS como texto, ej "4h"
+ * @param {Date|string|null} resolutionTime - (Opcional) Tiempo cuando se resolvió el ticket
  */
-function getSlaInfo(createdAt, slaInput, resolutionTime = null, status = null) {
+function getAnsInfo(createdAt, slaInput, resolutionTime = null, status = null) {
   let baseTime = createdAt;
   let finalSla = slaInput;
 
@@ -526,16 +525,17 @@ function getSlaInfo(createdAt, slaInput, resolutionTime = null, status = null) {
   };
 }
 
+const getSlaInfo = getAnsInfo;
+
 /**
  * Componente visual que renderiza la barra de progreso del tiempo restante (ANS).
- * Visual component rendering the remaining time (SLA) progress bar.
  */
-function SlaProgressBar({ createdAt, sla, resolvedAt, status }) {
-  const [info, setInfo] = React.useState(getSlaInfo(createdAt, sla, resolvedAt, status));
+function AnsProgressBar({ createdAt, sla, resolvedAt, status }) {
+  const [info, setInfo] = React.useState(getAnsInfo(createdAt, sla, resolvedAt, status));
 
   React.useEffect(() => {
     if (resolvedAt) return;
-    const timer = setInterval(() => setInfo(getSlaInfo(createdAt, sla, resolvedAt, status)), 60000); // update every minute
+    const timer = setInterval(() => setInfo(getAnsInfo(createdAt, sla, resolvedAt, status)), 60000); // update every minute
     return () => clearInterval(timer);
   }, [createdAt, sla, resolvedAt, status]);
 
@@ -558,9 +558,10 @@ function SlaProgressBar({ createdAt, sla, resolvedAt, status }) {
   );
 }
 
+const SlaProgressBar = AnsProgressBar;
+
 /**
  * Obtiene el texto de la fecha límite según el ANS fijado.
- * Returns the deadline date string based on the given SLA.
  */
 /**
  * Componente principal de la vista de Tickets.
@@ -2884,7 +2885,7 @@ export default function Tickets() {
                           </td>
                           <td className="col-hide-mobile">{ticket.location?.name || 'No aplica'}</td>
                           <td>
-                            <SlaProgressBar createdAt={ticket.createdAt} sla={ticket.sla} resolvedAt={ticket.resolvedAt || ticket.closedAt} status={ticket.status} />
+                            <AnsProgressBar createdAt={ticket.createdAt} sla={ticket.sla} resolvedAt={ticket.resolvedAt || ticket.closedAt} status={ticket.status} />
                           </td>
                           <td className="col-hide-mobile">
                             {(() => {
@@ -2961,7 +2962,7 @@ export default function Tickets() {
                           <span>📅 {new Date(ticket.createdAt).toLocaleDateString()}</span>
                         </div>
                         <div style={{ marginTop: '0.15rem' }}>
-                          <SlaProgressBar createdAt={ticket.createdAt} sla={ticket.sla} resolvedAt={ticket.resolvedAt || ticket.closedAt} status={ticket.status} />
+                          <AnsProgressBar createdAt={ticket.createdAt} sla={ticket.sla} resolvedAt={ticket.resolvedAt || ticket.closedAt} status={ticket.status} />
                         </div>
                       </div>
                     ))}

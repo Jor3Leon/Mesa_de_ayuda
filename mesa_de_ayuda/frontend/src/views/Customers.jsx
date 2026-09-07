@@ -320,7 +320,7 @@ export default function Customers() {
               100%
             </strong>
             <span style={{ fontSize: '0.65rem', color: '#64748b', fontWeight: 500, whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', textAlign: 'right', flex: 1 }}>
-              SLA Activo
+              ANS Activo
             </span>
           </div>
         </div>

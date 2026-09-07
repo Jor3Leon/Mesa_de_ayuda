@@ -305,6 +305,9 @@ export const generateDashboardReport = (data, user, viewMode = 'global') => {
 
 
 export const generateAnalyticsExecutiveReport = (data, filters, user) => {
+  if (data?.technician && data?.bloqueA) {
+    return generateTechnicianIndividualReport(data, filters, user);
+  }
   try {
     const doc = new jsPDF();
     const timestamp = new Date().toLocaleString('es-CO');
@@ -432,4 +435,136 @@ export const generateAnalyticsExecutiveReport = (data, filters, user) => {
     alert('Hubo un error al generar el PDF del informe ejecutivo.');
   }
 };
+
+export const generateTechnicianIndividualReport = (data, filters, requestingUser) => {
+  try {
+    const doc = new jsPDF();
+    const timestamp = new Date().toLocaleString('es-CO');
+    const tech = data?.technician || {};
+    const bA = data?.bloqueA || {};
+    const bB = data?.bloqueB || {};
+    const mtta = bB?.mtta || {};
+    const mttr = bB?.mttr || {};
+    const ans = bB?.ansCompliance || {};
+
+    // Header Corporate Banner
+    doc.setFillColor(0, 29, 64);
+    doc.rect(0, 0, 210, 45, 'F');
+
+    doc.setTextColor(0, 209, 255);
+    doc.setFontSize(10);
+    doc.setFont('helvetica', 'bold');
+    doc.text('MESA DE AYUDA ENTERPRISE · ANALÍTICA DE RENDIMIENTO INDIVIDUAL', 15, 16);
+
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(16);
+    doc.text(`INFORME DE DESEMPEÑO: ${tech.name ? tech.name.toUpperCase() : 'TÉCNICO'}`, 15, 27);
+
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.setTextColor(203, 213, 225);
+    doc.text(`Rol: ${tech.role || 'Técnico'} · Periodo: ${filters?.startDate || '30 días'} al ${filters?.endDate || 'Hoy'}`, 15, 36);
+    doc.text(`Fecha: ${timestamp}`, 130, 36);
+
+    // Bloque A
+    doc.setTextColor(15, 23, 42);
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.text('Bloque A — Conteos Operativos del Técnico', 15, 55);
+
+    const bloqueAData = [
+      ['Tickets Asignados', String(bA.assigned || 0), 'Tickets Resueltos', String(bA.resolved || 0)],
+      ['Tickets Programados', String(bA.scheduled || 0), 'Tickets No Resueltos (Activos)', String(bA.unresolved || 0)],
+      ['Tickets Tardíos (Fuera de ANS)', String(bA.overdue || 0), 'Estado Operativo', (bA.overdue || 0) === 0 ? 'Sin Casos Tardíos' : 'Alerta de Retraso']
+    ];
+
+    autoTable(doc, {
+      startY: 59,
+      head: [['Métrica Operativa', 'Valor', 'Métrica de Carga', 'Valor']],
+      body: bloqueAData,
+      theme: 'grid',
+      headStyles: { fillColor: [0, 45, 98], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 },
+      margin: { left: 15, right: 15 },
+    });
+
+    let currentY = doc.lastAutoTable.finalY + 12;
+
+    // Bloque B
+    doc.setFontSize(12);
+    doc.setFont('helvetica', 'bold');
+    doc.setTextColor(15, 23, 42);
+    doc.text('Bloque B — Velocidad de Atención & Acuerdos de Nivel de Servicio (ANS)', 15, currentY);
+
+    const bloqueBData = [
+      ['MTTA Mediana (P50)', `${mtta.p50 ?? 0} min`, 'MTTA Percentil 90 (P90)', `${mtta.p90 ?? 0} min`],
+      ['MTTR Mediana (P50)', `${mttr.p50 ?? 0} horas`, 'MTTR Percentil 90 (P90)', `${mttr.p90 ?? 0} horas`],
+      ['Cumplimiento ANS Respuesta', `${ans.response ?? 100}%`, 'Cumplimiento ANS Solución', `${ans.resolution ?? 100}%`],
+      ['Cumplimiento ANS Global', `${ans.global ?? 100}%`, 'Promedio MTTR General', `${mttr.avg ?? 0} horas`]
+    ];
+
+    autoTable(doc, {
+      startY: currentY + 4,
+      head: [['Indicador de Velocidad / ANS', 'Resultado', 'Indicador P90 / Solución', 'Resultado']],
+      body: bloqueBData,
+      theme: 'grid',
+      headStyles: { fillColor: [30, 58, 138], textColor: [255, 255, 255], fontStyle: 'bold' },
+      styles: { fontSize: 9, cellPadding: 3 },
+      margin: { left: 15, right: 15 },
+    });
+
+    currentY = doc.lastAutoTable.finalY + 12;
+
+    // Tickets del técnico
+    const tickets = data?.tickets || [];
+    if (tickets.length > 0) {
+      if (currentY > 220) {
+        doc.addPage();
+        currentY = 20;
+      }
+      doc.setFontSize(12);
+      doc.setFont('helvetica', 'bold');
+      doc.setTextColor(15, 23, 42);
+      doc.text(`Casos Atendidos por el Técnico (${tickets.length} tickets)`, 15, currentY);
+
+      const ticketRows = tickets.slice(0, 25).map(t => [
+        `#${t.id}`,
+        (t.title || 'Sin título').slice(0, 32),
+        t.priority || 'Medio',
+        t.status || 'OPEN',
+        t.ticketType || 'Incidencia',
+        new Date(t.createdAt).toLocaleDateString('es-CO')
+      ]);
+
+      autoTable(doc, {
+        startY: currentY + 4,
+        head: [['ID', 'Título', 'Prioridad', 'Estado', 'Tipo', 'Fecha Creación']],
+        body: ticketRows,
+        theme: 'striped',
+        headStyles: { fillColor: [51, 65, 85], textColor: [255, 255, 255] },
+        styles: { fontSize: 8, cellPadding: 2 },
+        margin: { left: 15, right: 15 },
+      });
+    }
+
+    const pageCount = doc.internal.getNumberOfPages();
+    for (let i = 1; i <= pageCount; i++) {
+      doc.setPage(i);
+      doc.setFontSize(8);
+      doc.setTextColor(140);
+      doc.text(
+        `Página ${i} de ${pageCount} · Mesa de Ayuda Enterprise · Desempeño Individual Técnico`,
+        105,
+        285,
+        { align: 'center' }
+      );
+    }
+
+    doc.save(`Desempeno_Tecnico_${(tech.name || 'Tecnico').replace(/\s+/g, '_')}_${Date.now()}.pdf`);
+  } catch (error) {
+    console.error('Error generando reporte de técnico:', error);
+    alert('Hubo un error al generar el PDF del técnico.');
+  }
+};
+
 

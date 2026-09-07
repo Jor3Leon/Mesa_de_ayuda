@@ -1,6 +1,7 @@
 const express = require('express');
-const { requireAuth, requirePermission, getEffectiveRole } = require('../lib/middleware');
-const { getTicketPerformanceMetrics } = require('../lib/ticket-analytics-service');
+const { requireAuth, requirePermission, requireAnyPermission, getEffectiveRole, canViewTechnicianAnalytics, getRoleHierarchy } = require('../lib/middleware');
+const { getTicketPerformanceMetrics, getTechnicianAnalytics } = require('../lib/ticket-analytics-service');
+const { createHttpError } = require('../lib/utils');
 
 function getAnalyticsRoutes(prisma) {
   const router = express.Router();
@@ -154,6 +155,110 @@ function getAnalyticsRoutes(prisma) {
       });
     } catch (error) {
       console.error('Analytics Error:', error);
+      next(error);
+    }
+  });
+
+  /**
+   * Endpoint para obtener la lista de técnicos que el usuario puede ver en Analítica (Fase 3).
+   * Determinado 100% en servidor según jerarquía.
+   */
+  router.get('/technicians', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
+    try {
+      const user = req.auth.user;
+      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+      const allUsers = await prisma.user.findMany({
+        where: {
+          ...orgFilter,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          roleId: true,
+          role: { select: { id: true, name: true, hierarchyLevel: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      // Filtrar únicamente los técnicos que el usuario puede auditar según jerarquía
+      const accessible = allUsers
+        .filter(target => canViewTechnicianAnalytics(user, target))
+        .map(t => ({
+          id: t.id,
+          name: t.name,
+          email: t.email,
+          role: t.role?.name || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(t)
+        }));
+
+      // Si el propio usuario no está en la lista resultante, asegurar que él mismo pueda verse
+      if (!accessible.some(t => t.id === user.id)) {
+        accessible.unshift({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(user)
+        });
+      }
+
+      res.json(accessible);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * Endpoint oficial de Analítica individual por técnico (Fase 3).
+   * Devuelve los 8 indicadores calculados exclusivamente sobre assignedToId = technicianId.
+   */
+  router.get('/technician/:technicianId', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
+    try {
+      const technicianId = parseInt(req.params.technicianId, 10);
+      if (isNaN(technicianId)) {
+        throw createHttpError(400, 'ID de técnico inválido.');
+      }
+
+      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+      const targetUser = await prisma.user.findFirst({
+        where: {
+          id: technicianId,
+          ...orgFilter
+        },
+        include: {
+          role: true
+        }
+      });
+
+      if (!targetUser) {
+        throw createHttpError(404, 'Técnico no encontrado.');
+      }
+
+      // Verificación estricta de autorización en servidor
+      if (!canViewTechnicianAnalytics(req.auth.user, targetUser)) {
+        throw createHttpError(403, 'No tiene permisos para ver las métricas de este técnico.');
+      }
+
+      const analytics = await getTechnicianAnalytics(prisma, targetUser.id, req.auth.organizationId, {
+        startDate: req.query.from || req.query.startDate,
+        endDate: req.query.to || req.query.endDate
+      });
+
+      res.json({
+        technician: {
+          id: targetUser.id,
+          name: targetUser.name,
+          email: targetUser.email,
+          role: targetUser.role?.name || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(targetUser)
+        },
+        ...analytics
+      });
+    } catch (error) {
       next(error);
     }
   });

@@ -608,6 +608,163 @@ async function getTicketPerformanceMetrics(prisma, options = {}) {
   };
 }
 
+/**
+ * Obtiene los 8 indicadores de desempeño individual de un técnico.
+ * Bloque A: Asignados, Resueltos, Programados, No resueltos, Tardíos.
+ * Bloque B: MTTA (P50/P90), MTTR (P50/P90), % Cumplimiento ANS (Respuesta, Solución).
+ */
+async function getTechnicianAnalytics(prisma, technicianId, organizationId, options = {}) {
+  const parsedId = Number(technicianId);
+  const { startDate, endDate } = options;
+
+  const now = new Date();
+  let start = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
+  let end = endDate ? new Date(endDate) : new Date(now);
+  if (endDate && String(endDate).length <= 10) {
+    end.setHours(23, 59, 59, 999);
+  }
+
+  const baseFilter = {
+    organizationId: organizationId || undefined,
+    assignedToId: parsedId,
+    createdAt: { gte: start, lte: end }
+  };
+
+  const [
+    assignedCount,
+    resolvedCount,
+    closedCount,
+    scheduledCount,
+    unresolvedCount,
+    tickets
+  ] = await Promise.all([
+    prisma.ticket.count({ where: baseFilter }).catch(() => 0),
+    prisma.ticket.count({ where: { ...baseFilter, status: 'RESOLVED' } }).catch(() => 0),
+    prisma.ticket.count({ where: { ...baseFilter, status: 'CLOSED' } }).catch(() => 0),
+    prisma.ticket.count({ where: { ...baseFilter, status: { in: ['PLANIFICADO', 'SCHEDULED'] } } }).catch(() => 0),
+    prisma.ticket.count({ where: { ...baseFilter, status: { notIn: ['RESOLVED', 'CLOSED'] } } }).catch(() => 0),
+    prisma.ticket.findMany({
+      where: baseFilter,
+      select: {
+        id: true,
+        title: true,
+        priority: true,
+        status: true,
+        ticketType: true,
+        category: true,
+        createdAt: true,
+        assignedAt: true,
+        firstResponseAt: true,
+        resolvedAt: true,
+        closedAt: true,
+        assignedToId: true,
+        responseAnsMinutes: true,
+        resolutionAnsMinutes: true,
+        reopenCount: true,
+      },
+      orderBy: { createdAt: 'asc' }
+    }).catch(() => [])
+  ]);
+
+  const mttaMinutesList = [];
+  const mttrHoursList = [];
+
+  let responseEligible = 0;
+  let responseCompliant = 0;
+  let resolutionEligible = 0;
+  let resolutionCompliant = 0;
+  let overdueCount = 0;
+
+  tickets.forEach(ticket => {
+    const evalAns = evaluateTicketAns(ticket);
+    if (evalAns.isOverdue) {
+      overdueCount++;
+    }
+
+    if (ticket.firstResponseAt && ticket.createdAt) {
+      const mtta = calculateBusinessMinutes(ticket.createdAt, ticket.firstResponseAt);
+      mttaMinutesList.push(mtta);
+    }
+
+    if (ticket.resolvedAt && ticket.createdAt) {
+      const mttrMin = calculateBusinessMinutes(ticket.createdAt, ticket.resolvedAt);
+      mttrHoursList.push(Number((mttrMin / 60).toFixed(1)));
+    }
+
+    if (ticket.firstResponseAt) {
+      responseEligible++;
+      if (evalAns.responseCompliant) responseCompliant++;
+    } else if (evalAns.isResponseBreached) {
+      responseEligible++;
+    }
+
+    if (evalAns.isResolved) {
+      resolutionEligible++;
+      if (evalAns.resolutionCompliant) resolutionCompliant++;
+    } else if (evalAns.isResolutionBreached) {
+      resolutionEligible++;
+    }
+  });
+
+  mttaMinutesList.sort((a, b) => a - b);
+  mttrHoursList.sort((a, b) => a - b);
+
+  const mttaP50 = calculatePercentile(mttaMinutesList, 50);
+  const mttaP90 = calculatePercentile(mttaMinutesList, 90);
+  const avgMtta = mttaMinutesList.length > 0 
+    ? Math.round(mttaMinutesList.reduce((a, b) => a + b, 0) / mttaMinutesList.length) 
+    : 0;
+
+  const mttrP50 = calculatePercentile(mttrHoursList, 50);
+  const mttrP90 = calculatePercentile(mttrHoursList, 90);
+  const avgMttr = mttrHoursList.length > 0
+    ? Number((mttrHoursList.reduce((a, b) => a + b, 0) / mttrHoursList.length).toFixed(1))
+    : 0;
+
+  const responseAnsCompliance = responseEligible > 0
+    ? Number(((responseCompliant / responseEligible) * 100).toFixed(1))
+    : 100;
+
+  const resolutionAnsCompliance = resolutionEligible > 0
+    ? Number(((resolutionCompliant / resolutionEligible) * 100).toFixed(1))
+    : 100;
+
+  const globalAnsCompliance = (responseEligible + resolutionEligible) > 0
+    ? Number((((responseCompliant + resolutionCompliant) / (responseEligible + resolutionEligible)) * 100).toFixed(1))
+    : 100;
+
+  return {
+    bloqueA: {
+      assigned: assignedCount,
+      resolved: resolvedCount + closedCount,
+      scheduled: scheduledCount,
+      unresolved: unresolvedCount,
+      overdue: overdueCount
+    },
+    bloqueB: {
+      mtta: {
+        p50: mttaP50,
+        p90: mttaP90,
+        avg: avgMtta,
+        samples: mttaMinutesList.length
+      },
+      mttr: {
+        p50: mttrP50,
+        p90: mttrP90,
+        avg: avgMttr,
+        samples: mttrHoursList.length
+      },
+      ansCompliance: {
+        response: responseAnsCompliance,
+        resolution: resolutionAnsCompliance,
+        global: globalAnsCompliance
+      }
+    },
+    tickets
+  };
+}
+
 module.exports = {
-  getTicketPerformanceMetrics
+  getTicketPerformanceMetrics,
+  getTechnicianAnalytics
 };

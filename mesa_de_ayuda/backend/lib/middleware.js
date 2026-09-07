@@ -133,10 +133,71 @@ function getEffectiveRole(req) {
   return requestedRole;
 }
 
+function getRoleHierarchy(userOrRole) {
+  if (!userOrRole) return 0;
+  if (typeof userOrRole === 'number') return userOrRole;
+  if (typeof userOrRole.hierarchyLevel === 'number' && userOrRole.hierarchyLevel > 0) {
+    return userOrRole.hierarchyLevel;
+  }
+  const roleObj = userOrRole.role;
+  if (roleObj) {
+    if (typeof roleObj === 'object' && typeof roleObj.hierarchyLevel === 'number' && roleObj.hierarchyLevel > 0) {
+      return roleObj.hierarchyLevel;
+    }
+  }
+  const roleName = String(
+    (typeof roleObj === 'string' ? roleObj : roleObj?.name) ||
+    userOrRole.roleName ||
+    userOrRole.name ||
+    userOrRole
+  ).trim().toUpperCase();
+
+  if (roleName.includes('ADMIN')) return 100;
+  if (roleName.includes('NIVEL 3') || roleName.includes('LEVEL_3') || roleName.includes('SUPERVISOR')) return 3;
+  if (roleName.includes('NIVEL 2') || roleName.includes('LEVEL_2')) return 2;
+  if (roleName.includes('NIVEL 1') || roleName.includes('LEVEL_1')) return 1;
+  return 0;
+}
+
+/**
+ * Función de autorización jerárquica para el módulo de Analítica individual.
+ * Reglas:
+ * - Admin -> siempre true.
+ * - Mismo usuario consultando sus propios datos -> true.
+ * - N3 -> ve sus propios datos + N1 y N2 (targetLevel < 3).
+ * - N2 -> únicamente sus propios datos.
+ * - N1 -> únicamente sus propios datos.
+ */
+function canViewTechnicianAnalytics(requestingUser, targetUser) {
+  if (!requestingUser || !targetUser) return false;
+
+  const reqId = Number(requestingUser.id);
+  const targetId = Number(typeof targetUser === 'object' ? targetUser.id : targetUser);
+
+  if (reqId && targetId && reqId === targetId) {
+    return true;
+  }
+
+  const reqLevel = getRoleHierarchy(requestingUser);
+  const targetLevel = typeof targetUser === 'object' ? getRoleHierarchy(targetUser) : 0;
+
+  if (reqLevel >= 100) {
+    return true;
+  }
+
+  if (reqLevel >= 3) {
+    return targetLevel < 3;
+  }
+
+  return false;
+}
+
 module.exports = {
   requireAuth,
   requirePermission,
   requireAnyPermission,
   requireRole,
   getEffectiveRole,
+  getRoleHierarchy,
+  canViewTechnicianAnalytics,
 };

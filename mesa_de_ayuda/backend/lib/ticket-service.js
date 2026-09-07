@@ -58,10 +58,24 @@ async function validateResponsibleUsers(prisma, responsibleUserIds) {
   return users;
 }
 
+function resolveHierarchyLevel(role) {
+  if (!role) return 0;
+  if (typeof role === 'object' && typeof role.hierarchyLevel === 'number' && role.hierarchyLevel > 0) {
+    return role.hierarchyLevel;
+  }
+  const roleName = (typeof role === 'string' ? role : role.name || '').trim().toUpperCase();
+  if (roleName.includes('ADMIN')) return 100;
+  if (roleName.includes('NIVEL 3') || roleName.includes('LEVEL_3') || roleName.includes('SUPERVISOR')) return 3;
+  if (roleName.includes('NIVEL 2') || roleName.includes('LEVEL_2')) return 2;
+  if (roleName.includes('NIVEL 1') || roleName.includes('LEVEL_1')) return 1;
+  return 0;
+}
+
 function sanitizeUser(user) {
   if (!user) return null;
   const { passwordHash, role, ...safeUser } = user;
   if (role) {
+    safeUser.hierarchyLevel = resolveHierarchyLevel(role);
     if (typeof role === 'string') {
       safeUser.role = role;
       safeUser.permissions = [];
@@ -71,6 +85,8 @@ function sanitizeUser(user) {
         ? role.permissions.map((p) => p.permission.code)
         : [];
     }
+  } else {
+    safeUser.hierarchyLevel = 0;
   }
   if (safeUser.location) {
     safeUser.dependencia = safeUser.location.name;

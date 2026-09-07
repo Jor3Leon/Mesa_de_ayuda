@@ -1104,6 +1104,221 @@ test('SECURITY: getEffectiveRole ignores unprivileged role impersonation header'
   assert.equal(adminRoleResult, 'NIVEL 1'); // Permitido
 });
 
+// =========================================================================
+// FASE 3 — TESTS OBLIGATORIOS DE AUTORIZACIÓN JERÁRQUICA (ANALÍTICA)
+// =========================================================================
+
+function buildHierarchyTestUsers() {
+  const org = { id: 'org-test-uuid', slug: 'stic', isActive: true };
+  const perm = [{ permission: { code: 'ANALYTICS_VIEW' } }, { permission: { code: 'TICKETS_VIEW' } }];
+
+  const admin = {
+    id: 100,
+    name: 'Admin Global',
+    email: 'admin@test.local',
+    isActive: true,
+    organizationId: org.id,
+    organization: org,
+    roleId: 1,
+    role: { id: 1, name: 'ADMIN', hierarchyLevel: 100, permissions: perm }
+  };
+
+  const n3 = {
+    id: 300,
+    name: 'Técnico Nivel 3',
+    email: 'n3@test.local',
+    isActive: true,
+    organizationId: org.id,
+    organization: org,
+    roleId: 3,
+    role: { id: 3, name: 'NIVEL 3', hierarchyLevel: 3, permissions: perm }
+  };
+
+  const n2 = {
+    id: 200,
+    name: 'Técnico Nivel 2',
+    email: 'n2@test.local',
+    isActive: true,
+    organizationId: org.id,
+    organization: org,
+    roleId: 2,
+    role: { id: 2, name: 'NIVEL 2', hierarchyLevel: 2, permissions: perm }
+  };
+
+  const n1 = {
+    id: 101,
+    name: 'Técnico Nivel 1 A',
+    email: 'n1a@test.local',
+    isActive: true,
+    organizationId: org.id,
+    organization: org,
+    roleId: 4,
+    role: { id: 4, name: 'NIVEL 1', hierarchyLevel: 1, permissions: perm }
+  };
+
+  const otherN1 = {
+    id: 102,
+    name: 'Técnico Nivel 1 B',
+    email: 'n1b@test.local',
+    isActive: true,
+    organizationId: org.id,
+    organization: org,
+    roleId: 4,
+    role: { id: 4, name: 'NIVEL 1', hierarchyLevel: 1, permissions: perm }
+  };
+
+  const userMap = new Map([
+    [100, admin],
+    [300, n3],
+    [200, n2],
+    [101, n1],
+    [102, otherN1]
+  ]);
+
+  return { admin, n3, n2, n1, otherN1, userMap };
+}
+
+function createHierarchyMockPrisma(userMap) {
+  return {
+    user: {
+      findUnique: async ({ where }) => userMap.get(where.id) || null,
+      findFirst: async ({ where }) => userMap.get(where.id) || null,
+      findMany: async () => Array.from(userMap.values())
+    },
+    ticket: {
+      count: async () => 3,
+      findMany: async () => [
+        {
+          id: 1,
+          title: 'Caso prueba',
+          priority: 'MEDIO',
+          status: 'RESOLVED',
+          ticketType: 'Incidencia',
+          category: 'Soporte',
+          createdAt: new Date('2026-09-01T09:00:00Z'),
+          firstResponseAt: new Date('2026-09-01T09:30:00Z'),
+          resolvedAt: new Date('2026-09-01T11:00:00Z'),
+          closedAt: new Date('2026-09-01T11:00:00Z'),
+          assignedToId: 101,
+          responseAnsMinutes: 30,
+          resolutionAnsMinutes: 120,
+          reopenCount: 0
+        }
+      ]
+    }
+  };
+}
+
+test('FASE 3 — HIERARCHY AUTH: N1 intenta ver los indicadores de otro N1 -> 403', async () => {
+  const { n1, userMap } = buildHierarchyTestUsers();
+  const app = buildApp(createHierarchyMockPrisma(userMap));
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/102`, {
+      headers: { Authorization: `Bearer ${createToken(n1)}` }
+    });
+    assert.equal(res.status, 403);
+    const body = await res.json();
+    assert.ok(body.error && body.error.includes('No tiene permisos'));
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('FASE 3 — HIERARCHY AUTH: N2 intenta ver los de N3 -> 403', async () => {
+  const { n2, userMap } = buildHierarchyTestUsers();
+  const app = buildApp(createHierarchyMockPrisma(userMap));
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/300`, {
+      headers: { Authorization: `Bearer ${createToken(n2)}` }
+    });
+    assert.equal(res.status, 403);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('FASE 3 — HIERARCHY AUTH: N3 ve los de N1 y N2 -> 200 con datos correctos', async () => {
+  const { n3, userMap } = buildHierarchyTestUsers();
+  const app = buildApp(createHierarchyMockPrisma(userMap));
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    // N3 ve N1
+    const resN1 = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/101`, {
+      headers: { Authorization: `Bearer ${createToken(n3)}` }
+    });
+    assert.equal(resN1.status, 200);
+    const bodyN1 = await resN1.json();
+    assert.ok(bodyN1.bloqueA, 'Debe incluir Bloque A');
+    assert.ok(bodyN1.bloqueB, 'Debe incluir Bloque B');
+    assert.equal(bodyN1.technician.id, 101);
+
+    // N3 ve N2
+    const resN2 = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/200`, {
+      headers: { Authorization: `Bearer ${createToken(n3)}` }
+    });
+    assert.equal(resN2.status, 200);
+    const bodyN2 = await resN2.json();
+    assert.equal(bodyN2.technician.id, 200);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('FASE 3 — HIERARCHY AUTH: Admin ve los de cualquiera -> 200', async () => {
+  const { admin, userMap } = buildHierarchyTestUsers();
+  const app = buildApp(createHierarchyMockPrisma(userMap));
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const resN1 = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/101`, {
+      headers: { Authorization: `Bearer ${createToken(admin)}` }
+    });
+    assert.equal(resN1.status, 200);
+
+    const resN2 = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/200`, {
+      headers: { Authorization: `Bearer ${createToken(admin)}` }
+    });
+    assert.equal(resN2.status, 200);
+
+    const resN3 = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/300`, {
+      headers: { Authorization: `Bearer ${createToken(admin)}` }
+    });
+    assert.equal(resN3.status, 200);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+test('FASE 3 — HIERARCHY AUTH: Un técnico ve los suyos propios -> 200', async () => {
+  const { n1, userMap } = buildHierarchyTestUsers();
+  const app = buildApp(createHierarchyMockPrisma(userMap));
+  const server = app.listen(0);
+  const { port } = server.address();
+
+  try {
+    const res = await fetch(`http://127.0.0.1:${port}/api/analytics/technician/101`, {
+      headers: { Authorization: `Bearer ${createToken(n1)}` }
+    });
+    assert.equal(res.status, 200);
+    const body = await res.json();
+    assert.equal(body.technician.id, 101);
+    assert.ok(body.bloqueA);
+    assert.ok(body.bloqueB);
+  } finally {
+    await new Promise((resolve) => server.close(resolve));
+  }
+});
+
+
 
 
 

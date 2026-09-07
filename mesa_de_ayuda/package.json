@@ -8,6 +8,7 @@
     "dev:frontend": "npm --prefix frontend run dev",
     "dev:up": "powershell -ExecutionPolicy Bypass -File scripts/start-dev.ps1",
     "dev:down": "powershell -ExecutionPolicy Bypass -File scripts/stop-dev.ps1",
+    "build": "node scripts/vercel-build.js",
     "start": "npm run dev"
   },
   "devDependencies": {

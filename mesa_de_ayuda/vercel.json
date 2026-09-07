@@ -1,7 +1,7 @@
 {
   "version": 2,
   "buildCommand": "node scripts/vercel-build.js",
-  "outputDirectory": "mesa_de_ayuda/frontend/dist",
+  "outputDirectory": "frontend/dist",
   "rewrites": [
     {
       "source": "/api/(.*)",

@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "description": "Mesa de Ayuda Fullstack Serverless on Vercel + Neon PostgreSQL",
   "scripts": {
-    "build": "npx prisma generate --schema=./mesa_de_ayuda/backend/prisma/schema.prisma && npm --prefix mesa_de_ayuda/frontend install && npm --prefix mesa_de_ayuda/frontend run build"
+    "build": "node scripts/vercel-build.js"
   },
   "dependencies": {
     "@prisma/client": "^6.19.2",

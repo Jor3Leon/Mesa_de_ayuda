@@ -61,6 +61,7 @@ export default function Analytics({ user }) {
 
   const [technicians, setTechnicians] = useState([]);
   const [selectedTechId, setSelectedTechId] = useState(null);
+  const [ticketType, setTicketType] = useState('all');
   const [data, setData] = useState(null);
   const [loading, setLoading] = useState(true);
   const [loadingMetrics, setLoadingMetrics] = useState(false);
@@ -85,9 +86,13 @@ export default function Analytics({ user }) {
         const list = Array.isArray(techList) ? techList : [];
         setTechnicians(list);
         if (list.length > 0) {
-          // Si el usuario actual está en la lista de técnicos, seleccionarlo por defecto
-          const isMe = list.find(t => Number(t.id) === Number(currentUser?.id));
-          setSelectedTechId(isMe ? isMe.id : list[0].id);
+          // Si tiene más de 1 técnico accesible, permitir ver todos por defecto o individual
+          if (list.length > 1) {
+            setSelectedTechId('all');
+          } else {
+            const isMe = list.find(t => Number(t.id) === Number(currentUser?.id));
+            setSelectedTechId(isMe ? String(isMe.id) : String(list[0].id));
+          }
         }
       })
       .catch((err) => {
@@ -98,7 +103,7 @@ export default function Analytics({ user }) {
       });
   }, [currentUser?.id]);
 
-  // 2. Cargar los 8 indicadores del técnico seleccionado
+  // 2. Cargar los indicadores del técnico seleccionado (o todos)
   useEffect(() => {
     if (!selectedTechId) return;
 
@@ -106,7 +111,8 @@ export default function Analytics({ user }) {
     setError(null);
     const query = new URLSearchParams({
       startDate: dateRange.startDate,
-      endDate: dateRange.endDate
+      endDate: dateRange.endDate,
+      ...(ticketType && ticketType !== 'all' ? { ticketType } : {})
     }).toString();
 
     apiRequest(`/analytics/technician/${selectedTechId}?${query}`)
@@ -119,7 +125,7 @@ export default function Analytics({ user }) {
       .finally(() => {
         setLoadingMetrics(false);
       });
-  }, [selectedTechId, dateRange]);
+  }, [selectedTechId, dateRange, ticketType]);
 
   const handleExportPdf = async () => {
     if (!data) return;
@@ -133,28 +139,35 @@ export default function Analytics({ user }) {
     }
   };
 
+  // Filtrado reactivo de tickets según Tipo de Ticket
+  const filteredTickets = useMemo(() => {
+    const raw = data?.tickets || [];
+    if (!ticketType || ticketType === 'all') return raw;
+    return raw.filter(t => (t.ticketType || 'Incidencia') === ticketType);
+  }, [data?.tickets, ticketType]);
+
   // Gráficos complementarios derivados de los tickets del técnico
   const priorityDistribution = useMemo(() => {
     const map = {};
-    (data?.tickets || []).forEach(t => {
+    filteredTickets.forEach(t => {
       const p = t.priority || 'MEDIO';
       map[p] = (map[p] || 0) + 1;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [data?.tickets]);
+  }, [filteredTickets]);
 
   const statusDistribution = useMemo(() => {
     const map = {};
-    (data?.tickets || []).forEach(t => {
+    filteredTickets.forEach(t => {
       const s = t.status || 'OPEN';
       map[s] = (map[s] || 0) + 1;
     });
     return Object.entries(map).map(([name, value]) => ({ name, value }));
-  }, [data?.tickets]);
+  }, [filteredTickets]);
 
   const timelineData = useMemo(() => {
     const map = {};
-    (data?.tickets || []).forEach(t => {
+    filteredTickets.forEach(t => {
       const d = new Date(t.createdAt).toISOString().split('T')[0];
       if (!map[d]) map[d] = { date: d, asignados: 0, resueltos: 0 };
       map[d].asignados++;
@@ -163,7 +176,7 @@ export default function Analytics({ user }) {
       }
     });
     return Object.keys(map).sort().map(k => map[k]);
-  }, [data?.tickets]);
+  }, [filteredTickets]);
 
   if (loading) {
     return (
@@ -192,171 +205,242 @@ export default function Analytics({ user }) {
   return (
     <div className="analytics-view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto' }}>
       
-      {/* HEADER PRINCIPAL */}
-      <div style={{
+      {/* 🌟 1. HERO HEADER (Exacto a Dashboard) */}
+      <div className="dashboard-hero-header" style={{
+        background: 'linear-gradient(135deg, #001D40 0%, #002D62 50%, #083b75 100%)',
+        borderRadius: '16px',
+        padding: '1.75rem 2rem',
+        marginBottom: '1.25rem',
+        boxShadow: '0 10px 25px -5px rgba(0, 45, 98, 0.35)',
+        border: '1px solid rgba(0, 209, 255, 0.25)',
+        color: '#ffffff',
         display: 'flex',
-        flexWrap: 'wrap',
-        justifyContent: 'space-between',
         alignItems: 'center',
-        gap: '1rem',
-        background: '#ffffff',
-        border: '1px solid #e2e8f0',
-        borderRadius: '12px',
-        padding: '1.2rem 1.5rem',
-        boxShadow: '0 2px 6px rgba(0,0,0,0.03)',
-        marginBottom: '1.5rem'
+        gap: '1rem'
       }}>
+        <div className="dashboard-hero-icon" style={{
+          width: '48px',
+          height: '48px',
+          borderRadius: '14px',
+          background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          boxShadow: '0 4px 14px rgba(0, 209, 255, 0.4)',
+          fontSize: '1.5rem',
+          color: '#001D40',
+          flexShrink: 0
+        }}>
+          📊
+        </div>
         <div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-            <h1 style={{ margin: 0, fontSize: '1.4rem', fontWeight: 800, color: '#001D40', letterSpacing: '-0.02em' }}>
-              Analítica de Desempeño Individual
+          <div style={{ display: 'flex', alignItems: 'center', gap: '0.65rem', flexWrap: 'wrap' }}>
+            <h1 className="dashboard-hero-title" style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
+              Analítica de Desempeño
             </h1>
-            {tech.name && (
+            {selectedTechId === 'all' ? (
               <span style={{
-                background: 'linear-gradient(135deg, rgba(0, 45, 98, 0.08) 0%, rgba(0, 209, 255, 0.15) 100%)',
-                color: '#002D62',
-                border: '1px solid rgba(0, 209, 255, 0.4)',
-                padding: '4px 12px',
-                borderRadius: '20px',
-                fontSize: '0.85rem',
+                background: 'rgba(0, 209, 255, 0.15)',
+                color: '#00D1FF',
+                border: '1px solid rgba(0, 209, 255, 0.35)',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                fontSize: '0.78rem',
+                fontWeight: 700
+              }}>
+                🌐 Todos los Técnicos
+              </span>
+            ) : tech?.name ? (
+              <span style={{
+                background: 'rgba(0, 209, 255, 0.15)',
+                color: '#00D1FF',
+                border: '1px solid rgba(0, 209, 255, 0.35)',
+                padding: '3px 10px',
+                borderRadius: '12px',
+                fontSize: '0.78rem',
                 fontWeight: 700,
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: '6px'
               }}>
                 <span>👤</span>
-                <span>Desempeño de: <strong>{tech.name}</strong></span>
-                <span style={{
-                  background: '#002D62',
-                  color: '#ffffff',
-                  fontSize: '0.7rem',
-                  padding: '2px 8px',
-                  borderRadius: '12px',
-                  textTransform: 'uppercase'
-                }}>
-                  {tech.role}
-                </span>
+                <span>{tech.name}</span>
+                {tech.role && (
+                  <span style={{
+                    background: '#002D62',
+                    color: '#ffffff',
+                    fontSize: '0.68rem',
+                    padding: '1px 6px',
+                    borderRadius: '8px',
+                    textTransform: 'uppercase'
+                  }}>
+                    {tech.role}
+                  </span>
+                )}
               </span>
-            )}
+            ) : null}
           </div>
-          <p style={{ margin: '4px 0 0 0', fontSize: '0.825rem', color: '#64748b' }}>
-            Indicadores operativos y de calidad según Acuerdos de Nivel de Servicio (ANS).
+          <p className="dashboard-hero-subtitle" style={{ margin: '0.25rem 0 0 0', fontSize: '0.875rem', color: '#cbd5e1' }}>
+            Indicadores operativos, métricas de rendimiento y control de Acuerdos de Nivel de Servicio (ANS).
           </p>
         </div>
+      </div>
 
-        {/* CONTROLES: SELECTOR DE TÉCNICO + FECHAS + EXPORTAR */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: '10px', flexWrap: 'wrap' }}>
-          
-          {/* SELECTOR DE TÉCNICO (Solo visible si tiene subordinados o más de 1 técnico autorizado) */}
-          {technicians.length > 1 ? (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                Técnico Supervisado
-              </label>
-              <select
-                value={selectedTechId || ''}
-                onChange={(e) => setSelectedTechId(Number(e.target.value))}
-                style={{
-                  padding: '7px 12px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#f8fafc',
-                  fontSize: '0.85rem',
-                  fontWeight: 600,
-                  color: '#0f172a',
-                  cursor: 'pointer',
-                  outline: 'none',
-                  minWidth: '220px'
-                }}
-              >
-                {technicians.map((t) => (
-                  <option key={t.id} value={t.id}>
-                    {t.name} ({t.role})
-                  </option>
-                ))}
-              </select>
-            </div>
-          ) : (
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              gap: '6px',
-              padding: '6px 12px',
-              background: '#f1f5f9',
-              borderRadius: '8px',
-              fontSize: '0.8rem',
-              color: '#334155',
-              fontWeight: 600
-            }}>
-              <span>🔒 Vista Personal:</span>
-              <span>{tech.name || currentUser?.name}</span>
-            </div>
-          )}
-
-          {/* RANGO DE FECHAS */}
-          <div style={{ display: 'flex', gap: '6px', alignItems: 'flex-end' }}>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                Desde
-              </label>
-              <input
-                type="date"
-                value={dateRange.startDate}
-                onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#ffffff',
-                  fontSize: '0.82rem',
-                  outline: 'none'
-                }}
-              />
-            </div>
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '3px' }}>
-              <label style={{ fontSize: '0.72rem', fontWeight: 700, color: '#475569', textTransform: 'uppercase' }}>
-                Hasta
-              </label>
-              <input
-                type="date"
-                value={dateRange.endDate}
-                onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
-                style={{
-                  padding: '6px 10px',
-                  borderRadius: '8px',
-                  border: '1.5px solid #cbd5e1',
-                  background: '#ffffff',
-                  fontSize: '0.82rem',
-                  outline: 'none'
-                }}
-              />
-            </div>
+      {/* 🎛️ 2. BARRA DE HERRAMIENTAS & FILTROS (Idéntica a Dashboard) */}
+      <div className="dashboard-toolbar-container" style={{
+        background: '#ffffff',
+        borderRadius: '16px',
+        padding: '1.15rem 1.5rem',
+        marginBottom: '1.75rem',
+        border: '1px solid #e2e8f0',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+        display: 'flex',
+        flexWrap: 'wrap',
+        alignItems: 'flex-end',
+        justifyContent: 'space-between',
+        gap: '14px'
+      }}>
+        <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '14px' }}>
+          {/* Rango de Fechas: Desde */}
+          <div>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Desde
+            </span>
+            <input
+              type="date"
+              className="dashboard-toolbar-input"
+              value={dateRange.startDate}
+              onChange={(e) => setDateRange(prev => ({ ...prev, startDate: e.target.value }))}
+              style={{
+                padding: '7px 10px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
           </div>
 
-          {/* BOTÓN EXPORTAR PDF */}
+          {/* Rango de Fechas: Hasta */}
+          <div>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Hasta
+            </span>
+            <input
+              type="date"
+              className="dashboard-toolbar-input"
+              value={dateRange.endDate}
+              onChange={(e) => setDateRange(prev => ({ ...prev, endDate: e.target.value }))}
+              style={{
+                padding: '7px 10px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer'
+              }}
+            />
+          </div>
+
+          {/* Tipo de Ticket */}
+          <div>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Tipo de Ticket
+            </span>
+            <select
+              className="dashboard-toolbar-select"
+              value={ticketType}
+              onChange={(e) => setTicketType(e.target.value)}
+              style={{
+                padding: '7px 14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: 'pointer',
+                minWidth: '220px'
+              }}
+            >
+              <option value="all">Todos (Incidencias & Solicitudes)</option>
+              <option value="Incidencia">Incidencias</option>
+              <option value="Solicitud">Solicitudes</option>
+            </select>
+          </div>
+
+          {/* Técnico */}
+          <div>
+            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+              Técnico
+            </span>
+            <select
+              className="dashboard-toolbar-select"
+              value={selectedTechId || ''}
+              disabled={technicians.length <= 1}
+              onChange={(e) => setSelectedTechId(e.target.value)}
+              style={{
+                padding: '7px 14px',
+                border: '1px solid #cbd5e1',
+                borderRadius: '8px',
+                background: '#ffffff',
+                color: '#1e293b',
+                fontSize: '0.8125rem',
+                fontWeight: 600,
+                outline: 'none',
+                cursor: technicians.length <= 1 ? 'not-allowed' : 'pointer',
+                minWidth: '220px',
+                opacity: technicians.length <= 1 ? 0.85 : 1
+              }}
+            >
+              {technicians.length > 1 && (
+                <option value="all">Todos los Técnicos</option>
+              )}
+              {technicians.map((t) => (
+                <option key={t.id} value={String(t.id)}>
+                  👤 {t.name} ({t.role})
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {/* Botón Exportar PDF en la misma fila */}
+        <div>
           <button
             type="button"
+            className="dashboard-export-btn"
             onClick={handleExportPdf}
             disabled={isExporting || loadingMetrics}
             style={{
-              alignSelf: 'flex-end',
-              background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               color: '#001D40',
               border: 'none',
-              padding: '8px 16px',
+              padding: '8px 18px',
               borderRadius: '8px',
               fontSize: '0.8125rem',
               fontWeight: 800,
-              cursor: isExporting ? 'not-allowed' : 'pointer',
-              display: 'flex',
+              cursor: (isExporting || loadingMetrics) ? 'not-allowed' : 'pointer',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.3)',
+              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.35)',
               transition: 'transform 0.15s ease',
-              height: '35px'
+              height: '36px',
+              whiteSpace: 'nowrap'
             }}
+            onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
+            onMouseLeave={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(0)')}
           >
-            {isExporting ? 'Generando...' : '📑 Exportar Informe (PDF)'}
+            {isExporting ? 'Generando PDF...' : '📄 Exportar Informe (PDF)'}
           </button>
         </div>
       </div>
@@ -674,16 +758,16 @@ export default function Analytics({ user }) {
       }}>
         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '1rem' }}>
           <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 800, color: '#002D62' }}>
-            📋 Tickets Asignados al Técnico ({data?.tickets?.length || 0})
+            📋 Tickets del Técnico ({filteredTickets.length})
           </h3>
           <span style={{ fontSize: '0.75rem', color: '#64748b' }}>
-            Mostrando casos asignados en el rango seleccionado
+            Mostrando casos correspondientes a los filtros seleccionados
           </span>
         </div>
 
-        {(!data?.tickets || data.tickets.length === 0) ? (
+        {(!filteredTickets || filteredTickets.length === 0) ? (
           <div style={{ padding: '2rem', textAlign: 'center', color: '#94a3b8', fontSize: '0.9rem' }}>
-            El técnico no tiene tickets asignados en las fechas seleccionadas.
+            No hay tickets asignados para los criterios seleccionados.
           </div>
         ) : (
           <div style={{ overflowX: 'auto' }}>
@@ -700,7 +784,7 @@ export default function Analytics({ user }) {
                 </tr>
               </thead>
               <tbody>
-                {data.tickets.map((t) => (
+                {filteredTickets.map((t) => (
                   <tr key={t.id} style={{ borderBottom: '1px solid #f1f5f9', transition: 'background 0.15s' }}>
                     <td style={{ padding: '10px 12px', fontWeight: 700, color: '#002D62' }}>#{t.id}</td>
                     <td style={{ padding: '10px 12px', fontWeight: 600, color: '#1e293b' }}>{t.title}</td>

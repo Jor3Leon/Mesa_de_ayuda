@@ -217,39 +217,56 @@ function getAnalyticsRoutes(prisma) {
    */
   router.get('/technician/:technicianId', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
-      const technicianId = parseInt(req.params.technicianId, 10);
-      if (isNaN(technicianId)) {
-        throw createHttpError(400, 'ID de técnico inválido.');
-      }
+      const isAll = req.params.technicianId === 'all';
+      let targetUser = null;
 
-      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
-
-      const targetUser = await prisma.user.findFirst({
-        where: {
-          id: technicianId,
-          ...orgFilter
-        },
-        include: {
-          role: true
+      if (!isAll) {
+        const technicianId = parseInt(req.params.technicianId, 10);
+        if (isNaN(technicianId)) {
+          throw createHttpError(400, 'ID de técnico inválido.');
         }
-      });
 
-      if (!targetUser) {
-        throw createHttpError(404, 'Técnico no encontrado.');
+        const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+        targetUser = await prisma.user.findFirst({
+          where: {
+            id: technicianId,
+            ...orgFilter
+          },
+          include: {
+            role: true
+          }
+        });
+
+        if (!targetUser) {
+          throw createHttpError(404, 'Técnico no encontrado.');
+        }
+
+        // Verificación estricta de autorización en servidor
+        if (!canViewTechnicianAnalytics(req.auth.user, targetUser)) {
+          throw createHttpError(403, 'No tiene permisos para ver las métricas de este técnico.');
+        }
+      } else {
+        const userHierarchy = getRoleHierarchy(req.auth.user);
+        if (userHierarchy < 3) {
+          throw createHttpError(403, 'No tiene permisos para ver las métricas globales de todos los técnicos.');
+        }
       }
 
-      // Verificación estricta de autorización en servidor
-      if (!canViewTechnicianAnalytics(req.auth.user, targetUser)) {
-        throw createHttpError(403, 'No tiene permisos para ver las métricas de este técnico.');
-      }
-
-      const analytics = await getTechnicianAnalytics(prisma, targetUser.id, req.auth.organizationId, {
+      const analytics = await getTechnicianAnalytics(prisma, isAll ? 'all' : targetUser.id, req.auth.organizationId, {
         startDate: req.query.from || req.query.startDate,
-        endDate: req.query.to || req.query.endDate
+        endDate: req.query.to || req.query.endDate,
+        ticketType: req.query.ticketType || 'all'
       });
 
       res.json({
-        technician: {
+        technician: isAll ? {
+          id: 'all',
+          name: 'Todos los Técnicos',
+          email: '',
+          role: 'TODOS',
+          hierarchyLevel: 0
+        } : {
           id: targetUser.id,
           name: targetUser.name,
           email: targetUser.email,

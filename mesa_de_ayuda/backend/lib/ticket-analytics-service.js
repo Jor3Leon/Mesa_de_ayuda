@@ -614,8 +614,9 @@ async function getTicketPerformanceMetrics(prisma, options = {}) {
  * Bloque B: MTTA (P50/P90), MTTR (P50/P90), % Cumplimiento ANS (Respuesta, Solución).
  */
 async function getTechnicianAnalytics(prisma, technicianId, organizationId, options = {}) {
-  const parsedId = Number(technicianId);
-  const { startDate, endDate } = options;
+  const isAll = !technicianId || technicianId === 'all';
+  const parsedId = isAll ? null : Number(technicianId);
+  const { startDate, endDate, ticketType } = options;
 
   const now = new Date();
   let start = startDate ? new Date(startDate) : new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
@@ -626,7 +627,8 @@ async function getTechnicianAnalytics(prisma, technicianId, organizationId, opti
 
   const baseFilter = {
     organizationId: organizationId || undefined,
-    assignedToId: parsedId,
+    ...(parsedId ? { assignedToId: parsedId } : {}),
+    ...(ticketType && ticketType !== 'all' ? { ticketType } : {}),
     createdAt: { gte: start, lte: end }
   };
 

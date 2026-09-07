@@ -1,136 +1,180 @@
 import React from 'react';
 
+/**
+ * AnalyticsFilters - Barra de filtros unificada para Analítica
+ * Diseño estético homologado con el módulo de Dashboard.
+ * Filtros activos: Desde, Hasta, Tipo de Ticket, Técnico, Exportar PDF.
+ */
 export default function AnalyticsFilters({ 
-  filters, 
-  onChange, 
-  isLevel2 = false,
+  dateRange,
+  onDateRangeChange,
+  ticketType,
+  onTicketTypeChange,
   technicians = [],
+  selectedTechId,
+  onTechnicianChange,
   onExportPdf,
   isExporting = false
 }) {
-  const handleChange = (field, value) => {
-    onChange({ ...filters, [field]: value });
-  };
-
   return (
-    <div className="analytics-filters-container" style={{ display: 'flex', flexWrap: 'wrap', gap: '12px', alignItems: 'flex-end' }}>
-      <div className="analytics-filter-dates" style={{ display: 'flex', gap: '8px' }}>
-        <div className="analytics-filter-item">
-          <span className="analytics-filter-label">Desde</span>
+    <div className="dashboard-toolbar-container" style={{
+      background: '#ffffff',
+      borderRadius: '16px',
+      padding: '1.15rem 1.5rem',
+      marginBottom: '1.75rem',
+      border: '1px solid #e2e8f0',
+      boxShadow: '0 2px 8px rgba(0, 0, 0, 0.03)',
+      display: 'flex',
+      flexWrap: 'wrap',
+      alignItems: 'flex-end',
+      justifyContent: 'space-between',
+      gap: '14px'
+    }}>
+      <div style={{ display: 'flex', flexWrap: 'wrap', alignItems: 'flex-end', gap: '14px' }}>
+        {/* Rango de Fechas: Desde */}
+        <div>
+          <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Desde
+          </span>
           <input
             type="date"
-            className="analytics-filter-input"
-            value={filters.startDate || ''}
-            onChange={(e) => handleChange('startDate', e.target.value)}
+            className="dashboard-toolbar-input"
+            value={dateRange?.startDate || ''}
+            onChange={(e) => onDateRangeChange?.('startDate', e.target.value)}
+            style={{
+              padding: '7px 10px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: 'pointer'
+            }}
           />
         </div>
-        <div className="analytics-filter-item">
-          <span className="analytics-filter-label">Hasta</span>
+
+        {/* Rango de Fechas: Hasta */}
+        <div>
+          <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Hasta
+          </span>
           <input
             type="date"
-            className="analytics-filter-input"
-            value={filters.endDate || ''}
-            onChange={(e) => handleChange('endDate', e.target.value)}
+            className="dashboard-toolbar-input"
+            value={dateRange?.endDate || ''}
+            onChange={(e) => onDateRangeChange?.('endDate', e.target.value)}
+            style={{
+              padding: '7px 10px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: 'pointer'
+            }}
           />
         </div>
-      </div>
 
-      <div className="analytics-filter-item">
-        <span className="analytics-filter-label">Tipo de Ticket</span>
-        <select
-          className="analytics-filter-select"
-          value={filters.ticketType || 'all'}
-          onChange={(e) => handleChange('ticketType', e.target.value)}
-        >
-          <option value="all">Todos (Incidencias & Solicitudes)</option>
-          <option value="Incidencia">Solo Incidencias</option>
-          <option value="Solicitud">Solo Solicitudes</option>
-        </select>
-      </div>
-
-      <div className="analytics-filter-item">
-        <span className="analytics-filter-label">Departamento</span>
-        <select
-          className="analytics-filter-select"
-          value={filters.department || 'all'}
-          onChange={(e) => handleChange('department', e.target.value)}
-        >
-          <option value="all">Todos los Departamentos</option>
-          <option value="Soporte Técnico">Soporte Técnico</option>
-          <option value="Infraestructura">Infraestructura & Redes</option>
-          <option value="Desarrollo">Desarrollo & Apps</option>
-          <option value="Seguridad TI">Seguridad TI</option>
-          <option value="Hardware">Hardware & Periféricos</option>
-        </select>
-      </div>
-
-      {!isLevel2 && filters.viewMode !== 'personal' && technicians.length > 0 && (
-        <div className="analytics-filter-item">
-          <span className="analytics-filter-label">Técnico</span>
+        {/* Tipo de Ticket */}
+        <div>
+          <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Tipo de Ticket
+          </span>
           <select
-            className="analytics-filter-select"
-            value={filters.technicianId || 'all'}
-            onChange={(e) => handleChange('technicianId', e.target.value)}
+            className="dashboard-toolbar-select"
+            value={ticketType || 'all'}
+            onChange={(e) => onTicketTypeChange?.(e.target.value)}
+            style={{
+              padding: '7px 14px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: 'pointer',
+              minWidth: '220px'
+            }}
           >
-            <option value="all">Todos los Técnicos</option>
-            {technicians.map(t => (
-              <option key={t.id} value={t.id}>{t.name} ({t.role})</option>
+            <option value="all">Todos (Incidencias & Solicitudes)</option>
+            <option value="Incidencia">Incidencias</option>
+            <option value="Solicitud">Solicitudes</option>
+          </select>
+        </div>
+
+        {/* Técnico */}
+        <div>
+          <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+            Técnico
+          </span>
+          <select
+            className="dashboard-toolbar-select"
+            value={selectedTechId || ''}
+            disabled={technicians.length <= 1}
+            onChange={(e) => onTechnicianChange?.(e.target.value)}
+            style={{
+              padding: '7px 14px',
+              border: '1px solid #cbd5e1',
+              borderRadius: '8px',
+              background: '#ffffff',
+              color: '#1e293b',
+              fontSize: '0.8125rem',
+              fontWeight: 600,
+              outline: 'none',
+              cursor: technicians.length <= 1 ? 'not-allowed' : 'pointer',
+              minWidth: '220px',
+              opacity: technicians.length <= 1 ? 0.85 : 1
+            }}
+          >
+            {technicians.length > 1 && (
+              <option value="all">Todos los Técnicos</option>
+            )}
+            {technicians.map((t) => (
+              <option key={t.id} value={String(t.id)}>
+                👤 {t.name} ({t.role})
+              </option>
             ))}
           </select>
         </div>
-      )}
-
-      <div className="analytics-filter-item">
-        <span className="analytics-filter-label">Vista de Alcance</span>
-        <select
-          className="analytics-filter-select"
-          value={isLevel2 ? 'personal' : (filters.viewMode || 'global')}
-          disabled={isLevel2}
-          onChange={(e) => handleChange('viewMode', e.target.value)}
-          style={{ opacity: isLevel2 ? 0.95 : 1 }}
-          title={isLevel2 ? 'Vista fija en métricas personales para Técnico Nivel 2' : 'Seleccionar vista'}
-        >
-          {isLevel2 ? (
-            <option value="personal">Mis Estadísticas (Nivel 2)</option>
-          ) : (
-            <>
-              <option value="global">Estadísticas Globales</option>
-              <option value="personal">Mis Estadísticas Individuales</option>
-            </>
-          )}
-        </select>
       </div>
 
+      {/* Botón Exportar PDF */}
       {onExportPdf && (
-        <div className="analytics-filter-item" style={{ marginLeft: 'auto' }}>
+        <div>
           <button
             type="button"
+            className="dashboard-export-btn"
             onClick={onExportPdf}
             disabled={isExporting}
             style={{
-              background: 'linear-gradient(135deg, #00D1FF 0%, #0099ff 100%)',
+              background: 'linear-gradient(135deg, #00D1FF 0%, #0284c7 100%)',
               color: '#001D40',
               border: 'none',
-              padding: '8px 16px',
+              padding: '8px 18px',
               borderRadius: '8px',
               fontSize: '0.8125rem',
               fontWeight: 800,
               cursor: isExporting ? 'not-allowed' : 'pointer',
-              display: 'flex',
+              display: 'inline-flex',
               alignItems: 'center',
               gap: '6px',
-              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.3)',
+              boxShadow: '0 4px 12px rgba(0, 209, 255, 0.35)',
               transition: 'transform 0.15s ease',
-              height: '36px'
+              height: '36px',
+              whiteSpace: 'nowrap'
             }}
             onMouseEnter={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(-1px)')}
             onMouseLeave={(e) => !isExporting && (e.currentTarget.style.transform = 'translateY(0)')}
           >
-            {isExporting ? 'Generando PDF...' : '📑 Exportar Informe (PDF)'}
+            {isExporting ? 'Generando PDF...' : '📄 Exportar Informe (PDF)'}
           </button>
         </div>
       )}
     </div>
   );
 }
-

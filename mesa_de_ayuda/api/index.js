@@ -68,8 +68,8 @@ module.exports = (req, res) => {
     console.error('Vercel Serverless Function Error:', error);
     if (!res.headersSent) {
       res.status(500).json({
-        error: 'Internal Server Error',
-        message: error.message
+        error: error.message || 'Internal Server Error',
+        message: error.message || 'Internal Server Error'
       });
     }
   }

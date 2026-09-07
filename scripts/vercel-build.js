@@ -39,10 +39,15 @@ if (sourceBackend && targetFrontend) {
     try {
       console.log(`[build] Syncing backend from ${sourceBackend} to ${destBackend}...`);
       fs.mkdirSync(destBackend, { recursive: true });
-      ['app.js', 'auth.js'].forEach(file => {
+      ['app.js', 'auth.js', 'package.json'].forEach(file => {
         const src = path.join(sourceBackend, file);
         if (fs.existsSync(src)) fs.copyFileSync(src, path.join(destBackend, file));
       });
+      fs.writeFileSync(path.join(destBackend, 'package.json'), JSON.stringify({
+        name: 'mesa-de-ayuda-backend-bundle',
+        private: true,
+        type: 'commonjs'
+      }, null, 2));
       ['lib', 'routes', 'prisma'].forEach(dir => {
         const src = path.join(sourceBackend, dir);
         if (fs.existsSync(src)) fs.cpSync(src, path.join(destBackend, dir), { recursive: true });

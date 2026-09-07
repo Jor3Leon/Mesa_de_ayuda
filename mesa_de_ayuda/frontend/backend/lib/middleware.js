@@ -1,0 +1,203 @@
+const { verifyToken } = require('../auth');
+const { createHttpError } = require('./utils');
+const { sanitizeUser } = require('./ticket-service');
+
+function parseBearerToken(headerValue) {
+  const value = String(headerValue || '');
+  if (!value.startsWith('Bearer ')) {
+    return null;
+  }
+  return value.slice(7).trim();
+}
+
+function requireAuth(prisma) {
+  return async (req, res, next) => {
+    try {
+      const token = parseBearerToken(req.headers.authorization) || req.cookies?.token;
+      if (!token) {
+        throw createHttpError(401, 'Authentication token is required.');
+      }
+
+      const payload = verifyToken(token);
+      const user = await prisma.user.findUnique({
+        where: { id: payload.sub },
+        include: {
+          organization: true,
+          location: true,
+          role: {
+            include: {
+              permissions: {
+                include: { permission: true }
+              }
+            }
+          }
+        }
+      });
+
+      if (!user) {
+        throw createHttpError(401, 'Authentication required.');
+      }
+
+      if (user.organization && !user.organization.isActive) {
+        throw createHttpError(403, 'La organización se encuentra inactiva o suspendida.');
+      }
+
+      req.auth = {
+        token,
+        organizationId: user.organizationId,
+        organization: user.organization,
+        user: sanitizeUser(user),
+      };
+
+      next();
+    } catch (error) {
+      if (!error.statusCode) {
+        error.statusCode = 401;
+      }
+      next(error);
+    }
+  };
+}
+
+function requirePermission(...permissions) {
+  return (req, res, next) => {
+    if (!req.auth?.user) {
+       return next(createHttpError(401, 'Authentication required.'));
+    }
+    
+    const userPermissions = req.auth.user.permissions || [];
+    const hasPermission = permissions.every(p => userPermissions.includes(p));
+
+    if (!hasPermission) {
+      return next(createHttpError(403, 'Insufficient permissions. No tiene los permisos necesarios.'));
+    }
+
+    next();
+  };
+}
+
+function requireAnyPermission(...permissions) {
+  return (req, res, next) => {
+    if (!req.auth?.user) {
+      return next(createHttpError(401, 'Authentication required.'));
+    }
+
+    const userPermissions = req.auth.user.permissions || [];
+    const hasPermission = permissions.some(p => userPermissions.includes(p));
+
+    if (!hasPermission) {
+      return next(createHttpError(403, 'Insufficient permissions. No tiene los permisos necesarios.'));
+    }
+
+    next();
+  };
+}
+
+function requireRole(...roles) {
+  return (req, res, next) => {
+    if (!req.auth?.user) {
+      return next(createHttpError(401, 'Authentication required.'));
+    }
+
+    if (!roles.includes(req.auth.user.role)) {
+      return next(createHttpError(403, 'Insufficient permissions.'));
+    }
+
+    next();
+  };
+}
+
+/**
+ * Resuelve el rol efectivo de forma segura (Sección 4.7 Auditoría).
+ * Solo usuarios autorizados (ADMIN, SUPERVISOR o con permiso ROLE_VIEW_AS) pueden simular otro rol.
+ */
+function getEffectiveRole(req) {
+  const user = req.auth?.user;
+  if (!user) return '';
+  const actualRole = String(user.role || user.role?.name || '').trim().toUpperCase();
+  const requestedRole = (req.headers['x-view-as-role'] || req.query.role || req.query.viewAsRole || '').trim().toUpperCase();
+
+  if (!requestedRole || requestedRole === actualRole) {
+    return actualRole;
+  }
+
+  const canSwitchRole = 
+    actualRole.includes('ADMIN') || 
+    actualRole.includes('SUPERVISOR') || 
+    (Array.isArray(user.permissions) && user.permissions.includes('ROLE_VIEW_AS'));
+
+  if (!canSwitchRole) {
+    return actualRole;
+  }
+
+  return requestedRole;
+}
+
+function getRoleHierarchy(userOrRole) {
+  if (!userOrRole) return 0;
+  if (typeof userOrRole === 'number') return userOrRole;
+  if (typeof userOrRole.hierarchyLevel === 'number' && userOrRole.hierarchyLevel > 0) {
+    return userOrRole.hierarchyLevel;
+  }
+  const roleObj = userOrRole.role;
+  if (roleObj) {
+    if (typeof roleObj === 'object' && typeof roleObj.hierarchyLevel === 'number' && roleObj.hierarchyLevel > 0) {
+      return roleObj.hierarchyLevel;
+    }
+  }
+  const roleName = String(
+    (typeof roleObj === 'string' ? roleObj : roleObj?.name) ||
+    userOrRole.roleName ||
+    userOrRole.name ||
+    userOrRole
+  ).trim().toUpperCase();
+
+  if (roleName.includes('ADMIN')) return 100;
+  if (roleName.includes('NIVEL 3') || roleName.includes('LEVEL_3') || roleName.includes('SUPERVISOR')) return 3;
+  if (roleName.includes('NIVEL 2') || roleName.includes('LEVEL_2')) return 2;
+  if (roleName.includes('NIVEL 1') || roleName.includes('LEVEL_1')) return 1;
+  return 0;
+}
+
+/**
+ * Función de autorización jerárquica para el módulo de Analítica individual.
+ * Reglas:
+ * - Admin -> siempre true.
+ * - Mismo usuario consultando sus propios datos -> true.
+ * - N3 -> ve sus propios datos + N1 y N2 (targetLevel < 3).
+ * - N2 -> únicamente sus propios datos.
+ * - N1 -> únicamente sus propios datos.
+ */
+function canViewTechnicianAnalytics(requestingUser, targetUser) {
+  if (!requestingUser || !targetUser) return false;
+
+  const reqId = Number(requestingUser.id);
+  const targetId = Number(typeof targetUser === 'object' ? targetUser.id : targetUser);
+
+  if (reqId && targetId && reqId === targetId) {
+    return true;
+  }
+
+  const reqLevel = getRoleHierarchy(requestingUser);
+  const targetLevel = typeof targetUser === 'object' ? getRoleHierarchy(targetUser) : 0;
+
+  if (reqLevel >= 100) {
+    return true;
+  }
+
+  if (reqLevel >= 3) {
+    return targetLevel < 3;
+  }
+
+  return false;
+}
+
+module.exports = {
+  requireAuth,
+  requirePermission,
+  requireAnyPermission,
+  requireRole,
+  getEffectiveRole,
+  getRoleHierarchy,
+  canViewTechnicianAnalytics,
+};

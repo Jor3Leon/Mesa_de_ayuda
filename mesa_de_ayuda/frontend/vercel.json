@@ -2,6 +2,11 @@
   "version": 2,
   "buildCommand": "node scripts/vercel-build.js",
   "outputDirectory": "dist",
+  "functions": {
+    "api/index.js": {
+      "includeFiles": "backend/**"
+    }
+  },
   "rewrites": [
     {
       "source": "/api/(.*)",

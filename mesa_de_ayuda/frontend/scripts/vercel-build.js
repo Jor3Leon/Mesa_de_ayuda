@@ -9,6 +9,51 @@ const cwd = process.cwd();
 console.log('[build] Current working directory:', cwd);
 console.log('[build] Script directory (__dirname):', __dirname);
 
+// 0. Auto-sync backend into frontend/backend for serverless bundle
+const candidateBackendDirs = [
+  path.resolve(cwd, 'mesa_de_ayuda/backend'),
+  path.resolve(cwd, 'backend'),
+  path.resolve(cwd, '../backend'),
+  path.resolve(__dirname, '../mesa_de_ayuda/backend'),
+  path.resolve(__dirname, '../backend'),
+  path.resolve(__dirname, '../../backend')
+];
+const sourceBackend = candidateBackendDirs.find(d => fs.existsSync(path.join(d, 'app.js')) && !d.includes('frontend'));
+
+const candidateFrontendDirs = [
+  cwd,
+  path.resolve(cwd, 'mesa_de_ayuda/frontend'),
+  path.resolve(cwd, 'frontend'),
+  path.resolve(__dirname, '..'),
+  path.resolve(__dirname, '../frontend'),
+  path.resolve(__dirname, '../mesa_de_ayuda/frontend')
+];
+const targetFrontend = candidateFrontendDirs.find(d => 
+  fs.existsSync(path.join(d, 'package.json')) && 
+  (fs.existsSync(path.join(d, 'vite.config.js')) || fs.existsSync(path.join(d, 'src')))
+);
+
+if (sourceBackend && targetFrontend) {
+  const destBackend = path.resolve(targetFrontend, 'backend');
+  if (sourceBackend !== destBackend) {
+    try {
+      console.log(`[build] Syncing backend from ${sourceBackend} to ${destBackend}...`);
+      fs.mkdirSync(destBackend, { recursive: true });
+      ['app.js', 'auth.js'].forEach(file => {
+        const src = path.join(sourceBackend, file);
+        if (fs.existsSync(src)) fs.copyFileSync(src, path.join(destBackend, file));
+      });
+      ['lib', 'routes', 'prisma'].forEach(dir => {
+        const src = path.join(sourceBackend, dir);
+        if (fs.existsSync(src)) fs.cpSync(src, path.join(destBackend, dir), { recursive: true });
+      });
+      console.log('[build] Backend synced successfully.');
+    } catch (err) {
+      console.warn('[build] Warning during backend sync:', err.message);
+    }
+  }
+}
+
 // 1. Locate schema.prisma
 const possibleSchemas = [
   path.resolve(cwd, 'prisma/schema.prisma'),
@@ -50,23 +95,14 @@ try {
 }
 
 // 3. Locate frontend directory
-const possibleFrontends = [
-  cwd,
-  path.resolve(cwd, 'mesa_de_ayuda/frontend'),
-  path.resolve(cwd, 'frontend'),
-  path.resolve(__dirname, '..'),
-  path.resolve(__dirname, '../frontend'),
-  path.resolve(__dirname, '../mesa_de_ayuda/frontend')
-];
-
-let frontendDir = possibleFrontends.find(d => 
+let frontendDir = targetFrontend || possibleFrontendDirs.find(d => 
   fs.existsSync(path.join(d, 'package.json')) && 
   (fs.existsSync(path.join(d, 'vite.config.js')) || fs.existsSync(path.join(d, 'src')))
 );
 
 if (!frontendDir) {
   console.error('[build] ERROR: Could not find frontend directory in:');
-  possibleFrontends.forEach(d => console.error('  -', d));
+  candidateFrontendDirs.forEach(d => console.error('  -', d));
   process.exit(1);
 }
 

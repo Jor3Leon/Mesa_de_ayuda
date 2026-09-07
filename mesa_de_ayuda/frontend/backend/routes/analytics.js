@@ -1,0 +1,286 @@
+const express = require('express');
+const { requireAuth, requirePermission, requireAnyPermission, getEffectiveRole, canViewTechnicianAnalytics, getRoleHierarchy } = require('../lib/middleware');
+const { getTicketPerformanceMetrics, getTechnicianAnalytics } = require('../lib/ticket-analytics-service');
+const { createHttpError } = require('../lib/utils');
+
+function getAnalyticsRoutes(prisma) {
+  const router = express.Router();
+
+  router.use(requireAuth(prisma));
+
+  /**
+   * Endpoint oficial de desempeño analítico de tickets y ANS
+   * (Directiva Sección 8 de la Auditoría)
+   */
+  router.get('/tickets/performance', requirePermission('ANALYTICS_VIEW'), async (req, res, next) => {
+    try {
+      const user = req.auth.user;
+      const effectiveRole = getEffectiveRole(req);
+      const isLevel2 = effectiveRole.includes('NIVEL 2') || effectiveRole.includes('LEVEL_2');
+      const isStandard = effectiveRole.includes('ESTANDAR') || effectiveRole.includes('STANDARD');
+
+      const requestedViewMode = req.query.viewMode || 'global';
+      const forcePersonal = isLevel2 || isStandard || requestedViewMode === 'personal';
+
+      const metrics = await getTicketPerformanceMetrics(prisma, {
+        organizationId: req.auth.organizationId,
+        startDate: req.query.from || req.query.startDate,
+        endDate: req.query.to || req.query.endDate,
+        ticketType: req.query.ticketType || 'all',
+        category: req.query.categoryId || req.query.category || req.query.department || 'all',
+        priority: req.query.priority || 'all',
+        technicianId: req.query.technicianId || 'all',
+        status: req.query.status || 'all',
+        viewMode: forcePersonal ? 'personal' : 'global',
+        user
+      });
+
+      res.json(metrics);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * Endpoint para vista gerencial / BI Analytics Dashboard
+   */
+  router.get('/dashboard', requirePermission('ANALYTICS_VIEW'), async (req, res, next) => {
+    try {
+      const { 
+        department = 'all', 
+        ticketType = 'all',
+        technicianId = 'all',
+        viewMode = 'global',
+        startDate: customStart,
+        endDate: customEnd
+      } = req.query;
+      const user = req.auth.user;
+
+      const effectiveRole = getEffectiveRole(req);
+      const isLevel2 = effectiveRole.includes('NIVEL 2') || effectiveRole.includes('LEVEL_2');
+      const isLevel1 = effectiveRole.includes('NIVEL 1') || effectiveRole.includes('LEVEL_1');
+      const isLevel3 = effectiveRole.includes('NIVEL 3') || effectiveRole.includes('LEVEL_3') || effectiveRole.includes('SUPERVISOR');
+      const isAdmin = effectiveRole.includes('ADMIN') || effectiveRole.includes('ADMINISTRADOR');
+      const isStandard = effectiveRole.includes('ESTANDAR') || effectiveRole.includes('STANDARD');
+
+      const forcePersonal = isLevel2 || isStandard || (viewMode === 'personal');
+
+      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+      // 1. Obtener métricas centralizadas desde TicketAnalyticsService
+      const metrics = await getTicketPerformanceMetrics(prisma, {
+        organizationId: req.auth.organizationId,
+        startDate: customStart,
+        endDate: customEnd,
+        ticketType,
+        category: department,
+        technicianId,
+        viewMode: forcePersonal ? 'personal' : 'global',
+        user
+      });
+
+      // 2. Activos de la organización
+      const [totalAssets, onlineAssets] = await Promise.all([
+        prisma.asset.count({ where: orgFilter }).catch(() => 0),
+        prisma.asset.count({ where: { ...orgFilter, status: 'ONLINE' } }).catch(() => 0)
+      ]);
+
+      // 3. Actividades recientes
+      const recentActivity = await prisma.ticketActivity.findMany({
+        where: forcePersonal
+          ? { ticket: { OR: [{ assignedToId: user.id }, { secondaryAssignedToId: user.id }, { createdById: user.id }] } }
+          : (req.auth.organizationId ? { ticket: { organizationId: req.auth.organizationId } } : {}),
+        take: 10,
+        orderBy: { createdAt: 'desc' },
+        include: {
+          ticket: { select: { id: true, title: true, priority: true, status: true, ticketType: true } }
+        }
+      }).catch(() => []);
+
+      const sparklineArray = (metrics.timeline || []).map(d => d.created);
+
+      res.json({
+        summary: {
+          totalTickets: metrics.summary.total,
+          openTickets: metrics.summary.open,
+          inProgressTickets: metrics.summary.inProgress,
+          resolvedTickets: metrics.summary.resolved,
+          closedTickets: metrics.summary.closed,
+          incidentCount: metrics.summary.incidents,
+          requestCount: metrics.summary.requests,
+          slaCompliance: metrics.summary.globalAnsCompliance,
+          ansResponseCompliance: metrics.summary.responseAnsCompliance,
+          ansResolutionCompliance: metrics.summary.resolutionAnsCompliance,
+          overdueCount: metrics.summary.overdueTickets,
+          mttaMinutes: metrics.summary.avgMttaMinutes,
+          mttaP50Minutes: metrics.summary.mttaP50Minutes,
+          mttaP90Minutes: metrics.summary.mttaP90Minutes,
+          mttrHours: metrics.summary.avgMttrHours,
+          mttrP50Hours: metrics.summary.mttrP50Hours,
+          mttrP90Hours: metrics.summary.mttrP90Hours,
+          fcrRate: metrics.summary.fcrRate,
+          reopenRate: metrics.summary.reopenRate,
+          throughputRatio: metrics.summary.total > 0 
+            ? Math.round(((metrics.summary.resolved + metrics.summary.closed) / metrics.summary.total) * 100) 
+            : 100,
+          totalAssets,
+          onlineAssets,
+          trends: {
+            totalTickets: 0,
+            openTickets: 0
+          },
+          sparklines: {
+            totalTickets: sparklineArray,
+            openTickets: sparklineArray.map(v => Math.floor(v * 0.4))
+          }
+        },
+        isLevel2: Boolean(isLevel2),
+        isLevel1: Boolean(isLevel1),
+        isLevel3: Boolean(isLevel3),
+        isAdmin: Boolean(isAdmin),
+        canSwitchView: Boolean(isAdmin || isLevel1 || isLevel3),
+        viewMode: forcePersonal ? 'personal' : 'global',
+        ticketsByPriority: metrics.priorities.map(p => ({ label: p.label, value: p.count })),
+        ticketsByStatus: metrics.statuses.map(s => ({ label: s.label, value: s.count })),
+        ticketsByCategory: metrics.categories.map(c => ({ label: c.label, value: c.count })),
+        dailyEvolution: metrics.timeline,
+        techniciansPerformance: metrics.techniciansWorkload,
+        techWorkload: metrics.techniciansWorkload.map(t => ({
+          id: t.id,
+          name: t.name,
+          count: t.inProgressCount + t.assignedCount
+        })),
+        hourlyHeatmap: metrics.hourlyHeatmap,
+        recentActivity
+      });
+    } catch (error) {
+      console.error('Analytics Error:', error);
+      next(error);
+    }
+  });
+
+  /**
+   * Endpoint para obtener la lista de técnicos que el usuario puede ver en Analítica (Fase 3).
+   * Determinado 100% en servidor según jerarquía.
+   */
+  router.get('/technicians', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
+    try {
+      const user = req.auth.user;
+      const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+      const allUsers = await prisma.user.findMany({
+        where: {
+          ...orgFilter,
+          isActive: true,
+        },
+        select: {
+          id: true,
+          name: true,
+          email: true,
+          roleId: true,
+          role: { select: { id: true, name: true, hierarchyLevel: true } }
+        },
+        orderBy: { name: 'asc' }
+      });
+
+      // Filtrar únicamente los técnicos que el usuario puede auditar según jerarquía
+      const accessible = allUsers
+        .filter(target => canViewTechnicianAnalytics(user, target))
+        .map(t => ({
+          id: t.id,
+          name: t.name,
+          email: t.email,
+          role: t.role?.name || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(t)
+        }));
+
+      // Si el propio usuario no está en la lista resultante, asegurar que él mismo pueda verse
+      if (!accessible.some(t => t.id === user.id)) {
+        accessible.unshift({
+          id: user.id,
+          name: user.name,
+          email: user.email,
+          role: user.role || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(user)
+        });
+      }
+
+      res.json(accessible);
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  /**
+   * Endpoint oficial de Analítica individual por técnico (Fase 3).
+   * Devuelve los 8 indicadores calculados exclusivamente sobre assignedToId = technicianId.
+   */
+  router.get('/technician/:technicianId', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
+    try {
+      const isAll = req.params.technicianId === 'all';
+      let targetUser = null;
+
+      if (!isAll) {
+        const technicianId = parseInt(req.params.technicianId, 10);
+        if (isNaN(technicianId)) {
+          throw createHttpError(400, 'ID de técnico inválido.');
+        }
+
+        const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
+
+        targetUser = await prisma.user.findFirst({
+          where: {
+            id: technicianId,
+            ...orgFilter
+          },
+          include: {
+            role: true
+          }
+        });
+
+        if (!targetUser) {
+          throw createHttpError(404, 'Técnico no encontrado.');
+        }
+
+        // Verificación estricta de autorización en servidor
+        if (!canViewTechnicianAnalytics(req.auth.user, targetUser)) {
+          throw createHttpError(403, 'No tiene permisos para ver las métricas de este técnico.');
+        }
+      } else {
+        const userHierarchy = getRoleHierarchy(req.auth.user);
+        if (userHierarchy < 3) {
+          throw createHttpError(403, 'No tiene permisos para ver las métricas globales de todos los técnicos.');
+        }
+      }
+
+      const analytics = await getTechnicianAnalytics(prisma, isAll ? 'all' : targetUser.id, req.auth.organizationId, {
+        startDate: req.query.from || req.query.startDate,
+        endDate: req.query.to || req.query.endDate,
+        ticketType: req.query.ticketType || 'all'
+      });
+
+      res.json({
+        technician: isAll ? {
+          id: 'all',
+          name: 'Todos los Técnicos',
+          email: '',
+          role: 'TODOS',
+          hierarchyLevel: 0
+        } : {
+          id: targetUser.id,
+          name: targetUser.name,
+          email: targetUser.email,
+          role: targetUser.role?.name || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(targetUser)
+        },
+        ...analytics
+      });
+    } catch (error) {
+      next(error);
+    }
+  });
+
+  return router;
+}
+
+module.exports = getAnalyticsRoutes;

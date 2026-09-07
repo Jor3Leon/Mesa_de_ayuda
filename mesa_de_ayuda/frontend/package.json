@@ -5,7 +5,8 @@
   "type": "module",
   "scripts": {
     "dev": "vite --configLoader native --host 127.0.0.1 --port 5173",
-    "build": "vite build",
+    "build": "node scripts/vercel-build.js",
+    "build:vite": "vite build",
     "lint": "eslint .",
     "preview": "vite preview"
   },

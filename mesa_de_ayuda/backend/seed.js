@@ -60,7 +60,9 @@ async function main() {
     { code: 'ASSETS_MANAGE', name: 'Gestionar Inventario', description: 'Permite crear, editar y eliminar activos.' },
     { code: 'USERS_MANAGE', name: 'Gestionar Usuarios', description: 'Permite administrar usuarios de la plataforma.' },
     { code: 'ROLES_MANAGE', name: 'Gestionar Roles y Permisos', description: 'Permite administrar roles, niveles de acceso y permisos.' },
+    { code: 'STRUCTURE_MANAGE', name: 'Estructura y Ubicaciones', description: 'Permite administrar sedes, dependencias y oficinas.' },
     { code: 'ANALYTICS_VIEW', name: 'Ver Estadísticas', description: 'Permite ver tableros de control y reportes.' },
+    { code: 'DASHBOARD_VIEW', name: 'Ver Dashboard', description: 'Permite ver el dashboard operacional principal.' },
   ];
 
   const permissions = {};

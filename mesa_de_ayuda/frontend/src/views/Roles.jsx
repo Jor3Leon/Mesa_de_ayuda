@@ -3,7 +3,7 @@ import { apiRequest } from '../lib/api';
 
 const MODULE_LABELS = {
   ADMINISTRACION: 'Seguridad & Administración',
-  DASHBOARD: 'Dashboard Operacional',
+  DASHBOARD: 'Área Personal & Dashboard',
   ANALYTICS: 'Analítica & Reportes',
   ASSETS: 'Inventario ITAM & Hardware',
   CMDB: 'CMDB & Topología',
@@ -25,7 +25,7 @@ const ACTION_LABELS = {
 
 function getPermissionMeta(code) {
   const [moduleCode = 'GENERAL', actionCode = 'ACCESS'] = String(code || '').split('_');
-  const moduleGroupCode = moduleCode === 'USERS' || moduleCode === 'ROLES' ? 'ADMINISTRACION' : moduleCode;
+  const moduleGroupCode = ['USERS', 'ROLES', 'STRUCTURE'].includes(moduleCode) ? 'ADMINISTRACION' : moduleCode;
 
   return {
     moduleCode,
@@ -38,7 +38,7 @@ function getPermissionMeta(code) {
 
 function getPermissionDisplay(permission) {
   if (permission.code === 'DASHBOARD_VIEW') {
-    return { title: 'Ver Dashboard', subtitle: 'Acceso a la consola principal de operaciones.' };
+    return { title: 'Ver Dashboard', subtitle: 'Acceso a la consola principal de operaciones y panel personal.' };
   }
   if (permission.code === 'ANALYTICS_VIEW') {
     return { title: 'Ver Analítica', subtitle: 'Acceso a gráficos de rendimiento y ANS.' };
@@ -48,6 +48,9 @@ function getPermissionDisplay(permission) {
   }
   if (permission.code === 'ROLES_MANAGE') {
     return { title: 'Gestionar Roles & RBAC', subtitle: 'Modificar matrices de permisos.' };
+  }
+  if (permission.code === 'STRUCTURE_MANAGE' || permission.code === 'STRUCTURE_VIEW') {
+    return { title: 'Estructura y Ubicaciones', subtitle: 'Acceso y administración de sedes, dependencias y oficinas.' };
   }
   if (permission.code === 'TICKETS_CONFIGURE') {
     return { title: 'Campos Administrativos', subtitle: 'Modificar tipo, categoría, ANS y técnicos.' };
@@ -84,13 +87,29 @@ export default function Roles() {
     ])
       .then(([rolesRes, permsRes]) => {
         const roleList = Array.isArray(rolesRes) ? rolesRes : [];
-        const permList = Array.isArray(permsRes) ? permsRes : [];
+        let permList = Array.isArray(permsRes) ? permsRes : [];
+        if (!permList.some((p) => p.code === 'STRUCTURE_MANAGE')) {
+          permList = [
+            ...permList,
+            {
+              id: 9999,
+              code: 'STRUCTURE_MANAGE',
+              name: 'Estructura y Ubicaciones',
+              description: 'Permite administrar sedes, dependencias y oficinas.',
+            },
+          ];
+        }
         setRoles(roleList);
         setPermissions(permList);
         if (roleList.length > 0) {
+          const firstRole = roleList[0];
+          const initialPerms = [...(firstRole.permissionCodes || [])];
+          if (firstRole.name === 'ADMIN' && !initialPerms.includes('STRUCTURE_MANAGE')) {
+            initialPerms.push('STRUCTURE_MANAGE');
+          }
           setSelectedRole({
-            ...roleList[0],
-            permissionCodes: [...(roleList[0].permissionCodes || [])],
+            ...firstRole,
+            permissionCodes: initialPerms,
           });
         }
       })
@@ -121,9 +140,13 @@ export default function Roles() {
   }, [permissions]);
 
   function handleSelectRole(role) {
+    const initialPerms = [...(role.permissionCodes || [])];
+    if (role.name === 'ADMIN' && !initialPerms.includes('STRUCTURE_MANAGE')) {
+      initialPerms.push('STRUCTURE_MANAGE');
+    }
     setSelectedRole({
       ...role,
-      permissionCodes: [...(role.permissionCodes || [])],
+      permissionCodes: initialPerms,
     });
     setFeedback('');
     setError('');
@@ -197,6 +220,114 @@ export default function Roles() {
 
   const selectedPermsCount = selectedRole?.permissionCodes?.length || 0;
   const coveragePercent = permissions.length > 0 ? Math.round((selectedPermsCount / permissions.length) * 100) : 0;
+
+  const compactGroupCodes = ['DASHBOARD', 'ANALYTICS'];
+  const compactGroups = groupedPermissions.filter((g) => compactGroupCodes.includes(g.moduleCode));
+  const standardGroups = groupedPermissions.filter((g) => !compactGroupCodes.includes(g.moduleCode));
+
+  function renderModuleCard(group, isCompact = false) {
+    const moduleCodes = group.permissions.map((p) => p.code);
+    const isAllChecked = moduleCodes.every((code) => selectedRole?.permissionCodes?.includes(code));
+
+    return (
+      <div
+        key={group.moduleCode}
+        style={{
+          border: '1px solid #e2e8f0',
+          borderRadius: '12px',
+          overflow: 'hidden',
+          background: '#ffffff',
+          boxShadow: '0 1px 3px rgba(0,0,0,0.02)',
+          display: 'flex',
+          flexDirection: 'column',
+          height: isCompact ? '100%' : 'auto',
+          boxSizing: 'border-box',
+        }}
+      >
+        {/* Module Header */}
+        <div
+          style={{
+            padding: isCompact ? '0.65rem 0.95rem' : '0.75rem 1rem',
+            background: isCompact ? 'linear-gradient(180deg, #f8fafc 0%, #f1f5f9 100%)' : '#f8fafc',
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            borderBottom: '1px solid #e2e8f0',
+          }}
+        >
+          <span style={{ fontWeight: '800', fontSize: isCompact ? '0.85rem' : '0.9rem', color: '#1e293b', display: 'flex', alignItems: 'center', gap: '0.4rem' }}>
+            📦 {group.moduleLabel}
+          </span>
+          <button
+            type="button"
+            onClick={() => handleToggleModule(moduleCodes)}
+            style={{
+              background: isAllChecked ? '#ede9fe' : '#f1f5f9',
+              border: `1px solid ${isAllChecked ? '#c4b5fd' : '#cbd5e1'}`,
+              color: isAllChecked ? '#5b21b6' : '#475569',
+              padding: isCompact ? '0.2rem 0.55rem' : '0.25rem 0.65rem',
+              borderRadius: '6px',
+              fontSize: isCompact ? '0.72rem' : '0.75rem',
+              fontWeight: '700',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease',
+            }}
+          >
+            {isAllChecked ? 'Deseleccionar Módulo' : 'Seleccionar Todo'}
+          </button>
+        </div>
+
+        {/* Permissions Checkbox Grid */}
+        <div
+          style={{
+            padding: isCompact ? '0.75rem 0.95rem' : '1rem',
+            display: 'grid',
+            gridTemplateColumns: isCompact ? '1fr' : 'repeat(auto-fill, minmax(280px, 1fr))',
+            gap: isCompact ? '0.55rem' : '0.75rem',
+            flex: 1,
+            alignContent: 'start',
+          }}
+        >
+          {group.permissions.map((perm) => {
+            const isChecked = selectedRole?.permissionCodes?.includes(perm.code);
+            const display = getPermissionDisplay(perm);
+
+            return (
+              <label
+                key={perm.code}
+                style={{
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  gap: '0.7rem',
+                  padding: isCompact ? '0.65rem 0.75rem' : '0.75rem',
+                  borderRadius: '8px',
+                  border: isChecked ? '1.5px solid #a78bfa' : '1px solid #f1f5f9',
+                  background: isChecked ? '#faf5ff' : '#f8fafc',
+                  cursor: 'pointer',
+                  transition: 'all 0.15s ease',
+                }}
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => handleTogglePermission(perm.code)}
+                  style={{ marginTop: '0.15rem', accentColor: '#7c3aed', width: '16px', height: '16px', cursor: 'pointer' }}
+                />
+                <div>
+                  <div style={{ fontWeight: '700', fontSize: isCompact ? '0.83rem' : '0.85rem', color: isChecked ? '#5b21b6' : '#0f172a' }}>
+                    {display.title}
+                  </div>
+                  <div style={{ fontSize: isCompact ? '0.72rem' : '0.75rem', color: '#64748b', marginTop: '0.12rem', lineHeight: 1.3 }}>
+                    {display.subtitle}
+                  </div>
+                </div>
+              </label>
+            );
+          })}
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
@@ -419,9 +550,26 @@ export default function Roles() {
       )}
 
       {/* 🧭 SPLIT LAYOUT (ROLES SELECTOR + PERMISSIONS MATRIX) */}
-      <div className="roles-split-container">
+      <div
+        className="roles-split-container"
+        style={{
+          display: 'grid',
+          gridTemplateColumns: 'minmax(280px, 340px) 1fr',
+          gap: '1.25rem',
+          alignItems: 'start',
+        }}
+      >
         {/* LEFT COLUMN: ROLES SELECTOR */}
-        <div className="roles-selector-box">
+        <div
+          className="roles-selector-box"
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            padding: '1rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          }}
+        >
           <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '0.75rem' }}>
             <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: '800', color: '#0f172a' }}>
               Niveles & Perfiles ({roles.length})
@@ -429,7 +577,14 @@ export default function Roles() {
             <span style={{ fontSize: '0.72rem', color: '#64748b', fontWeight: '600' }}>Selecciona uno</span>
           </div>
 
-          <div className="roles-selector-list">
+          <div
+            className="roles-selector-list"
+            style={{
+              display: 'flex',
+              flexDirection: 'column',
+              gap: '0.65rem',
+            }}
+          >
             {roles.map((r) => {
               const isSelected = selectedRole?.id === r.id;
               const permCount = r.permissionCodes?.length || 0;
@@ -475,7 +630,16 @@ export default function Roles() {
         </div>
 
         {/* RIGHT COLUMN: PERMISSIONS MATRIX */}
-        <div className="roles-matrix-box">
+        <div
+          className="roles-matrix-box"
+          style={{
+            background: '#ffffff',
+            borderRadius: '12px',
+            border: '1px solid #e2e8f0',
+            padding: '1.25rem',
+            boxShadow: '0 1px 3px rgba(0,0,0,0.03)',
+          }}
+        >
           {selectedRole ? (
             <form onSubmit={handleSave}>
               <div
@@ -519,102 +683,23 @@ export default function Roles() {
               </div>
 
               {/* MODULES PERMISSION ACCORDION */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.25rem' }}>
-                {groupedPermissions.map((group) => {
-                  const moduleCodes = group.permissions.map((p) => p.code);
-                  const isAllChecked = moduleCodes.every((code) => selectedRole.permissionCodes.includes(code));
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '1.15rem' }}>
+                {/* 1. Standard full-width modules */}
+                {standardGroups.map((group) => renderModuleCard(group, false))}
 
-                  return (
-                    <div
-                      key={group.moduleCode}
-                      style={{
-                        border: '1px solid #e2e8f0',
-                        borderRadius: '12px',
-                        overflow: 'hidden',
-                        background: '#ffffff',
-                      }}
-                    >
-                      {/* Module Header */}
-                      <div
-                        style={{
-                          padding: '0.75rem 1rem',
-                          background: '#f8fafc',
-                          display: 'flex',
-                          justifyContent: 'space-between',
-                          alignItems: 'center',
-                          borderBottom: '1px solid #e2e8f0',
-                        }}
-                      >
-                        <span style={{ fontWeight: '800', fontSize: '0.9rem', color: '#1e293b' }}>
-                          📦 {group.moduleLabel}
-                        </span>
-                        <button
-                          type="button"
-                          onClick={() => handleToggleModule(moduleCodes)}
-                          style={{
-                            background: isAllChecked ? '#ede9fe' : '#f1f5f9',
-                            border: `1px solid ${isAllChecked ? '#c4b5fd' : '#cbd5e1'}`,
-                            color: isAllChecked ? '#5b21b6' : '#475569',
-                            padding: '0.25rem 0.65rem',
-                            borderRadius: '6px',
-                            fontSize: '0.75rem',
-                            fontWeight: '700',
-                            cursor: 'pointer',
-                          }}
-                        >
-                          {isAllChecked ? 'Deseleccionar Módulo' : 'Seleccionar Todo'}
-                        </button>
-                      </div>
-
-                      {/* Permissions Checkbox Grid */}
-                      <div
-                        style={{
-                          padding: '1rem',
-                          display: 'grid',
-                          gridTemplateColumns: 'repeat(auto-fill, minmax(280px, 1fr))',
-                          gap: '0.75rem',
-                        }}
-                      >
-                        {group.permissions.map((perm) => {
-                          const isChecked = selectedRole.permissionCodes.includes(perm.code);
-                          const display = getPermissionDisplay(perm);
-
-                          return (
-                            <label
-                              key={perm.code}
-                              style={{
-                                display: 'flex',
-                                alignItems: 'flex-start',
-                                gap: '0.75rem',
-                                padding: '0.75rem',
-                                borderRadius: '8px',
-                                border: isChecked ? '1px solid #c4b5fd' : '1px solid #f1f5f9',
-                                background: isChecked ? '#faf5ff' : '#ffffff',
-                                cursor: 'pointer',
-                                transition: 'all 0.15s ease',
-                              }}
-                            >
-                              <input
-                                type="checkbox"
-                                checked={isChecked}
-                                onChange={() => handleTogglePermission(perm.code)}
-                                style={{ marginTop: '0.2rem', accentColor: '#7c3aed', width: '16px', height: '16px' }}
-                              />
-                              <div>
-                                <div style={{ fontWeight: '700', fontSize: '0.85rem', color: isChecked ? '#5b21b6' : '#0f172a' }}>
-                                  {display.title}
-                                </div>
-                                <div style={{ fontSize: '0.75rem', color: '#64748b', marginTop: '0.15rem' }}>
-                                  {display.subtitle}
-                                </div>
-                              </div>
-                            </label>
-                          );
-                        })}
-                      </div>
-                    </div>
-                  );
-                })}
+                {/* 2. Compact side-by-side modules for 'Área Personal & Dashboard' and 'Analítica & Reportes' */}
+                {compactGroups.length > 0 && (
+                  <div
+                    style={{
+                      display: 'grid',
+                      gridTemplateColumns: compactGroups.length > 1 ? 'repeat(auto-fit, minmax(280px, 1fr))' : '1fr',
+                      gap: '1.15rem',
+                      alignItems: 'stretch',
+                    }}
+                  >
+                    {compactGroups.map((group) => renderModuleCard(group, true))}
+                  </div>
+                )}
               </div>
             </form>
           ) : (

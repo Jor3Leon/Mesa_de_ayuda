@@ -42,7 +42,7 @@ const ROLE_HIERARCHY = {
 
 // Permisos de fallback (solo si la consulta al API falla)
 const FALLBACK_ROLE_PERMISSIONS = {
-  ADMIN: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'],
+  ADMIN: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'TICKETS_DELETE', 'TICKETS_CONFIGURE', 'ASSETS_VIEW', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE', 'STRUCTURE_MANAGE'],
   LEVEL_3: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW', 'ASSETS_MANAGE'],
   LEVEL_2: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
   LEVEL_1: ['DASHBOARD_VIEW', 'ANALYTICS_VIEW', 'TICKETS_VIEW', 'TICKETS_CREATE', 'TICKETS_EDIT', 'ASSETS_VIEW'],
@@ -472,7 +472,7 @@ function buildNavSections(user) {
       path: '/structure', 
       icon: 'structure', 
       description: 'Sedes, dependencias y oficinas para activos TI',
-      requiredAnyPermission: ['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']
+      requiredAnyPermission: ['STRUCTURE_MANAGE', 'USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']
     },
     { 
       name: 'Service Desk', 
@@ -1356,7 +1356,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/structure" 
               element={(
-                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['STRUCTURE_MANAGE', 'USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
                   <OrganizationStructure />
                 </ProtectedRoute>
               )} 
@@ -1364,7 +1364,7 @@ function AppShell({ user, onLogout, onProfileUpdate }) {
             <Route 
               path="/customers" 
               element={(
-                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
+                <ProtectedRoute user={effectiveUser} requiredAnyPermission={['STRUCTURE_MANAGE', 'USERS_MANAGE', 'ASSETS_MANAGE', 'ROLES_MANAGE']}>
                   <OrganizationStructure />
                 </ProtectedRoute>
               )} 

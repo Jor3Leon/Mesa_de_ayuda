@@ -58,6 +58,11 @@ const PIE_COLORS = ['#00D1FF', '#2563eb', '#10b981', '#f59e0b', '#8b5cf6', '#dc2
 export default function Analytics({ user }) {
   const sessionUser = getStoredSession()?.user;
   const currentUser = user || sessionUser;
+  const currentRole = String(currentUser?.role || '').toUpperCase();
+  const isUnipersonal = currentRole.includes('NIVEL 1') || currentRole.includes('LEVEL_1') ||
+                        currentRole.includes('NIVEL 2') || currentRole.includes('LEVEL_2');
+  const isLevel3OrAdmin = currentRole.includes('NIVEL 3') || currentRole.includes('LEVEL_3') ||
+                          currentRole.includes('ADMIN') || currentRole.includes('SUPERVISOR');
 
   const [technicians, setTechnicians] = useState([]);
   const [selectedTechId, setSelectedTechId] = useState(null);
@@ -243,7 +248,7 @@ export default function Analytics({ user }) {
             <h1 className="dashboard-hero-title" style={{ fontSize: '1.55rem', fontWeight: '800', margin: 0, letterSpacing: '-0.025em', color: '#ffffff' }}>
               Analítica de Desempeño
             </h1>
-            {selectedTechId === 'all' ? (
+            {!isUnipersonal && selectedTechId === 'all' ? (
               <span style={{
                 background: 'rgba(0, 209, 255, 0.15)',
                 color: '#00D1FF',
@@ -255,7 +260,7 @@ export default function Analytics({ user }) {
               }}>
                 🌐 Todos los Técnicos
               </span>
-            ) : tech?.name ? (
+            ) : tech?.name || currentUser?.name ? (
               <span style={{
                 background: 'rgba(0, 209, 255, 0.15)',
                 color: '#00D1FF',
@@ -269,8 +274,8 @@ export default function Analytics({ user }) {
                 gap: '6px'
               }}>
                 <span>👤</span>
-                <span>{tech.name}</span>
-                {tech.role && (
+                <span>{tech?.name || currentUser?.name}</span>
+                {(tech?.role || currentUser?.role) && (
                   <span style={{
                     background: '#002D62',
                     color: '#ffffff',
@@ -279,7 +284,7 @@ export default function Analytics({ user }) {
                     borderRadius: '8px',
                     textTransform: 'uppercase'
                   }}>
-                    {tech.role}
+                    {tech?.role || currentUser?.role}
                   </span>
                 )}
               </span>
@@ -382,40 +387,42 @@ export default function Analytics({ user }) {
             </select>
           </div>
 
-          {/* Técnico */}
-          <div>
-            <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
-              Técnico
-            </span>
-            <select
-              className="dashboard-toolbar-select"
-              value={selectedTechId || ''}
-              disabled={technicians.length <= 1}
-              onChange={(e) => setSelectedTechId(e.target.value)}
-              style={{
-                padding: '7px 14px',
-                border: '1px solid #cbd5e1',
-                borderRadius: '8px',
-                background: '#ffffff',
-                color: '#1e293b',
-                fontSize: '0.8125rem',
-                fontWeight: 600,
-                outline: 'none',
-                cursor: technicians.length <= 1 ? 'not-allowed' : 'pointer',
-                minWidth: '220px',
-                opacity: technicians.length <= 1 ? 0.85 : 1
-              }}
-            >
-              {technicians.length > 1 && (
-                <option value="all">Todos los Técnicos</option>
-              )}
-              {technicians.map((t) => (
-                <option key={t.id} value={String(t.id)}>
-                  👤 {t.name} ({t.role})
-                </option>
-              ))}
-            </select>
-          </div>
+          {/* Técnico (Visible únicamente para Nivel 3 y Administrador; oculto para Nivel 1 y Nivel 2 unipersonal) */}
+          {!isUnipersonal && (
+            <div>
+              <span className="dashboard-toolbar-label" style={{ display: 'block', fontSize: '0.7rem', fontWeight: 800, color: '#002D62', textTransform: 'uppercase', letterSpacing: '0.05em', marginBottom: '4px' }}>
+                Técnico
+              </span>
+              <select
+                className="dashboard-toolbar-select"
+                value={selectedTechId || ''}
+                disabled={technicians.length <= 1}
+                onChange={(e) => setSelectedTechId(e.target.value)}
+                style={{
+                  padding: '7px 14px',
+                  border: '1px solid #cbd5e1',
+                  borderRadius: '8px',
+                  background: '#ffffff',
+                  color: '#1e293b',
+                  fontSize: '0.8125rem',
+                  fontWeight: 600,
+                  outline: 'none',
+                  cursor: technicians.length <= 1 ? 'not-allowed' : 'pointer',
+                  minWidth: '220px',
+                  opacity: technicians.length <= 1 ? 0.85 : 1
+                }}
+              >
+                {technicians.length > 1 && (
+                  <option value="all">Todos los Técnicos</option>
+                )}
+                {technicians.map((t) => (
+                  <option key={t.id} value={String(t.id)}>
+                    👤 {t.name} ({t.role})
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
         </div>
 
         {/* Botón Exportar PDF en la misma fila */}

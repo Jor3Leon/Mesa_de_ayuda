@@ -86,12 +86,17 @@ export default function Analytics({ user }) {
         const list = Array.isArray(techList) ? techList : [];
         setTechnicians(list);
         if (list.length > 0) {
-          // Si tiene más de 1 técnico accesible, permitir ver todos por defecto o individual
-          if (list.length > 1) {
-            setSelectedTechId('all');
-          } else {
+          const currentRole = String(currentUser?.role || '').toUpperCase();
+          const isSingleOnly = currentRole.includes('NIVEL 1') || currentRole.includes('LEVEL_1') ||
+                               currentRole.includes('NIVEL 2') || currentRole.includes('LEVEL_2');
+
+          // Si el rol es unipersonal (Nivel 1 o Nivel 2) o solo hay 1 técnico accesible, auto-seleccionar su ID
+          if (isSingleOnly || list.length <= 1) {
             const isMe = list.find(t => Number(t.id) === Number(currentUser?.id));
             setSelectedTechId(isMe ? String(isMe.id) : String(list[0].id));
+          } else {
+            // Nivel 3 o Administrador con más de 1 técnico
+            setSelectedTechId('all');
           }
         }
       })
@@ -101,7 +106,7 @@ export default function Analytics({ user }) {
       .finally(() => {
         setLoading(false);
       });
-  }, [currentUser?.id]);
+  }, [currentUser?.id, currentUser?.role]);
 
   // 2. Cargar los indicadores del técnico seleccionado (o todos)
   useEffect(() => {

@@ -165,7 +165,8 @@ function getAnalyticsRoutes(prisma) {
    */
   router.get('/technicians', requireAnyPermission('ANALYTICS_VIEW', 'DASHBOARD_VIEW', 'TICKETS_VIEW'), async (req, res, next) => {
     try {
-      const user = req.auth.user;
+      const effectiveRole = getEffectiveRole(req);
+      const effectiveUser = { ...req.auth.user, role: effectiveRole };
       const orgFilter = req.auth.organizationId ? { organizationId: req.auth.organizationId } : {};
 
       const allUsers = await prisma.user.findMany({
@@ -185,7 +186,7 @@ function getAnalyticsRoutes(prisma) {
 
       // Filtrar únicamente los técnicos que el usuario puede auditar según jerarquía
       const accessible = allUsers
-        .filter(target => canViewTechnicianAnalytics(user, target))
+        .filter(target => canViewTechnicianAnalytics(effectiveUser, target))
         .map(t => ({
           id: t.id,
           name: t.name,
@@ -195,13 +196,13 @@ function getAnalyticsRoutes(prisma) {
         }));
 
       // Si el propio usuario no está en la lista resultante, asegurar que él mismo pueda verse
-      if (!accessible.some(t => t.id === user.id)) {
+      if (!accessible.some(t => t.id === effectiveUser.id)) {
         accessible.unshift({
-          id: user.id,
-          name: user.name,
-          email: user.email,
-          role: user.role || 'TÉCNICO',
-          hierarchyLevel: getRoleHierarchy(user)
+          id: effectiveUser.id,
+          name: effectiveUser.name,
+          email: effectiveUser.email,
+          role: effectiveUser.role || 'TÉCNICO',
+          hierarchyLevel: getRoleHierarchy(effectiveUser)
         });
       }
 
@@ -219,6 +220,8 @@ function getAnalyticsRoutes(prisma) {
     try {
       const isAll = req.params.technicianId === 'all';
       let targetUser = null;
+      const effectiveRole = getEffectiveRole(req);
+      const effectiveUser = { ...req.auth.user, role: effectiveRole };
 
       if (!isAll) {
         const technicianId = parseInt(req.params.technicianId, 10);
@@ -242,12 +245,12 @@ function getAnalyticsRoutes(prisma) {
           throw createHttpError(404, 'Técnico no encontrado.');
         }
 
-        // Verificación estricta de autorización en servidor
-        if (!canViewTechnicianAnalytics(req.auth.user, targetUser)) {
+        // Verificación estricta de autorización en servidor según rol efectivo
+        if (!canViewTechnicianAnalytics(effectiveUser, targetUser)) {
           throw createHttpError(403, 'No tiene permisos para ver las métricas de este técnico.');
         }
       } else {
-        const userHierarchy = getRoleHierarchy(req.auth.user);
+        const userHierarchy = getRoleHierarchy(effectiveUser);
         if (userHierarchy < 3) {
           throw createHttpError(403, 'No tiene permisos para ver las métricas globales de todos los técnicos.');
         }

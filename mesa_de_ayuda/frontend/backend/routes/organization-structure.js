@@ -161,7 +161,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.post('/sedes', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.post('/sedes', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const name = requireNonEmptyString(req.body?.name, 'nombre de la sede');
       const code = normalizeOptionalString(req.body?.code);
@@ -193,7 +193,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.put('/sedes/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.put('/sedes/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.sede.findFirst({
@@ -229,7 +229,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.delete('/sedes/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.delete('/sedes/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.sede.findFirst({
@@ -267,7 +267,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.post('/dependencias', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.post('/dependencias', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const name = requireNonEmptyString(req.body?.name, 'nombre del área/dependencia');
       const code = normalizeOptionalString(req.body?.code);
@@ -300,7 +300,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.put('/dependencias/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.put('/dependencias/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.dependencia.findFirst({
@@ -336,7 +336,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.delete('/dependencias/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.delete('/dependencias/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.dependencia.findFirst({
@@ -374,7 +374,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.post('/oficinas', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.post('/oficinas', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const name = requireNonEmptyString(req.body?.name, 'nombre de la oficina');
       const code = normalizeOptionalString(req.body?.code);
@@ -418,7 +418,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.put('/oficinas/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.put('/oficinas/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.oficina.findFirst({
@@ -458,7 +458,7 @@ function getOrgStructureRoutes(prisma) {
     }
   });
 
-  router.delete('/oficinas/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ASSETS_MANAGE', 'USERS_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
+  router.delete('/oficinas/:id', requireAnyPermission('STRUCTURE_MANAGE', 'ROLES_MANAGE'), async (req, res, next) => {
     try {
       const id = Number.parseInt(req.params.id, 10);
       const target = await prisma.oficina.findFirst({

@@ -203,6 +203,7 @@ export default function Roles() {
       setRoles((prev) => prev.map((r) => (r.id === selectedRole.id ? mappedRole : r)));
       setSelectedRole(mappedRole);
       setFeedback(`Matriz de permisos para el rol "${selectedRole.name}" guardada con éxito.`);
+      window.dispatchEvent(new CustomEvent('roles-updated'));
     } catch (err) {
       setError(err.message);
     } finally {

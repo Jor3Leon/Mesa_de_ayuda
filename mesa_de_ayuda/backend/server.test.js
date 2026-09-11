@@ -19,6 +19,7 @@ function buildUser(overrides = {}) {
         { permission: { code: 'ASSETS_MANAGE' } },
         { permission: { code: 'TICKETS_VIEW' } },
         { permission: { code: 'DASHBOARD_VIEW' } },
+        { permission: { code: 'STRUCTURE_MANAGE' } },
       ],
     },
     organizationId: 'org-test-uuid',

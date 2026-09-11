@@ -15,7 +15,7 @@ from sync import sync_to_server
 
 I18N = {
     "ES": {
-        "title": "Instalador STIC Agent - Mesa de Ayuda",
+        "title": "Instalador Agente RMM - Mesa de Ayuda",
         "header_title": "STIC Agent",
         "header_sub": "Asistente de Configuracion e Instalacion de Inventario",
         "lang_label": "Idioma / Language:",
@@ -32,14 +32,14 @@ I18N = {
         "status_installing": "Instalando agente y registrando en el sistema...",
         "status_idle": "Listo para configurar e instalar.",
         "success_title": "Instalacion Exitosa",
-        "success_msg": "El Agente STIC ha sido instalado correctamente.\n\nSe ha registrado en 'Programas y caracteristicas' y continuara sincronizandose en segundo plano.",
+        "success_msg": "El Agente RMM ha sido instalado correctamente.\n\nSe ha registrado en 'Programas y caracteristicas' y continuara sincronizandose en segundo plano.",
         "test_ok": "Conexion exitosa con el servidor.",
         "test_fail": "No se pudo contactar el servidor: ",
         "validation_err": "Por favor complete la URL del servidor y el slug de la organizacion.",
-        "footer": "v2.0.0 (Windows Native) - Alcaldia de Yopal / STIC"
+        "footer": "v2.0.0 (Windows Native) - HelpDesk RMM Client"
     },
     "EN": {
-        "title": "STIC Agent Setup - Help Desk",
+        "title": "RMM Agent Setup - Help Desk",
         "header_title": "STIC Agent",
         "header_sub": "Inventory Configuration and Installation Wizard",
         "lang_label": "Language / Idioma:",
@@ -56,11 +56,11 @@ I18N = {
         "status_installing": "Installing agent and registering with system...",
         "status_idle": "Ready to configure and install.",
         "success_title": "Installation Complete",
-        "success_msg": "STIC Agent has been successfully installed.\n\nRegistered in Windows Programs & Features and syncing in the background.",
+        "success_msg": "RMM Agent has been successfully installed.\n\nRegistered in Windows Programs & Features and syncing in the background.",
         "test_ok": "Successfully connected to server.",
         "test_fail": "Could not connect to server: ",
         "validation_err": "Please enter both the server URL and organization slug.",
-        "footer": "v2.0.0 (Windows Native) - STIC Help Desk"
+        "footer": "v2.0.0 (Windows Native) - HelpDesk RMM Client"
     }
 }
 
@@ -255,3 +255,4 @@ def main():
 
 if __name__ == "__main__":
     main()
+

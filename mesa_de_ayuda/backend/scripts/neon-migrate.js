@@ -87,7 +87,7 @@ async function migrateAndSeed() {
       "name" TEXT NOT NULL,
       "code" TEXT,
       "address" TEXT,
-      "city" TEXT DEFAULT 'Yopal',
+      "city" TEXT DEFAULT 'Principal',
       "phone" TEXT,
       "managerName" TEXT,
       "isActive" BOOLEAN NOT NULL DEFAULT true,
@@ -349,7 +349,7 @@ async function migrateAndSeed() {
 
   // 2. Seed Default Organization
   console.log('🏢 2/4 Seeding Default Organization...');
-  const orgId = 'org-stic-yopal-001';
+  const orgId = 'org-corporacion-001';
   await sql(`
     INSERT INTO "Organization" ("id", "name", "slug", "plan", "isActive")
     VALUES ($1, $2, $3, $4, true)
@@ -385,7 +385,7 @@ async function migrateAndSeed() {
     INSERT INTO "Customer" ("name", "email", "organizationId")
     VALUES ($1, $2, $3)
     ON CONFLICT ("email", "organizationId") DO NOTHING;
-  `, ['Alcaldía de Yopal', 'soporte@yopal.gov.co', orgId]);
+  `, ['Alcaldía de Yopal', 'contacto@cliente.com', orgId]);
 
   // Seed Roles
   const roles = [
@@ -428,17 +428,17 @@ async function migrateAndSeed() {
     VALUES ($1, $2, $3, true)
     ON CONFLICT ("name", "organizationId") DO UPDATE SET "description" = EXCLUDED."description"
     RETURNING "id";
-  `, ['Palacio Municipal - Piso 2', 'Área administrativa y mesa de ayuda.', orgId]);
+  `, ['Sede Central - Piso 2', 'Área administrativa y mesa de ayuda.', orgId]);
   const locationId = locRes.rows[0].id;
 
   // 4. Seed Users
   console.log('👤 4/4 Seeding Initial Users...');
   const users = [
-    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@yopal.gov.co', role: 'ADMIN' },
-    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@yopal.gov.co', role: 'NIVEL 1' },
-    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@yopal.gov.co', role: 'NIVEL 2' },
-    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@yopal.gov.co', role: 'NIVEL 3' },
-    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@yopal.gov.co', role: 'USUARIO ESTANDAR' }
+    { name: 'Jherson Rivera', user: 'jherson.rivera', email: 'jherson.rivera@empresa.com', role: 'ADMIN' },
+    { name: 'Técnico Nivel 1', user: 'tecnico.n1', email: 'nivel1@empresa.com', role: 'NIVEL 1' },
+    { name: 'Técnico Nivel 2', user: 'tecnico.n2', email: 'nivel2@empresa.com', role: 'NIVEL 2' },
+    { name: 'Técnico Nivel 3', user: 'tecnico.n3', email: 'nivel3@empresa.com', role: 'NIVEL 3' },
+    { name: 'Usuario Estándar', user: 'usuario.test', email: 'usuario.test@empresa.com', role: 'USUARIO ESTANDAR' }
   ];
 
   for (const u of users) {
@@ -485,3 +485,4 @@ migrateAndSeed().catch(err => {
   console.error('❌ Migration Error:', err);
   process.exit(1);
 });
+

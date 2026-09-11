@@ -35,14 +35,14 @@ async function main() {
 
   // 2. Seed Customer
   let customer = await prisma.customer.findFirst({
-    where: { email: 'soporte@yopal.gov.co', organizationId: org.id },
+    where: { email: 'contacto@cliente.com', organizationId: org.id },
   });
 
   if (!customer) {
     customer = await prisma.customer.create({
       data: {
         name: 'Alcaldía de Yopal',
-        email: 'soporte@yopal.gov.co',
+        email: 'contacto@cliente.com',
         organizationId: org.id,
       },
     });
@@ -136,7 +136,7 @@ async function main() {
 
   // 5. Seed Locations (Tenant Scoped)
   const locationsData = [
-    { name: 'Palacio Municipal - Piso 2', description: 'Area administrativa y mesa de ayuda.' },
+    { name: 'Sede Central - Piso 2', description: 'Area administrativa y mesa de ayuda.' },
     { name: 'Datacenter Principal', description: 'Infraestructura critica y servidores.' },
     { name: 'Punto Vive Digital', description: 'Punto de atencion y soporte tecnologico.' },
   ];
@@ -166,9 +166,9 @@ async function main() {
 
   // 5.1 Seed Organization Structure (Sedes, Dependencias, Oficinas)
   const sedesData = [
-    { name: 'Palacio Municipal (Sede Central)', code: 'SED-01', address: 'Diagonal 15 No. 13-35', city: 'Yopal', phone: '6351234' },
-    { name: 'Datacenter Principal & Redes', code: 'SED-02', address: 'Calle 10 No. 20-40', city: 'Yopal', phone: '6355678' },
-    { name: 'Sede Campestre / Obras Públicas', code: 'SED-03', address: 'Vía Morichal Km 2', city: 'Yopal', phone: '6359999' },
+    { name: 'Sede Central', code: 'SED-01', address: 'Diagonal 15 No. 13-35', city: 'Principal', phone: '6351234' },
+    { name: 'Datacenter Principal & Redes', code: 'SED-02', address: 'Calle 10 No. 20-40', city: 'Principal', phone: '6355678' },
+    { name: 'Sede Campestre / Obras Públicas', code: 'SED-03', address: 'Vía Morichal Km 2', city: 'Principal', phone: '6359999' },
   ];
 
   const seededSedes = {};
@@ -182,13 +182,13 @@ async function main() {
     if (sede) seededSedes[s.name] = sede;
   }
 
-  const palacioSede = seededSedes['Palacio Municipal (Sede Central)'];
+  const palacioSede = seededSedes['Sede Central'];
   if (palacioSede) {
     const depsData = [
-      { name: 'Dirección de TIC e Innovación', code: 'TIC', managerName: 'Jherson Rivera', email: 'tic@yopal.gov.co' },
-      { name: 'Secretaría General', code: 'SGEN', managerName: 'Secretario General', email: 'general@yopal.gov.co' },
-      { name: 'Secretaría de Hacienda y Tesorería', code: 'SHAC', managerName: 'Secretario de Hacienda', email: 'hacienda@yopal.gov.co' },
-      { name: 'Secretaría de Tránsito y Movilidad', code: 'STRA', managerName: 'Secretario de Tránsito', email: 'transito@yopal.gov.co' },
+      { name: 'Dirección de TIC e Innovación', code: 'TIC', managerName: 'Jherson Rivera', email: 'tic@empresa.com' },
+      { name: 'Secretaría General', code: 'SGEN', managerName: 'Secretario General', email: 'general@empresa.com' },
+      { name: 'Secretaría de Hacienda y Tesorería', code: 'SHAC', managerName: 'Secretario de Hacienda', email: 'hacienda@empresa.com' },
+      { name: 'Secretaría de Tránsito y Movilidad', code: 'STRA', managerName: 'Secretario de Tránsito', email: 'transito@empresa.com' },
     ];
 
     for (const d of depsData) {
@@ -221,23 +221,23 @@ async function main() {
     {
       name: 'Jherson Rivera',
       username: 'jherson.rivera',
-      email: 'jherson.rivera@yopal.gov.co',
+      email: 'jherson.rivera@empresa.com',
       roleName: 'ADMIN',
-      locationName: 'Palacio Municipal - Piso 2',
+      locationName: 'Sede Central - Piso 2',
       password: DEFAULT_PASSWORDS.admin,
     },
     {
       name: 'Tecnico Nivel 1',
       username: 'tecnico.n1',
-      email: 'nivel1@yopal.gov.co',
+      email: 'nivel1@empresa.com',
       roleName: 'NIVEL 1',
-      locationName: 'Palacio Municipal - Piso 2',
+      locationName: 'Sede Central - Piso 2',
       password: DEFAULT_PASSWORDS.level1,
     },
     {
       name: 'Tecnico Nivel 2',
       username: 'tecnico.n2',
-      email: 'nivel2@yopal.gov.co',
+      email: 'nivel2@empresa.com',
       roleName: 'NIVEL 2',
       locationName: 'Datacenter Principal',
       password: DEFAULT_PASSWORDS.level2,
@@ -245,7 +245,7 @@ async function main() {
     {
       name: 'Tecnico Nivel 3',
       username: 'tecnico.n3',
-      email: 'nivel3@yopal.gov.co',
+      email: 'nivel3@empresa.com',
       roleName: 'NIVEL 3',
       locationName: 'Datacenter Principal',
       password: DEFAULT_PASSWORDS.level3,
@@ -253,9 +253,9 @@ async function main() {
     {
       name: 'Usuario Estandar',
       username: 'usuario.test',
-      email: 'usuario.test@yopal.gov.co',
+      email: 'usuario.test@empresa.com',
       roleName: 'USUARIO ESTANDAR',
-      locationName: 'Palacio Municipal - Piso 2',
+      locationName: 'Sede Central - Piso 2',
       password: 'User1234!',
     },
   ];
@@ -364,7 +364,7 @@ async function main() {
         model: 'OptiPlex 7010',
         deviceType: 'Escritorio',
         assignedUser: 'Jherson Rivera',
-        location: 'Palacio Municipal - Piso 2',
+        location: 'Sede Central - Piso 2',
         agentVersion: 'MDS Agent 2.4.1',
         lastSeenAt: new Date(),
         motherboard: 'Dell 0WR7PY',
@@ -468,3 +468,4 @@ main()
   .finally(async () => {
     await prisma.$disconnect();
   });
+

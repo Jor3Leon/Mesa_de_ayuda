@@ -126,7 +126,7 @@ function generateSimulatedDiscovery(ip) {
   if (ip === '10.0.22.28' || lastOctet === 28) {
     brand = 'Lexmark';
     model = 'MX722adhe';
-    hostname = 'STIC24183';
+    hostname = 'PC-CORP-01';
     serialNumber = '7464832020G9P';
     mac = '00:21:B7:77:36:A9';
     firmware = 'LW74.SB4.P045';
@@ -383,7 +383,7 @@ export default function Discovery() {
 
   return (
     <div className="view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      {/* 🌟 HERO HEADER */}
       <div
         className="card"
         style={{
@@ -969,3 +969,4 @@ export default function Discovery() {
     </div>
   );
 }
+

@@ -104,7 +104,7 @@ function extractNetworkCard(networkSummary) {
 
 function formatAssignedUser(userName) {
   if (!userName) return 'No asignado';
-  // Strip domain prefixes e.g. "ALCYOPAL\jherson.rivera" -> "jherson.rivera"
+  // Strip domain prefixes e.g. "EMPRESA\\jherson.rivera" -> "jherson.rivera"
   const clean = String(userName).replace(/^[^\\]*\\/, '').replace(/^[^/]*\//, '').trim();
   return clean || userName;
 }
@@ -1962,3 +1962,4 @@ export default function Assets() {
     </div>
   );
 }
+

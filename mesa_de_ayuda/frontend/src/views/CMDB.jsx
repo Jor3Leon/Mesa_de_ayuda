@@ -538,7 +538,7 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
 
   return (
     <div className="view-container" style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', width: '100%', boxSizing: 'border-box', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
-      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      {/* 🌟 HERO HEADER */}
       <div
         className="card"
         style={{
@@ -1878,3 +1878,4 @@ OBSERVACIONES / ACTIVIDADES A REALIZAR:
     </div>
   );
 }
+

@@ -1,5 +1,5 @@
 ================================================================================
-          MANUAL DE SINCRONIZACION Y DIAGNOSTICO - STIC AGENT (WINDOWS)
+          MANUAL DE SINCRONIZACION Y DIAGNOSTICO - AGENTE RMM (WINDOWS)
                              Mesa de Ayuda TI
 ================================================================================
 
@@ -26,7 +26,7 @@ de Mesa de Ayuda.
 
 [A] ERROR DE SLUG / ORGANIZACION NO COINCIDE
 - Causa: Si en el instalador se escribe un nombre de organizacion diferente 
-  (ejemplo: "STIC", "alcaldia", "ayuda"), el sistema asignara el equipo a otra 
+  (ejemplo: "empresa", "corporacion", "ti"), el sistema asignara el equipo a otra 
   entidad o no se vinculara a tu cuenta de usuario.
 - Solucion: Utiliza siempre el slug oficial en minusculas: "stic".
 
@@ -81,3 +81,4 @@ Abre CMD o PowerShell como Administrador en el equipo cliente y ejecuta:
 --------------------------------------------------------------------------------
 Soporte Tecnico: Alcaldia de Yopal - Oficina STIC
 ================================================================================
+

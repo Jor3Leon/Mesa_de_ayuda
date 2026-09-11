@@ -2522,7 +2522,7 @@ export default function Tickets() {
         </div>
       ) : (
         <>
-          {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+          {/* 🌟 HERO HEADER */}
           <div
             className="card"
             style={{
@@ -3108,6 +3108,7 @@ export default function Tickets() {
     </div>
   );
 }
+
 
 
 

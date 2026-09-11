@@ -114,7 +114,7 @@ export default function Customers() {
   return (
     <div style={{ padding: '1.5rem', maxWidth: '1600px', margin: '0 auto', fontFamily: 'Inter, system-ui, -apple-system, sans-serif' }}>
       
-      {/* 🌟 HERO BANNER INSTITUCIONAL YOPAL */}
+      {/* 🌟 HERO HEADER */}
       <div
         className="card"
         style={{
@@ -728,3 +728,4 @@ export default function Customers() {
     </div>
   );
 }
+
